@@ -1,0 +1,437 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4: explicitly declare sources for class scanning */
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+@source "../data/**/*.{ts,tsx}";
+@source "../types/**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-logo: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-coral: var(--glam-coral);
+  --color-sand: var(--glam-sand);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  /* Brand palette */
+  --glam-bg: #f6f4f1;
+  --glam-text: #000000;
+  --glam-coral: #f95c48;
+  --glam-sand: #e4ded2;
+  --glam-border: #e4ded2;
+
+  /* Design tokens */
+  --background: var(--glam-bg);
+  --foreground: var(--glam-text);
+  --card: color-mix(in oklab, white 88%, var(--glam-bg));
+  --card-foreground: var(--glam-text);
+  --popover: color-mix(in oklab, white 92%, var(--glam-bg));
+  --popover-foreground: var(--glam-text);
+  --primary: var(--glam-coral);
+  --primary-foreground: #ffffff;
+  --secondary: color-mix(in oklab, var(--glam-sand) 55%, var(--glam-bg));
+  --secondary-foreground: var(--glam-text);
+  --muted: color-mix(in oklab, var(--glam-sand) 35%, var(--glam-bg));
+  --muted-foreground: color-mix(in oklab, var(--glam-text) 52%, white);
+  --accent: color-mix(in oklab, var(--glam-coral) 12%, var(--glam-bg));
+  --accent-foreground: var(--glam-text);
+  --destructive: #dc2626;
+  --border: var(--glam-border);
+  --input: color-mix(in oklab, var(--glam-sand) 70%, white);
+  --ring: color-mix(in oklab, var(--glam-coral) 45%, white);
+  --radius: 1.05rem;
+
+  /* Typography */
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-sora);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading tracking-tight text-foreground;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Consistent pointer on all interactive controls */
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="option"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="link"],
+  label[for],
+  select:not(:disabled),
+  summary,
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  [data-slot="button"],
+  [data-slot="tabs-trigger"],
+  [data-slot="checkbox"],
+  [data-slot="sheet-trigger"],
+  [data-slot="sheet-close"],
+  [data-slot="dialog-trigger"],
+  [data-slot="dialog-close"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .glam-glow {
+    background-image:
+      radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--glam-coral) 18%, transparent), transparent 55%),
+      radial-gradient(circle at 84% 20%, color-mix(in oklab, var(--glam-sand) 55%, transparent), transparent 60%);
+  }
+  .glam-card-surface {
+    @apply rounded-3xl border border-border/80 bg-card/80 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03] backdrop-blur-md;
+  }
+
+  /* Consistent page / section spacing sitewide */
+  .main-nav-offset,
+  .page-main {
+    @apply pt-[4.25rem];
+  }
+
+  .section-y {
+    @apply py-20 sm:py-28;
+  }
+
+  /**
+   * Stacked section-y siblings: collapse top padding only between plain sections.
+   * Band sections (.section-band-*) and .section-y-separated always keep full padding.
+   */
+  .page-main > .section-y:not([class*="section-band-"]):not(.section-y-separated)
+    + .section-y:not([class*="section-band-"]):not(.section-y-separated),
+  .page-main
+    > section.section-y:not([class*="section-band-"]):not(.section-y-separated)
+    + section.section-y:not([class*="section-band-"]):not(.section-y-separated) {
+    padding-top: 0;
+  }
+
+  .page-main > .section-y-b + .section-y:not([class*="section-band-"]):not(.section-y-separated),
+  .page-main
+    > section.section-y-b
+    + section.section-y:not([class*="section-band-"]):not(.section-y-separated) {
+    padding-top: 0;
+  }
+
+  /**
+   * Testimonials (.section-y-separated) → Partner: avoid double vertical gap (one section's padding only).
+   */
+  .page-main
+    > section.section-y.section-y-separated:not([class*="section-band-"])
+    + section#partner.section-y:not([class*="section-band-"]):not(.section-y-separated) {
+    padding-top: 0;
+  }
+
+  /** Band sections — always keep breathing room inside borders */
+  .page-main > section.section-y[class*="section-band-"] {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  @media (min-width: 640px) {
+    .page-main > section.section-y[class*="section-band-"] {
+      padding-top: 7rem;
+      padding-bottom: 7rem;
+    }
+  }
+
+  .section-y-t {
+    @apply pt-20 sm:pt-28;
+  }
+
+  .section-y-b {
+    @apply pb-20 sm:pb-28;
+  }
+
+  /** First landing section — accounts for fixed nav on main */
+  .section-y-hero {
+    @apply pb-20 pt-10 sm:pb-28 sm:pt-16;
+  }
+
+  /** Shared section background bands (landing + explore + salon) */
+  .section-band-base {
+    border-bottom: 1px solid color-mix(in oklab, var(--glam-border) 85%, transparent);
+    background: color-mix(in oklab, white 55%, var(--glam-bg));
+  }
+
+  .section-band-statement {
+    border-top: 1px solid color-mix(in oklab, var(--glam-border) 85%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--glam-border) 85%, transparent);
+    background: color-mix(in oklab, var(--glam-sand) 68%, var(--glam-bg));
+  }
+
+  .section-band-featured {
+    border-top: 1px solid color-mix(in oklab, var(--glam-border) 85%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--glam-border) 85%, transparent);
+    background: color-mix(in oklab, var(--glam-coral) 7%, var(--glam-sand) 38%, var(--glam-bg));
+  }
+
+  .section-band-dark {
+    @apply bg-foreground text-background;
+  }
+
+  .section-eyebrow {
+    @apply text-xs font-medium uppercase tracking-[0.22em] text-foreground/50;
+  }
+
+  .display-hero {
+    @apply font-heading text-[clamp(2.75rem,8vw,5.5rem)] font-semibold uppercase leading-[0.95] tracking-[-0.03em];
+  }
+
+  .hero-headline {
+    @apply font-heading text-[clamp(2.25rem,5.5vw,4.25rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground;
+  }
+
+  .hero-float-card {
+    @apply rounded-2xl border border-border/80 bg-card shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] backdrop-blur-sm;
+  }
+
+  .display-section {
+    @apply font-heading text-[clamp(1.75rem,4vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.02em];
+  }
+
+  .editorial-statement {
+    @apply font-heading text-[clamp(1.5rem,3.5vw,2.25rem)] font-medium leading-[1.35] tracking-[-0.02em] text-foreground/90;
+  }
+
+  .meta-label {
+    @apply text-xs font-medium uppercase tracking-[0.18em] text-foreground/45;
+  }
+
+  /* Vertical scroll-stacking cards — short runway = subtle overlap */
+  .services-stack {
+    position: relative;
+    padding-bottom: 1.25rem;
+  }
+
+  .services-stack-item {
+    position: sticky;
+    top: var(--stack-top, 5.25rem);
+    display: flex;
+    align-items: flex-start;
+    min-height: 50vh;
+    padding-bottom: 1.25rem;
+  }
+
+  .services-stack-item:last-child {
+    min-height: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .services-stack-card {
+    width: 100%;
+    box-shadow: 0 12px 40px -18px rgba(0, 0, 0, 0.12);
+  }
+
+  .services-stack-media {
+    isolation: isolate;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--glam-sand) 40%, var(--glam-bg));
+  }
+
+  .services-stack-media img {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  @media (min-width: 768px) {
+    .services-stack-item {
+      min-height: 46vh;
+      padding-bottom: 1rem;
+    }
+
+    .services-stack-item:last-child {
+      min-height: auto;
+    }
+  }
+
+  /* CSS motion (replaces framer-motion — stable webpack dev on Windows) */
+  @keyframes motion-fade-up {
+    from {
+      transform: translateY(14px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes motion-fade-up-subtle {
+    from {
+      transform: translateY(8px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .motion-section.motion-stagger:not(.motion-visible) .motion-item {
+    transform: translateY(14px);
+  }
+
+  .motion-section.motion-stagger.motion-visible .motion-item {
+    animation: motion-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(2) {
+    animation-delay: 0.13s;
+  }
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(3) {
+    animation-delay: 0.21s;
+  }
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(4) {
+    animation-delay: 0.29s;
+  }
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(5) {
+    animation-delay: 0.37s;
+  }
+  .motion-section.motion-stagger.motion-visible .motion-item:nth-child(6) {
+    animation-delay: 0.45s;
+  }
+
+  .motion-section.motion-fade-subtle:not(.motion-visible) {
+    transform: translateY(8px);
+  }
+
+  .motion-section.motion-fade-subtle.motion-visible {
+    animation: motion-fade-up-subtle 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  }
+
+  .motion-section.motion-fade-subtle:not(.motion-visible) .motion-item-subtle {
+    transform: translateY(8px);
+  }
+
+  .motion-section.motion-fade-subtle.motion-visible .motion-item-subtle {
+    animation: motion-fade-up-subtle 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+    animation-delay: 0.08s;
+  }
+
+  .motion-section:not(.motion-stagger):not(.motion-fade-subtle).motion-visible .motion-item {
+    animation: motion-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .motion-section:not(.motion-visible) .motion-item {
+    transform: translateY(14px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .motion-section .motion-item,
+    .motion-section.motion-fade-subtle {
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .services-stack-item {
+      position: relative;
+      top: auto;
+      min-height: auto;
+      padding-bottom: 1.5rem;
+    }
+
+    .services-stack-item:last-child {
+      min-height: auto;
+      padding-bottom: 0;
+    }
+
+    .services-stack {
+      padding-bottom: 0;
+    }
+
+    .services-stack-card {
+      transition: none;
+    }
+  }
+}
+
+.marquee-band {
+  overflow-x: clip;
+  contain: layout style;
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-track {
+  animation: marquee 35s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 1rem;
+    white-space: normal;
+  }
+
+  .marquee-band .marquee-track > span {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
