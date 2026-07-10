@@ -51,18 +51,33 @@ export function DatePicker({
   className,
   "aria-label": ariaLabel = "Date",
 }: DatePickerProps) {
-  const todayIso = React.useMemo(() => toIsoDate(new Date()), [])
+  const initialAnchor = React.useMemo(
+    () => parseIsoDate(value) ?? parseIsoDate(min ?? ""),
+    [value, min]
+  )
+  const [todayIso, setTodayIso] = React.useState<string | null>(null)
 
-  const initialView =
-    parseIsoDate(value) ?? parseIsoDate(min ?? todayIso) ?? new Date()
   const [open, setOpen] = React.useState(false)
-  const [viewYear, setViewYear] = React.useState(initialView.getFullYear())
-  const [viewMonth, setViewMonth] = React.useState(initialView.getMonth())
+  const [viewYear, setViewYear] = React.useState(() => initialAnchor?.getFullYear() ?? 0)
+  const [viewMonth, setViewMonth] = React.useState(() => initialAnchor?.getMonth() ?? 0)
+
+  React.useEffect(() => {
+    const nowIso = toIsoDate(new Date())
+    setTodayIso(nowIso)
+
+    if (initialAnchor) return
+    const anchor = parseIsoDate(value) ?? parseIsoDate(min ?? nowIso) ?? new Date()
+    setViewYear(anchor.getFullYear())
+    setViewMonth(anchor.getMonth())
+  }, [initialAnchor, value, min])
 
   React.useEffect(() => {
     if (!open) return
     const anchor =
-      parseIsoDate(value) ?? parseIsoDate(min ?? todayIso) ?? new Date()
+      parseIsoDate(value) ??
+      parseIsoDate(min ?? (todayIso ?? "")) ??
+      (todayIso ? parseIsoDate(todayIso) : null) ??
+      new Date()
     setViewYear(anchor.getFullYear())
     setViewMonth(anchor.getMonth())
   }, [open, value, min, todayIso])
@@ -159,7 +174,7 @@ export function DatePicker({
             ))}
             {cells.map((cell) => {
               const selectedDay = value && isSameIso(cell.iso, value)
-              const today = isSameIso(cell.iso, todayIso)
+              const today = todayIso ? isSameIso(cell.iso, todayIso) : false
               const dayDisabled = isDisabled(cell.iso)
 
               return (
@@ -211,8 +226,11 @@ export function DatePicker({
           </button>
           <button
             type="button"
-            disabled={isDisabled(todayIso)}
-            onClick={() => selectDate(todayIso)}
+            disabled={!todayIso || isDisabled(todayIso)}
+            onClick={() => {
+              if (!todayIso) return
+              selectDate(todayIso)
+            }}
             className="cursor-pointer rounded-lg px-2 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Today

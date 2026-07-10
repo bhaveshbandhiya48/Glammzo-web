@@ -1,5 +1,5 @@
 /**
- * Glamzzo media — curated salon booking imagery (Unsplash + Pexels).
+ * Glammzo media — curated salon booking imagery (Unsplash + Pexels).
  * Re-sync: npm run media:sync · Credits: src/data/media-credits.ts
  */
 

@@ -7,7 +7,7 @@ type GlamzzoMarkProps = {
 }
 
 /**
- * Glamzzo brand mark — scissors + comb in a circle medallion (salon / self-care).
+ * Glammzo brand mark — scissors + comb in a circle medallion (salon / self-care).
  */
 export function GlamzzoMark({ className, size = 32, inverse = false }: GlamzzoMarkProps) {
   const id = inverse ? "glamzzo-mark-inv" : "glamzzo-mark"

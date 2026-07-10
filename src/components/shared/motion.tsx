@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  forwardRef,
   useEffect,
   useRef,
   useState,
@@ -70,21 +71,36 @@ function useSectionVisible({
   return { ref, visible }
 }
 
-export function MotionSection({
-  className,
-  children,
-  variants,
-  initial,
-  animate,
-  whileInView,
-  viewport,
-  ...rest
-}: MotionProps & ComponentPropsWithoutRef<"section">) {
+export const MotionSection = forwardRef<
+  HTMLElement,
+  MotionProps & ComponentPropsWithoutRef<"section">
+>(function MotionSection(
+  {
+    className,
+    children,
+    variants,
+    initial,
+    animate,
+    whileInView,
+    viewport,
+    ...rest
+  },
+  forwardedRef
+) {
   const { ref, visible } = useSectionVisible({ initial, animate, whileInView, viewport })
+
+  const setRef = (node: HTMLElement | null) => {
+    ref.current = node
+    if (typeof forwardedRef === "function") {
+      forwardedRef(node)
+    } else if (forwardedRef) {
+      forwardedRef.current = node
+    }
+  }
 
   return (
     <section
-      ref={ref}
+      ref={setRef}
       className={cn(
         "motion-section",
         variants === stagger && "motion-stagger",
@@ -98,7 +114,7 @@ export function MotionSection({
       {children}
     </section>
   )
-}
+})
 
 /** Child of MotionSection — animates when parent gets .motion-visible */
 export function MotionDiv({

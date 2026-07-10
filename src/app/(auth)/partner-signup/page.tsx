@@ -4,36 +4,13 @@ import Link from "next/link"
 import { useActionState } from "react"
 import { Building2Icon, CheckCircle2Icon, Loader2Icon } from "lucide-react"
 
+import { partnerSignupAction, type PartnerSignupState } from "@/lib/partner/partner-actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type State =
-  | { ok: true }
-  | { ok: false; message: string; fieldErrors?: Partial<Record<string, string>> }
-
-const initialState: State = { ok: false, message: "" }
-
-async function partnerSignupAction(_prev: State, formData: FormData): Promise<State> {
-  const salonName = String(formData.get("salonName") ?? "").trim()
-  const contactName = String(formData.get("contactName") ?? "").trim()
-  const email = String(formData.get("email") ?? "").trim().toLowerCase()
-  const city = String(formData.get("city") ?? "").trim()
-
-  const fieldErrors: Record<string, string> = {}
-  if (!salonName) fieldErrors.salonName = "Salon name is required."
-  if (!contactName) fieldErrors.contactName = "Contact name is required."
-  if (!email) fieldErrors.email = "Email is required."
-  if (!city) fieldErrors.city = "City is required."
-
-  if (Object.keys(fieldErrors).length) {
-    return { ok: false, message: "Please check the form.", fieldErrors }
-  }
-
-  // Production: create partner lead + send verification email.
-  return { ok: true }
-}
+const initialState: PartnerSignupState = { ok: false, message: "" }
 
 export default function PartnerSignupPage() {
   const [state, action, pending] = useActionState(partnerSignupAction, initialState)
@@ -62,14 +39,15 @@ export default function PartnerSignupPage() {
                 Request received
               </div>
               <p className="text-sm leading-6 text-foreground/65">
-                Thanks! We&apos;ll reach out shortly with next steps and a quick verification.
+                Thanks! Create your salon account to finish onboarding. We&apos;ll use your email
+                to match this request.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button asChild className="h-11 rounded-xl">
-                  <Link href="/">Back to home</Link>
+                  <a href={state.crmSignupUrl}>Create salon account</a>
                 </Button>
                 <Button asChild variant="outline" className="h-11 rounded-xl">
-                  <Link href="/partner/dashboard">Partner dashboard</Link>
+                  <Link href="/">Back to home</Link>
                 </Button>
               </div>
             </div>
@@ -116,6 +94,11 @@ export default function PartnerSignupPage() {
               </div>
 
               <div className="grid gap-2">
+                <Label htmlFor="phone">Mobile (optional)</Label>
+                <Input id="phone" name="phone" type="tel" placeholder="+91 …" />
+              </div>
+
+              <div className="grid gap-2">
                 <Label htmlFor="city">City</Label>
                 <Input
                   id="city"
@@ -153,4 +136,3 @@ export default function PartnerSignupPage() {
     </div>
   )
 }
-

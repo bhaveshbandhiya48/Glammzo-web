@@ -113,7 +113,7 @@ export function PartnerSection() {
                     Get started
                   </p>
                   <p className="mt-2 font-heading text-lg font-semibold leading-snug text-foreground">
-                    Join salons already on Glamzzo in Bengaluru.
+                    Join salons already on Glammzo.
                   </p>
                 </div>
 

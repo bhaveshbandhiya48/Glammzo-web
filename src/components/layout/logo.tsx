@@ -12,7 +12,7 @@ export function Logo({ className, inverse = false, size = "md" }: LogoProps) {
   return (
     <Link
       href="/"
-      aria-label="Glamzzo home"
+      aria-label="Glammzo home"
       className={cn("inline-flex items-center rounded-xl px-2 py-1 transition-opacity hover:opacity-80", className)}
     >
       <span
@@ -26,7 +26,7 @@ export function Logo({ className, inverse = false, size = "md" }: LogoProps) {
           inverse ? "text-background" : "text-foreground"
         )}
       >
-        Glam<span className="text-primary">zzo</span>
+        Glamm<span className="text-primary">zo</span>
       </span>
     </Link>
   )

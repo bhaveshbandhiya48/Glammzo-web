@@ -1,9 +1,19 @@
 export const GLAMZZO_CART_KEY = "glamzzo_cart"
 export const CART_UPDATED_EVENT = "glamzzo-cart-updated"
 
+export type BookingCartLine = {
+  id: string
+  name: string
+  price: number
+  durationMin: number
+}
+
 export type BookingCart = {
   salonId: string
+  salonName?: string
   serviceIds: string[]
+  /** Snapshot for instant cart preview in the header. */
+  lines?: BookingCartLine[]
 }
 
 export function readBookingCart(): BookingCart | null {
@@ -41,6 +51,30 @@ export function clearBookingCart(): void {
 
 export function getCartItemCount(cart: BookingCart | null): number {
   return cart?.serviceIds.length ?? 0
+}
+
+export function getCartLines(cart: BookingCart | null): BookingCartLine[] {
+  if (!cart) return []
+  if (!cart.lines?.length) return []
+
+  const byId = new Map(cart.lines.map((line) => [line.id, line]))
+  return cart.serviceIds
+    .map((id) => byId.get(id))
+    .filter((line): line is BookingCartLine => Boolean(line))
+}
+
+export function buildCartSnapshot(
+  salonId: string,
+  salonName: string,
+  services: BookingCartLine[],
+  serviceIds: string[],
+): BookingCart {
+  const byId = new Map(services.map((service) => [service.id, service]))
+  const lines = serviceIds
+    .map((id) => byId.get(id))
+    .filter((line): line is BookingCartLine => Boolean(line))
+
+  return { salonId, salonName, serviceIds, lines }
 }
 
 export function buildCartHref(cart: BookingCart | null): string {

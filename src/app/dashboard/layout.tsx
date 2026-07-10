@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation"
 
-import { AppShell } from "@/components/layout/app-shell"
+import { SitePageShell } from "@/components/layout/site-page-shell"
 import { getSession } from "@/lib/auth/session"
 
-export default async function DashboardLayout({
+export default async function AccountLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const session = await getSession()
-  if (!session) redirect("/login?next=/dashboard")
+  if (!session) redirect("/login?next=/dashboard/bookings")
 
-  return <AppShell>{children}</AppShell>
+  return <SitePageShell>{children}</SitePageShell>
 }

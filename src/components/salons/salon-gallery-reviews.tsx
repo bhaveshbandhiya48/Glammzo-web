@@ -130,8 +130,7 @@ function ReviewsPanel({
         <div>
           <p className="font-heading text-lg font-semibold">Team reviews</p>
           <p className="mt-1 text-sm text-foreground/60">
-            Based on {reviewCount.toLocaleString()} ratings for {salonName}. Recent feedback about our
-            stylists and staff from verified visits.
+            Based on {reviewCount.toLocaleString()} ratings for {salonName}. Verified visits are marked with a check badge.
           </p>
         </div>
       </div>

@@ -3,9 +3,10 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
-import { writeBookingCart } from "@/lib/bookings/cart"
+import { buildCartSnapshot, writeBookingCart } from "@/lib/bookings/cart"
 
 import { BookingSummary } from "@/components/booking/booking-summary"
+import { SelectedServicesList } from "@/components/booking/selected-services-list"
 import { ServicePicker } from "@/components/booking/service-picker"
 import {
   buildBookHref,
@@ -19,6 +20,7 @@ type SalonServicesSectionProps = {
   services: SalonService[]
   priceFrom: number
   salonId: string
+  salonName: string
   authenticated: boolean
 }
 
@@ -26,15 +28,32 @@ export function SalonServicesSection({
   services,
   priceFrom,
   salonId,
+  salonName,
   authenticated,
 }: SalonServicesSectionProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   useEffect(() => {
+    if (selectedIds.length === 0) {
+      writeBookingCart(null)
+      return
+    }
+
+    const selected = resolveServices(services, selectedIds)
     writeBookingCart(
-      selectedIds.length > 0 ? { salonId, serviceIds: selectedIds } : null
+      buildCartSnapshot(
+        salonId,
+        salonName,
+        selected.map((service) => ({
+          id: service.id,
+          name: service.name,
+          price: service.price,
+          durationMin: service.durationMin,
+        })),
+        selectedIds,
+      ),
     )
-  }, [salonId, selectedIds])
+  }, [salonId, salonName, services, selectedIds])
 
   const selectedServices = useMemo(
     () => resolveServices(services, selectedIds),
@@ -61,23 +80,11 @@ export function SalonServicesSection({
             <div className="mt-2">
               <BookingSummary services={selectedServices} compact />
             </div>
-            <ul className="mt-4 space-y-2 border-t border-border/60 pt-4">
-              {selectedServices.map((svc) => (
-                <li
-                  key={svc.id}
-                  className="flex items-center justify-between gap-2 text-sm text-foreground/70"
-                >
-                  <span className="truncate">{svc.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedIds((prev) => prev.filter((id) => id !== svc.id))}
-                    className="shrink-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <SelectedServicesList
+              className="mt-4 border-t border-border/60 pt-4"
+              services={selectedServices}
+              onRemove={(id) => setSelectedIds((prev) => prev.filter((serviceId) => serviceId !== id))}
+            />
           </>
         ) : (
           <>

@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useActionState } from "react"
 import { Loader2Icon } from "lucide-react"
 
-import { signupAction } from "@/lib/auth/auth-actions"
+import { signupRequestOtpAction, signupVerifyOtpAction } from "@/lib/auth/auth-actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,12 +13,34 @@ import { Label } from "@/components/ui/label"
 
 type AuthState =
   | { ok: true }
-  | { ok: false; message: string; fieldErrors?: Partial<Record<string, string>> }
+  | {
+      ok: false
+      message: string
+      step?: "phone" | "otp"
+      fieldErrors?: Partial<Record<string, string>>
+      debugOtp?: string
+    }
 
 const initialState: AuthState = { ok: false, message: "" }
 
 export default function SignupPage() {
-  const [state, action, pending] = useActionState(signupAction, initialState)
+  const searchParams = useSearchParams()
+  const rawNext = searchParams.get("next")
+  const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/"
+
+  const [requestState, requestAction, requesting] = useActionState(
+    signupRequestOtpAction,
+    initialState
+  )
+  const [verifyState, verifyAction, verifying] = useActionState(
+    signupVerifyOtpAction,
+    initialState
+  )
+  const step = requestState.ok ? "phone" : requestState.step ?? "phone"
+
+  const activeState = step === "otp" ? verifyState : requestState
+  const pending = step === "otp" ? verifying : requesting
+  const action = step === "otp" ? verifyAction : requestAction
 
   return (
     <div className="flex h-full flex-col justify-center">
@@ -26,64 +49,96 @@ export default function SignupPage() {
           Create your account
         </div>
         <p className="mt-2 text-sm leading-6 text-foreground/65">
-          A calmer way to book, with favorites, reminders, and one-tap rebooking.
+          Use your mobile number. We&apos;ll verify it with a one-time code.
         </p>
       </div>
 
       <Card className="mt-7 rounded-3xl">
         <CardContent className="px-6 py-7">
           <form action={action} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                autoComplete="name"
-                placeholder="Your name"
-                aria-invalid={Boolean(!state.ok && state.fieldErrors?.name) || undefined}
-              />
-              {!state.ok && state.fieldErrors?.name ? (
-                <p className="text-sm text-destructive">{state.fieldErrors.name}</p>
-              ) : null}
-            </div>
+            <input type="hidden" name="next" value={nextPath} />
+            {step === "phone" ? (
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Mobile number</Label>
+                <div className="flex">
+                  <span className="inline-flex h-11 items-center rounded-l-xl border border-input bg-background/60 px-3 text-sm text-foreground/70">
+                    +91
+                  </span>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    minLength={10}
+                    maxLength={10}
+                    placeholder="10-digit mobile"
+                    title="Enter a 10-digit mobile number"
+                    className="rounded-l-none border-l-0"
+                    onInput={(e) => {
+                      const el = e.currentTarget
+                      el.value = el.value.replace(/\\D/g, "").slice(0, 10)
+                    }}
+                    aria-invalid={
+                      Boolean(!activeState.ok && activeState.fieldErrors?.phone) || undefined
+                    }
+                  />
+                </div>
+                {!activeState.ok && activeState.fieldErrors?.phone ? (
+                  <p className="text-sm text-destructive">{activeState.fieldErrors.phone}</p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label htmlFor="otp">Verification code</Label>
+                <Input
+                  id="otp"
+                  name="otp"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  minLength={6}
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  title="Enter the 6-digit code"
+                  onInput={(e) => {
+                    const el = e.currentTarget
+                    el.value = el.value.replace(/\\D/g, "").slice(0, 6)
+                  }}
+                  aria-invalid={Boolean(!activeState.ok && activeState.fieldErrors?.otp) || undefined}
+                />
+                {!activeState.ok && activeState.fieldErrors?.otp ? (
+                  <p className="text-sm text-destructive">{activeState.fieldErrors.otp}</p>
+                ) : null}
+                {!requestState.ok && requestState.step === "otp" && requestState.debugOtp ? (
+                  <p className="text-xs text-foreground/55">
+                    Dev OTP:{" "}
+                    <span className="font-medium text-foreground">{requestState.debugOtp}</span>
+                  </p>
+                ) : null}
+                {verifyState.ok ? null : verifyState.debugOtp ? (
+                  <p className="text-xs text-foreground/55">
+                    Dev OTP:{" "}
+                    <span className="font-medium text-foreground">{verifyState.debugOtp}</span>
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="text-left text-sm font-medium text-foreground/70 underline underline-offset-4 hover:text-foreground"
+                >
+                  Use a different number
+                </button>
+              </div>
+            )}
 
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@company.com"
-                aria-invalid={Boolean(!state.ok && state.fieldErrors?.email) || undefined}
-              />
-              {!state.ok && state.fieldErrors?.email ? (
-                <p className="text-sm text-destructive">{state.fieldErrors.email}</p>
-              ) : null}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Create a password"
-                aria-invalid={Boolean(!state.ok && state.fieldErrors?.password) || undefined}
-              />
-              {!state.ok && state.fieldErrors?.password ? (
-                <p className="text-sm text-destructive">{state.fieldErrors.password}</p>
-              ) : null}
-            </div>
-
-            {!state.ok && state.message ? (
-              <p className="text-sm text-destructive">{state.message}</p>
+            {!activeState.ok && activeState.message ? (
+              <p className="text-sm text-destructive">{activeState.message}</p>
             ) : null}
 
             <Button type="submit" className="h-11 rounded-xl" disabled={pending}>
               {pending ? <Loader2Icon className="mr-2 size-4 animate-spin" /> : null}
-              Create account
+              {step === "otp" ? "Verify & create account" : "Send code"}
             </Button>
           </form>
         </CardContent>
@@ -92,7 +147,7 @@ export default function SignupPage() {
       <p className="mt-6 text-sm text-foreground/60">
         Already have an account?{" "}
         <Link
-          href="/login"
+          href={nextPath !== "/dashboard" ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"}
           className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
         >
           Sign in

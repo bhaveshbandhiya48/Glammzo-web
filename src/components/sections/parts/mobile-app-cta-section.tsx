@@ -44,7 +44,7 @@ export function MobileAppCtaSection() {
                   size="lg"
                   className="h-12 rounded-full border-background/30 bg-transparent px-8 text-background hover:border-primary hover:bg-primary hover:text-primary-foreground"
                 >
-                  <Link href="mailto:hello@glamzzo.com?subject=Mobile%20app%20waitlist">
+                  <Link href="mailto:hello@glammzo.com?subject=Mobile%20app%20waitlist">
                     {mobile.secondaryCta}
                   </Link>
                 </Button>
@@ -53,7 +53,7 @@ export function MobileAppCtaSection() {
             <div className="relative min-h-[280px] lg:min-h-full">
               <Image
                 src="/images/sections/mobile-app.jpg"
-                alt="Salon reception, book on Glamzzo"
+                alt="Salon reception, book on Glammzo"
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"

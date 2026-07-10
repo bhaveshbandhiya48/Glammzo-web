@@ -1,3 +1,5 @@
+import type { ReactNode } from "react"
+
 import { cn } from "@/lib/utils"
 
 export function PageHeader({
@@ -7,8 +9,8 @@ export function PageHeader({
   className,
 }: {
   eyebrow?: string
-  title: string
-  subtitle?: string
+  title: ReactNode
+  subtitle?: ReactNode
   className?: string
 }) {
   return (

@@ -63,7 +63,7 @@ export function SocialIconLink({
       href={link.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Follow Glamzzo on ${link.label}`}
+      aria-label={`Follow Glammzo on ${link.label}`}
       className={cn(
         "inline-flex size-10 items-center justify-center rounded-full border border-background/15 bg-background/5 text-background/60 transition-colors",
         "hover:border-primary/35 hover:bg-primary/10 hover:text-primary",

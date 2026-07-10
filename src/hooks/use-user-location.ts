@@ -7,7 +7,11 @@ import {
   readStoredLocation,
   type ParsedStoredLocation,
 } from "@/lib/location-storage"
-import { formatStoredLocationLabel } from "@/lib/location"
+import {
+  DEFAULT_CITY_NAME,
+  formatBrowseSalonsCityLabel,
+  formatStoredLocationLabel,
+} from "@/lib/location"
 
 export function useUserLocation() {
   const [data, setData] = useState<ParsedStoredLocation | null>(null)
@@ -31,16 +35,19 @@ export function useUserLocation() {
   const location = data?.location
   const label = location ? formatStoredLocationLabel(location, stored) : null
   const coords =
-    stored?.nearMe &&
-    typeof stored.latitude === "number" &&
-    typeof stored.longitude === "number"
+    typeof stored?.latitude === "number" && typeof stored?.longitude === "number"
       ? { latitude: stored.latitude, longitude: stored.longitude }
       : null
+
+  const browseCity = location
+    ? formatBrowseSalonsCityLabel(location, stored)
+    : DEFAULT_CITY_NAME
 
   return {
     location,
     stored,
     label,
+    browseCity,
     coords,
     nearMe: Boolean(coords),
     resolvedArea: stored?.resolvedArea,

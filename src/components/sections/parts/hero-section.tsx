@@ -3,8 +3,10 @@
 import Link from "next/link"
 import { ArrowRightIcon, SparklesIcon } from "lucide-react"
 
+import { FloatingGradientBlob } from "@/components/hero/FloatingGradientBlob"
 import { siteCopy } from "@/data/site-copy"
 import { media } from "@/data/media"
+import { HeroLiveBadge } from "@/components/explore/explore-location-copy"
 import { HeroVisual } from "@/components/sections/parts/hero-visual"
 import { Container } from "@/components/layout/container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,9 +17,9 @@ import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/m
 const { hero } = siteCopy
 
 const earlyUsers = [
-  { src: media.testimonials.t1, alt: "Glamzzo user" },
-  { src: media.testimonials.t2, alt: "Glamzzo user" },
-  { src: media.testimonials.t3, alt: "Glamzzo user" },
+  { src: media.testimonials.t1, alt: "Glammzo user" },
+  { src: media.testimonials.t2, alt: "Glammzo user" },
+  { src: media.testimonials.t3, alt: "Glammzo user" },
 ]
 
 export function HeroSection() {
@@ -27,18 +29,21 @@ export function HeroSection() {
       initial={false}
       animate="show"
       variants={stagger}
-      className="section-y-hero relative overflow-hidden"
+      className="section-y-hero relative overflow-x-hidden"
     >
       <div className="pointer-events-none absolute inset-0 -z-10 glam-glow" />
       <div className="pointer-events-none absolute -right-32 top-16 -z-10 size-[480px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-coral)_12%,transparent)_0%,transparent_70%)]" />
       <div className="pointer-events-none absolute -left-24 bottom-0 -z-10 size-[360px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-sand)_80%,transparent)_0%,transparent_65%)]" />
+      <FloatingGradientBlob />
 
       <Container>
-        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-12 xl:gap-20">
+        <div className="grid items-start gap-14 lg:grid-cols-2 lg:items-center lg:gap-12 xl:gap-20">
           <MotionDiv variants={fadeUp} className="max-w-xl lg:max-w-none">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-sm text-foreground/80 shadow-sm backdrop-blur-sm">
               <SparklesIcon className="size-3.5 text-primary" />
-              <span className="font-medium text-foreground">{hero.badge}</span>
+              <span className="font-medium text-foreground">
+                <HeroLiveBadge />
+              </span>
             </div>
 
             <h1 className="hero-headline mt-7">
@@ -84,7 +89,7 @@ export function HeroSection() {
             </div>
           </MotionDiv>
 
-          <MotionDiv variants={fadeUp}>
+          <MotionDiv variants={fadeUp} className="flex w-full justify-center">
             <HeroVisual />
           </MotionDiv>
         </div>

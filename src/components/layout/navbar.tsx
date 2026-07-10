@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { MenuIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import { MenuIcon, UserIcon } from "lucide-react"
 
 import { navItems } from "@/data/site-copy"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Sheet,
   SheetContent,
@@ -18,8 +20,35 @@ import { CartNavButton } from "@/components/layout/cart-nav-button"
 import { Container } from "@/components/layout/container"
 import { Logo } from "@/components/layout/logo"
 import { LocationSwitcher } from "@/components/layout/location-switcher"
+import { resolveSessionGreeting } from "@/lib/auth/display"
+import { logoutAction } from "@/lib/auth/auth-actions"
 
 export function Navbar() {
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [welcomeName, setWelcomeName] = useState<string>("")
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/session")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load session"))))
+      .then((data: { authenticated?: boolean; session?: { name?: string; phone?: string } | null }) => {
+        if (cancelled) return
+        setAuthenticated(Boolean(data?.authenticated))
+        setWelcomeName(
+          resolveSessionGreeting({
+            name: data?.session?.name,
+            phone: data?.session?.phone,
+          }),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setAuthenticated(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl">
       <Container className="flex h-[4.25rem] items-center justify-between gap-4">
@@ -48,12 +77,60 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 md:flex">
           <CartNavButton />
-          <Button asChild variant="ghost" className="rounded-full">
-            <Link href="/login">Login</Link>
-          </Button>
-          <Button asChild className="rounded-full px-6">
-            <Link href="/explore">Find salons</Link>
-          </Button>
+          {authenticated ? (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+                    <UserIcon className="size-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-52 p-2">
+                  <div className="px-2 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground/45">
+                      Welcome
+                    </p>
+                    {welcomeName ? (
+                      <p className="mt-1 truncate text-sm font-medium text-foreground/85">
+                        {welcomeName}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="my-1 h-px bg-border/70" />
+                  <Link
+                    href="/dashboard/bookings"
+                    className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent"
+                  >
+                    My bookings
+                  </Link>
+                  <Link
+                    href="/dashboard/favorites"
+                    className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent"
+                  >
+                    Saved salons
+                  </Link>
+                  <Link
+                    href="/dashboard/settings"
+                    className="flex items-center rounded-xl px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent"
+                  >
+                    Settings
+                  </Link>
+                  <form action={logoutAction}>
+                    <button
+                      type="submit"
+                      className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground/80 transition-colors hover:bg-accent"
+                    >
+                      Logout
+                    </button>
+                  </form>
+                </PopoverContent>
+              </Popover>
+            </>
+          ) : (
+            <Button asChild variant="ghost" className="rounded-full">
+              <Link href="/login">Login</Link>
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 md:hidden">
@@ -81,12 +158,43 @@ export function Navbar() {
                 ))}
               </div>
               <div className="mt-auto grid gap-2 p-4">
-                <Button asChild variant="outline" className="h-11 w-full rounded-full">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild className="h-11 w-full rounded-full">
-                  <Link href="/explore">Find salons</Link>
-                </Button>
+                {authenticated ? (
+                  <>
+                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                      <Link href="/dashboard/bookings">
+                        <span className="inline-flex items-center gap-2">
+                          <UserIcon className="size-4" />
+                          My bookings
+                        </span>
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                      <Link href="/dashboard/favorites">
+                        <span className="inline-flex items-center gap-2">
+                          <UserIcon className="size-4" />
+                          Saved salons
+                        </span>
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                      <Link href="/dashboard/settings">
+                        <span className="inline-flex items-center gap-2">
+                          <UserIcon className="size-4" />
+                          Settings
+                        </span>
+                      </Link>
+                    </Button>
+                    <form action={logoutAction}>
+                      <Button type="submit" variant="outline" className="h-11 w-full rounded-full">
+                        Logout
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                )}
               </div>
             </SheetContent>
           </Sheet>

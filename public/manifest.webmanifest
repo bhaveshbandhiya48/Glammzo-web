@@ -1,0 +1,18 @@
+{
+  "name": "Glammzo",
+  "short_name": "Glammzo",
+  "description": "Discover trusted salons and book appointments in minutes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c2410c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/brand/glamzzo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,46 +1,28 @@
-import { getSession } from "@/lib/auth/session"
+import { getProfileDefaults } from "@/lib/auth/profile-actions"
 import { logoutAction } from "@/lib/auth/auth-actions"
+import { ProfileSettingsForm } from "@/components/auth/profile-settings-form"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 export default async function SettingsPage() {
-  const session = await getSession()
+  const profile = await getProfileDefaults()
 
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Settings"
-        title="Account"
-        subtitle="Profile details are stored in your session for this demo."
+        eyebrow="Your account"
+        title="Profile & settings"
+        subtitle="Your name and email are saved when you book. Update them here anytime."
       />
 
       <Card className="rounded-2xl">
-        <CardContent className="space-y-5 px-6 py-8">
-          <div className="space-y-2">
-            <Label htmlFor="name">Display name</Label>
-            <Input
-              id="name"
-              defaultValue={session?.name ?? ""}
-              disabled
-              className="rounded-xl"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              defaultValue={session?.email ?? ""}
-              disabled
-              className="rounded-xl"
-            />
-          </div>
-          <p className="text-sm text-foreground/60">
-            Connect a database to enable profile edits and email verification.
-          </p>
+        <CardContent className="px-6 py-8">
+          <ProfileSettingsForm
+            defaultName={profile.name}
+            defaultEmail={profile.email}
+            defaultPhone={profile.phone}
+          />
         </CardContent>
       </Card>
 

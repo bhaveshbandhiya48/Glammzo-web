@@ -49,10 +49,10 @@ export function Footer() {
           <div>
             <p className="meta-label text-background/40">Contact</p>
             <a
-              href="mailto:hello@glamzzo.com"
+              href="mailto:hello@glammzo.com"
               className="mt-2 block font-heading text-xl font-semibold transition-colors hover:text-primary sm:text-2xl"
             >
-              hello@glamzzo.com
+              hello@glammzo.com
             </a>
           </div>
         </div>
@@ -79,12 +79,12 @@ export function Footer() {
 
         <div className="mt-16 overflow-hidden">
           <p className="font-heading text-[clamp(3rem,12vw,8rem)] font-semibold uppercase leading-none tracking-tighter text-background/10">
-            Glamzzo
+            Glammzo
           </p>
         </div>
 
         <div className="mt-8 flex flex-col gap-2 text-sm text-background/45 sm:flex-row sm:items-center sm:justify-between">
-          <div>© {new Date().getFullYear()} Glamzzo. All Rights Reserved.</div>
+          <div>© {new Date().getFullYear()} Glammzo. All Rights Reserved.</div>
           <div className="flex gap-6">
             <Link href="#" className="transition-colors hover:text-background/80">
               Privacy

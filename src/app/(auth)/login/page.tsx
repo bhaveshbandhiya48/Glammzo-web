@@ -7,7 +7,7 @@ export default async function LoginPage({
 }) {
   const sp = (await searchParams) ?? {}
   const rawNext = Array.isArray(sp.next) ? sp.next[0] : sp.next
-  const nextPath = typeof rawNext === "string" && rawNext.startsWith("/") ? rawNext : "/dashboard"
+  const nextPath = typeof rawNext === "string" && rawNext.startsWith("/") ? rawNext : "/"
   return <LoginForm nextPath={nextPath} />
 }
 

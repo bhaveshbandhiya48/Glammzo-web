@@ -20,11 +20,19 @@ export function parseIsoDate(iso: string): Date | null {
 export function formatDisplayDate(iso: string): string {
   const d = parseIsoDate(iso)
   if (!d) return ""
-  return d.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const year = String(d.getFullYear())
+  return `${day}/${month}/${year}`
+}
+
+export const DATE_INPUT_PLACEHOLDER = "dd/mm/yyyy"
+
+export function shiftIsoDate(iso: string, days: number): string {
+  const parsed = parseIsoDate(iso)
+  if (!parsed) return iso
+  parsed.setDate(parsed.getDate() + days)
+  return toIsoDate(parsed)
 }
 
 export function isBeforeIso(a: string, b: string): boolean {

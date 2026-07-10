@@ -52,15 +52,30 @@ export function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-export function getSalonCoordinates(salonId: string, area: string) {
+export function getSalonCoordinates(
+  salon: Pick<Salon, "id" | "area" | "latitude" | "longitude">
+) {
+  if (
+    typeof salon.latitude === "number" &&
+    typeof salon.longitude === "number" &&
+    Number.isFinite(salon.latitude) &&
+    Number.isFinite(salon.longitude)
+  ) {
+    return { lat: salon.latitude, lng: salon.longitude }
+  }
+
   return (
-    SALON_COORDINATES[salonId] ??
-    AREA_COORDINATES[area] ?? { lat: 12.9716, lng: 77.5946 }
+    SALON_COORDINATES[salon.id] ??
+    AREA_COORDINATES[salon.area] ?? { lat: 12.9716, lng: 77.5946 }
   )
 }
 
-export function distanceToSalonKm(salon: Salon, latitude: number, longitude: number): number {
-  const coords = getSalonCoordinates(salon.id, salon.area)
+export function distanceToSalonKm(
+  salon: Pick<Salon, "id" | "area" | "latitude" | "longitude">,
+  latitude: number,
+  longitude: number,
+): number {
+  const coords = getSalonCoordinates(salon)
   return haversineKm(latitude, longitude, coords.lat, coords.lng)
 }
 

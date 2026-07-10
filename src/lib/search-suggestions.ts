@@ -1,4 +1,4 @@
-import { salons } from "@/data/salons"
+import type { Salon } from "@/types/salon"
 
 export const RECENT_SEARCHES_KEY = "glamzzo_recent_searches"
 export const MAX_RECENT_SEARCHES = 5
@@ -41,24 +41,24 @@ export type ServiceSuggestion = {
 }
 
 export type SearchSuggestions = {
-  salons: typeof salons
+  salons: Salon[]
   services: ServiceSuggestion[]
   categories: (typeof SEARCH_CATEGORIES)[number][]
 }
 
-export function getAllAreas(): string[] {
+export function getAllAreas(salons: Salon[]): string[] {
   const fromSalons = salons.map((s) => s.area)
   return [...new Set([...POPULAR_AREAS, ...fromSalons])].sort()
 }
 
-export function getAreaSuggestions(query: string): string[] {
+export function getAreaSuggestions(salons: Salon[], query: string): string[] {
   const q = query.trim().toLowerCase()
-  const areas = getAllAreas()
+  const areas = getAllAreas(salons)
   if (!q) return areas
   return areas.filter((area) => area.toLowerCase().includes(q))
 }
 
-export function getSearchSuggestions(query: string): SearchSuggestions {
+export function getSearchSuggestions(salons: Salon[], query: string): SearchSuggestions {
   const q = query.trim().toLowerCase()
   if (!q) {
     return { salons: [], services: [], categories: [] }

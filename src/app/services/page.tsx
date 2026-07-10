@@ -55,7 +55,7 @@ export default function ServicesPage() {
           <SectionHeader
             eyebrow="Ready to book?"
             title="Find salons offering these services"
-            subtitle="Compare ratings, prices, and availability across Bengaluru and confirm in minutes."
+            subtitle="Compare ratings, prices, and availability and confirm in minutes."
             align="center"
             className="mb-8"
           />

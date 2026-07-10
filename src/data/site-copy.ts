@@ -3,33 +3,32 @@ import type { NavItem, Stat } from "@/types/landing"
 /** Lightweight copy + nav — safe for client components (no salon/image graph). */
 export const siteCopy = {
   brand: {
-    name: "Glamzzo",
+    name: "Glammzo",
     tagline: "Salon booking, made calm.",
     description:
       "Discover trusted salons, compare services with upfront pricing, and book your next appointment in minutes.",
   },
   social: [
-    { label: "Instagram", href: "https://instagram.com/glamzzo", icon: "instagram" },
-    { label: "Facebook", href: "https://facebook.com/glamzzo", icon: "facebook" },
-    { label: "X", href: "https://x.com/glamzzo", icon: "x" },
+    { label: "Instagram", href: "https://instagram.com/glammzo", icon: "instagram" },
+    { label: "Facebook", href: "https://facebook.com/glammzo", icon: "facebook" },
+    { label: "X", href: "https://x.com/glammzo", icon: "x" },
   ] as const,
   hero: {
-    badge: "Now live in Bengaluru",
+    badge: "Now live near you",
     headline: "Your next salon visit,",
     headlineAccent: "booked in minutes.",
     subhead:
-      "Glamzzo helps you find the right salon, see real prices, and confirm appointments without phone calls or guesswork.",
+      "Glammzo helps you find the right salon, see real prices, and confirm appointments without phone calls or guesswork.",
     primaryCta: "Find a salon",
     secondaryCta: "See how it works",
     searchPlaceholder: "Service or salon",
-    locationPlaceholder: "Area in Bengaluru",
+    locationPlaceholder: "Area",
     socialProof: "Trusted by early users across the city",
   },
   statement: {
-    eyebrow: "Why we built Glamzzo",
-    body: "Booking a salon shouldn’t feel like a chore. We’re building a calmer way to discover great spaces, understand what you’ll pay, and show up confident, with premium care that still feels approachable.",
-    primaryCta: "Browse salons",
-    secondaryCta: "View services",
+    title: "Salon booking, without the hassle.",
+    subtitle: "Discover trusted spaces, see real prices, and book in minutes.",
+    cta: "Browse salons",
   },
   howItWorks: {
     eyebrow: "How it works",
@@ -44,9 +43,9 @@ export const siteCopy = {
   },
   salons: {
     eyebrow: "Featured partners",
-    title: "Salons on Glamzzo right now",
+    title: "Salons on Glammzo right now",
     subtitle:
-      "We’re starting in Bengaluru with hand-picked partners. More cities and studios are on the way.",
+      "We’re starting with hand-picked partners. More cities and studios are on the way.",
     partnerCta: "Own a salon? Join us",
   },
   experience: {
@@ -62,13 +61,13 @@ export const siteCopy = {
   },
   partner: {
     eyebrow: "For salon owners",
-    title: "Grow with Glamzzo",
+    title: "Grow with Glammzo",
     subtitle:
       "Fill empty slots, reach new clients, and manage bookings from one calm dashboard, built for independent studios and growing chains.",
   },
   mobile: {
     eyebrow: "Mobile app",
-    title: "Glamzzo in your pocket, coming soon",
+    title: "Glammzo in your pocket, coming soon",
     subtitle:
       "We’re polishing iOS and Android apps for rebooking, reminders, and saved favorites. Until then, the web experience works beautifully on mobile.",
     primaryCta: "Use web app",
@@ -79,11 +78,12 @@ export const siteCopy = {
 export const navItems: NavItem[] = [
   { label: "Services", href: "/services" },
   { label: "Explore", href: "/explore" },
+  { label: "Map", href: "/customer/map" },
   { label: "For salons", href: "/partner" },
 ]
 
 export const stats: Stat[] = [
-  { value: "4+", label: "Partner salons", description: "Live in Bengaluru today" },
+  { value: "4+", label: "Partner salons", description: "Live today" },
   { value: "5", label: "Service categories", description: "Hair, spa, nails & more" },
   { value: "<2 min", label: "To book", description: "Search to confirmation" },
 ]
@@ -110,7 +110,7 @@ export const howItWorksSteps = [
 ] as const
 
 export const marqueeItems = [
-  "Bengaluru",
+  "Your city",
   "Hair & styling",
   "Spa & wellness",
   "Nails & makeup",

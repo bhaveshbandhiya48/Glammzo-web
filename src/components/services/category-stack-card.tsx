@@ -56,7 +56,7 @@ export function CategoryStackCard({ category, index, total }: CategoryStackCardP
           <div className="absolute inset-0">
             <CategoryImage
               src={category.imageUrl}
-              alt={`${category.eyebrow} services at Glamzzo`}
+              alt={`${category.eyebrow} services at Glammzo`}
               priority={index === 0}
             />
           </div>

@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { resolveSessionGreeting } from "@/lib/auth/display"
 import { logoutAction } from "@/lib/auth/auth-actions"
 import { getSession } from "@/lib/auth/session"
 import { DashboardNav } from "@/components/layout/dashboard-nav"
@@ -32,7 +33,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <aside className="space-y-6">
           {session ? (
             <p className="text-sm text-foreground/60">
-              Hi, <span className="font-medium text-foreground">{session.name ?? session.email}</span>
+              Hi,{" "}
+              <span className="font-medium text-foreground">
+                {resolveSessionGreeting({ name: session.name, phone: session.phone })}
+              </span>
             </p>
           ) : null}
           <DashboardNav />

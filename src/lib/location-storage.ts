@@ -1,5 +1,9 @@
+import { requestUserLocation } from "@/lib/geo"
 import type { ResolvedGpsLocation } from "@/lib/reverse-geocode"
+import { resolveLocationFromGps } from "@/lib/reverse-geocode"
 import {
+  DEFAULT_FALLBACK_HERO_AREA,
+  DEFAULT_FALLBACK_LOCATION_ID,
   GLAMZZO_LOCATION_KEY,
   getLocationById,
   type GlamzzoLocation,
@@ -17,6 +21,7 @@ function normalizeStored(parsed: Partial<StoredLocation>): StoredLocation | null
   if (!parsed?.id) return null
   const stored: StoredLocation = {
     id: parsed.id,
+    defaultFallback: parsed.defaultFallback,
     nearMe: parsed.nearMe,
     latitude: parsed.latitude,
     longitude: parsed.longitude,
@@ -55,6 +60,32 @@ export function readStoredLocation(): ParsedStoredLocation | null {
     return { location: getLocationById(stored.id), stored }
   } catch {
     return null
+  }
+}
+
+export function buildDefaultFallbackLocation(): StoredLocation {
+  return {
+    id: DEFAULT_FALLBACK_LOCATION_ID,
+    areaLabelOverride: DEFAULT_FALLBACK_HERO_AREA,
+    defaultFallback: true,
+  }
+}
+
+/** Ask for location on first visit; falls back to Indiranagar, Bangalore when denied. */
+export async function resolveInitialLocation(): Promise<ParsedStoredLocation> {
+  const existing = readStoredLocation()
+  if (existing) return existing
+
+  try {
+    const position = await requestUserLocation()
+    const resolved = await resolveLocationFromGps(position.latitude, position.longitude)
+    const stored = buildStoredFromNearMe(resolved)
+    writeStoredLocation(stored)
+    return { location: getLocationById(resolved.locationId), stored }
+  } catch {
+    const stored = buildDefaultFallbackLocation()
+    writeStoredLocation(stored)
+    return { location: getLocationById(stored.id), stored }
   }
 }
 

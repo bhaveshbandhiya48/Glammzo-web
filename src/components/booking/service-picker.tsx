@@ -1,9 +1,12 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { CheckIcon, ChevronDownIcon } from "lucide-react"
 
 import type { SalonService } from "@/types/salon"
+import { Button } from "@/components/ui/button"
+import { RemoveServiceButton } from "@/components/booking/remove-service-button"
 import { cn } from "@/lib/utils"
 
 /** Shared spacing + radius for service cards (salon detail + booking) */
@@ -35,15 +38,19 @@ export function ServicePicker({
   }
 
   if (variant === "list") {
+    const isCart = mode === "cart"
+
     return (
       <ul
         className={cn(
-          "space-y-2.5 border border-border/70 bg-card/40 p-3 sm:p-3.5",
-          serviceListShellRadius
+          isCart
+            ? "space-y-4 overflow-visible"
+            : "space-y-2.5 border border-border/70 bg-card/40 p-3 sm:p-3.5",
+          !isCart && serviceListShellRadius,
         )}
       >
         {services.map((svc) => (
-          <li key={svc.id}>
+          <li key={svc.id} className={isCart ? "overflow-visible px-1 pt-1.5" : undefined}>
             <ServicePickerItem
               service={svc}
               selected={selectedIds.includes(svc.id)}
@@ -64,7 +71,7 @@ export function ServicePicker({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className={cn("grid gap-3", mode === "cart" && "overflow-visible pt-1.5 pr-1.5")}>
       {services.map((svc) => (
         <ServicePickerItem
           key={svc.id}
@@ -107,6 +114,20 @@ function ServiceIncludes({ includes }: { includes: string[] }) {
   )
 }
 
+function ServiceThumbnail({ service }: { service: SalonService }) {
+  return (
+    <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30 sm:size-16">
+      <Image
+        src={service.imageUrl}
+        alt=""
+        fill
+        className="object-cover"
+        sizes="64px"
+      />
+    </div>
+  )
+}
+
 function ServicePickerItem({
   service,
   selected,
@@ -133,8 +154,9 @@ function ServicePickerItem({
   return (
     <div
       className={cn(
-        "overflow-hidden border transition-[border-color,background-color,box-shadow]",
+        "border transition-[border-color,background-color,box-shadow]",
         serviceCardRadius,
+        isCart ? "relative overflow-visible" : "overflow-hidden",
         showSelectedStyle
           ? "border-primary bg-primary/[0.07] shadow-sm shadow-primary/10"
           : isList
@@ -143,61 +165,43 @@ function ServicePickerItem({
       )}
     >
       {isCart ? (
+        <>
+          <RemoveServiceButton
+            serviceName={service.name}
+            onClick={onToggle}
+            position="corner"
+          />
+          <div
+            className={cn(
+              "flex items-start gap-3",
+              serviceCardPadX,
+              isList ? "py-4 sm:py-5" : "py-4",
+            )}
+          >
+            <ServiceThumbnail service={service} />
+            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium leading-snug">{service.name}</p>
+                <p className="mt-1 text-sm text-foreground/60">
+                  {service.category} · {service.durationMin} min
+                </p>
+              </div>
+              <span className="shrink-0 font-heading text-lg font-semibold tabular-nums leading-none">
+                ₹{service.price}
+              </span>
+            </div>
+          </div>
+        </>
+      ) : (
         <div
           className={cn(
-            "flex items-start justify-between gap-6",
+            "flex items-center justify-between gap-4",
             serviceCardPadX,
             isList ? "py-4 sm:py-5" : "py-4"
           )}
         >
-          <div className="min-w-0 flex-1">
-            <p className="font-medium leading-snug">{service.name}</p>
-            <p className="mt-1 text-sm text-foreground/60">
-              {service.category} · {service.durationMin} min
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <span className="font-heading text-lg font-semibold tabular-nums leading-none">
-              ₹{service.price}
-            </span>
-            <button
-              type="button"
-              onClick={onToggle}
-              className={cn(
-                "cursor-pointer text-xs font-medium text-primary underline-offset-2 transition-colors",
-                "hover:text-primary/80 hover:underline",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2"
-              )}
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-pressed={selected}
-          aria-expanded={showIncludes}
-          className={cn(
-            "flex w-full cursor-pointer items-center justify-between gap-4 text-left",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2",
-            serviceCardPadX,
-            isList ? "py-4 sm:py-5" : "py-4"
-          )}
-        >
-          <div className="flex min-w-0 items-start gap-3">
-            <span
-              className={cn(
-                "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors",
-                selected
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border/80 bg-background"
-              )}
-              aria-hidden
-            >
-              {selected ? <CheckIcon className="size-3" strokeWidth={3} /> : null}
-            </span>
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <ServiceThumbnail service={service} />
             <div className="min-w-0">
               <p className="font-medium">{service.name}</p>
               <p className="mt-0.5 text-sm text-foreground/60">
@@ -205,10 +209,23 @@ function ServicePickerItem({
               </p>
             </div>
           </div>
-          <span className="shrink-0 font-heading text-lg font-semibold tabular-nums">
-            ₹{service.price}
-          </span>
-        </button>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+            <span className="font-heading text-lg font-semibold tabular-nums">
+              ₹{service.price}
+            </span>
+            {!selected ? (
+              <Button
+                type="button"
+                size="xs"
+                variant="default"
+                className="min-w-[4.25rem] rounded-full"
+                onClick={onToggle}
+              >
+                Add
+              </Button>
+            ) : null}
+          </div>
+        </div>
       )}
 
       {!isCart && isList && hasIncludes && !expanded ? (

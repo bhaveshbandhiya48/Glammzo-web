@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ClockIcon,
@@ -14,6 +14,7 @@ import {
   TrendingUpIcon,
 } from "lucide-react"
 
+import { HeroAreaPlaceholder } from "@/components/explore/explore-location-copy"
 import { siteCopy } from "@/data/site-copy"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,18 +24,32 @@ import {
   POPULAR_SEARCHES,
   buildExploreHref,
   clearRecentSearches,
-  getAreaSuggestions,
   getSearchSuggestions,
   readRecentSearches,
   saveRecentSearch,
   type RecentSearch,
 } from "@/lib/search-suggestions"
 import { useNearMe } from "@/hooks/use-near-me"
-import { readStoredLocation } from "@/lib/location-storage"
+import { useSalonCatalog } from "@/hooks/use-salon-catalog"
+import { formatHeroAreaLabel } from "@/lib/location"
+import {
+  LOCATION_UPDATED_EVENT,
+  readStoredLocation,
+  writeStoredLocation,
+} from "@/lib/location-storage"
 
 const { hero } = siteCopy
 
 type ActivePanel = "query" | "area" | null
+
+type AreaSuggestion = {
+  id: string
+  label: string
+  lat: number
+  lon: number
+  city?: string | null
+  state?: string | null
+}
 
 function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -85,30 +100,39 @@ function ChipButton({ label, onClick }: { label: string; onClick: () => void }) 
 
 export function HeroSearchForm() {
   const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null)
+  const formRef = useRef<HTMLDivElement>(null)
   const queryId = useId()
   const areaId = useId()
   const panelId = useId()
 
   const [query, setQuery] = useState("")
   const [area, setArea] = useState("")
+  const [areaSelected, setAreaSelected] = useState(false)
+  const [areaError, setAreaError] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
   const [recent, setRecent] = useState<RecentSearch[]>([])
+  const [areaResults, setAreaResults] = useState<AreaSuggestion[]>([])
+  const [areaLoading, setAreaLoading] = useState(false)
   const { busy: nearBusy, applyNearMe } = useNearMe()
+  const { salons } = useSalonCatalog()
+
+  const syncAreaFromStorage = useCallback(() => {
+    const parsed = readStoredLocation()
+    if (!parsed) return
+    setArea(formatHeroAreaLabel(parsed.location, parsed.stored))
+  }, [])
 
   useEffect(() => {
     setRecent(readRecentSearches())
-    const stored = readStoredLocation()
-    if (stored?.stored.nearMe) {
-      if (stored.stored.inServiceArea && stored.stored.resolvedArea) {
-        setArea(stored.stored.resolvedArea)
-      } else if (stored.stored.displayLabel) {
-        setArea(stored.stored.displayLabel)
-      }
-    } else if (stored?.location.areaLabel) {
-      setArea(stored.location.areaLabel)
+    syncAreaFromStorage()
+    const onUpdate = () => syncAreaFromStorage()
+    window.addEventListener(LOCATION_UPDATED_EVENT, onUpdate)
+    window.addEventListener("storage", onUpdate)
+    return () => {
+      window.removeEventListener(LOCATION_UPDATED_EVENT, onUpdate)
+      window.removeEventListener("storage", onUpdate)
     }
-  }, [])
+  }, [syncAreaFromStorage])
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -127,8 +151,7 @@ export function HeroSearchForm() {
     }
   }, [])
 
-  const suggestions = getSearchSuggestions(query)
-  const areaSuggestions = getAreaSuggestions(area)
+  const suggestions = getSearchSuggestions(salons, query)
   const hasQueryMatches =
     suggestions.salons.length > 0 ||
     suggestions.services.length > 0 ||
@@ -146,6 +169,11 @@ export function HeroSearchForm() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
+    if (area.trim() && !areaSelected) {
+      setAreaError("Please select a suggested area from the dropdown.")
+      setActivePanel("area")
+      return
+    }
     navigate(query, area)
   }
 
@@ -162,50 +190,104 @@ export function HeroSearchForm() {
 
   const panelOpen = activePanel !== null
 
+  const debouncedAreaQuery = useMemo(() => area.trim(), [area])
+
+  useEffect(() => {
+    if (activePanel !== "area") return
+    const q = debouncedAreaQuery
+    if (!q) {
+      setAreaResults([])
+      setAreaLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setAreaLoading(true)
+      fetch(`/api/locations/autocomplete?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      })
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed"))))
+        .then((data: { items?: AreaSuggestion[] }) => {
+          setAreaResults(Array.isArray(data?.items) ? data.items : [])
+        })
+        .catch(() => {
+          setAreaResults([])
+        })
+        .finally(() => setAreaLoading(false))
+    }, 250)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timer)
+    }
+  }, [activePanel, debouncedAreaQuery])
+
   return (
     <div className="relative z-30 mt-8 max-w-xl">
       <div
+        ref={formRef}
         className={cn(
-          "overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm shadow-black/[0.04]",
-          panelOpen && "shadow-md shadow-black/[0.06]"
+          "relative rounded-2xl border border-border/80 bg-card shadow-sm shadow-black/[0.04]",
+          "transition-[box-shadow,border-color,transform] duration-200 ease-out",
+          panelOpen && "border-border/90 shadow-md shadow-black/[0.08]"
         )}
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="p-2">
-          <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-            <div className="relative min-w-0">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-foreground/45" />
-              <Input
-                id={queryId}
-                name="q"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setActivePanel("query")}
-                autoComplete="off"
-                aria-autocomplete="list"
-                aria-controls={panelOpen ? panelId : undefined}
-                aria-expanded={activePanel === "query"}
-                className="h-11 border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
-                placeholder={hero.searchPlaceholder}
-                aria-label="Search salons or services"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="p-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center rounded-xl bg-background/30 px-1">
+              <div className="relative min-w-0 flex-[0.9]">
+                <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-foreground/45" />
+                <Input
+                  id={areaId}
+                  name="area"
+                  value={area}
+                  onChange={(e) => {
+                    setArea(e.target.value)
+                    setAreaSelected(false)
+                    setAreaError(null)
+                  }}
+                  onFocus={() => setActivePanel("area")}
+                  autoComplete="off"
+                  aria-autocomplete="list"
+                  aria-controls={panelId}
+                  aria-expanded={activePanel === "area"}
+                  className="h-11 border-0 bg-transparent pl-9 shadow-none transition-colors duration-150 focus-visible:ring-0"
+                  placeholder=""
+                  aria-label="Location"
+                />
+                {!area ? (
+                  <span
+                    className="pointer-events-none absolute left-9 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                    aria-hidden
+                  >
+                    <HeroAreaPlaceholder />
+                  </span>
+                ) : null}
+              </div>
 
-            <div className="relative min-w-0">
-              <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-foreground/45" />
-              <Input
-                id={areaId}
-                name="area"
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                onFocus={() => setActivePanel("area")}
-                autoComplete="off"
-                aria-autocomplete="list"
-                aria-controls={panelOpen ? panelId : undefined}
-                aria-expanded={activePanel === "area"}
-                className="h-11 border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
-                placeholder={hero.locationPlaceholder}
-                aria-label="Area"
+              <span
+                aria-hidden
+                className="mx-1 hidden h-6 w-px shrink-0 bg-border/80 sm:block"
               />
+
+              <div className="relative min-w-0 flex-[1.1]">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-foreground/45" />
+                <Input
+                  id={queryId}
+                  name="q"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setActivePanel("query")}
+                  autoComplete="off"
+                  aria-autocomplete="list"
+                  aria-controls={panelId}
+                  aria-expanded={activePanel === "query"}
+                  className="h-11 border-0 bg-transparent pl-9 shadow-none transition-colors duration-150 focus-visible:ring-0"
+                  placeholder={hero.searchPlaceholder}
+                  aria-label="Search salons or services"
+                />
+              </div>
             </div>
 
             <Button type="submit" className="h-11 shrink-0 rounded-xl px-5">
@@ -214,16 +296,23 @@ export function HeroSearchForm() {
           </div>
         </form>
 
-        {panelOpen ? (
-          <div
-            id={panelId}
-            role="listbox"
-            aria-labelledby={activePanel === "query" ? queryId : areaId}
-            className="border-t border-border/60 bg-card"
-          >
+        <div
+          id={panelId}
+          role="listbox"
+          aria-labelledby={activePanel === "query" ? queryId : areaId}
+          aria-hidden={!panelOpen}
+          className={cn(
+            "absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[min(20rem,60vh)] overflow-hidden rounded-2xl border border-border/80 bg-card shadow-lg shadow-black/[0.1]",
+            "origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none",
+            panelOpen
+              ? "pointer-events-auto translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-1 opacity-0"
+          )}
+        >
+          <div className="max-h-[min(20rem,60vh)] overflow-y-auto">
           {activePanel === "query" ? (
             query.trim() && hasQueryMatches ? (
-              <div className="max-h-[min(20rem,60vh)] overflow-y-auto p-2">
+              <div className="p-2">
                 {suggestions.salons.length > 0 ? (
                   <div className="mb-1">
                     <SectionLabel className="px-2 py-2">Salons</SectionLabel>
@@ -342,6 +431,11 @@ export function HeroSearchForm() {
             )
           ) : (
             <div className="p-4">
+              {areaError ? (
+                <p className="mb-3 rounded-xl border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                  {areaError}
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={async () => {
@@ -352,6 +446,8 @@ export function HeroSearchForm() {
                         ? result.stored.resolvedArea
                         : result.stored.displayLabel
                     )
+                    setAreaSelected(true)
+                    setAreaError(null)
                     setActivePanel(null)
                   }
                 }}
@@ -381,6 +477,8 @@ export function HeroSearchForm() {
                         label={label}
                         onClick={() => {
                           setArea(label)
+                          setAreaSelected(true)
+                          setAreaError(null)
                           navigate(query, label)
                         }}
                       />
@@ -393,18 +491,38 @@ export function HeroSearchForm() {
                 <SectionLabel className="mb-2">
                   {area.trim() ? "Matching areas" : "All areas"}
                 </SectionLabel>
-                {areaSuggestions.length > 0 ? (
+                {areaLoading ? (
+                  <p className="py-4 text-sm text-foreground/55">Searching areas…</p>
+                ) : area.trim() && areaResults.length > 0 ? (
                   <div className="space-y-0.5">
-                    {areaSuggestions.map((label) => (
+                    {areaResults.map((item) => (
                       <SuggestionButton
-                        key={label}
+                        key={item.id}
                         onClick={() => {
-                          setArea(label)
-                          navigate(query, label)
+                          setArea(item.label)
+                          setAreaSelected(true)
+                          setAreaError(null)
+                          const current = readStoredLocation()
+                          if (current?.stored) {
+                            writeStoredLocation({
+                              ...current.stored,
+                              nearMe: false,
+                              latitude: item.lat,
+                              longitude: item.lon,
+                              displayLabel: [item.label, item.state].filter(Boolean).join(", "),
+                              city: item.city ?? undefined,
+                              state: item.state ?? undefined,
+                              country: "India",
+                              inServiceArea: false,
+                              resolvedArea: undefined,
+                              areaLabelOverride: item.label,
+                            })
+                          }
+                          navigate(query, item.label)
                         }}
                       >
                         <MapPinIcon className="size-4 shrink-0 text-primary" />
-                        <span>{label}</span>
+                        <span>{item.label}</span>
                       </SuggestionButton>
                     ))}
                   </div>
@@ -417,7 +535,7 @@ export function HeroSearchForm() {
             </div>
           )}
           </div>
-        ) : null}
+        </div>
       </div>
     </div>
   )

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { SalonCard } from "@/components/salons/salon-card"
-import { sortSalonsByDistance } from "@/lib/geo"
+import { distanceToSalonKm } from "@/lib/geo"
+import type { ExploreSortId } from "@/lib/explore-filters"
 import {
   LOCATION_UPDATED_EVENT,
   readStoredLocation,
@@ -13,10 +14,14 @@ import type { Salon } from "@/types/salon"
 
 type ExploreSalonGridProps = {
   salons: Salon[]
+  sort?: ExploreSortId
   /** From URL ?near=1 — prefer sorting by user coordinates */
   nearFromUrl?: boolean
   urlLatitude?: number
   urlLongitude?: number
+  radiusKm?: number | null
+  favoriteSalonIds?: string[]
+  authenticated?: boolean
 }
 
 function parseCoord(value: number | undefined): number | null {
@@ -26,10 +31,15 @@ function parseCoord(value: number | undefined): number | null {
 
 export function ExploreSalonGrid({
   salons,
+  sort = "recommended",
   nearFromUrl,
   urlLatitude,
   urlLongitude,
+  radiusKm,
+  favoriteSalonIds = [],
+  authenticated = false,
 }: ExploreSalonGridProps) {
+  const favoriteSet = useMemo(() => new Set(favoriteSalonIds), [favoriteSalonIds])
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
     null
   )
@@ -61,14 +71,46 @@ export function ExploreSalonGrid({
   }, [nearFromUrl, urlLatitude, urlLongitude])
 
   const displaySalons = useMemo(() => {
-    if (!coords) return salons
-    return sortSalonsByDistance(salons, coords.latitude, coords.longitude)
-  }, [salons, coords])
+    const canComputeDistance = Boolean(coords)
+    if (!canComputeDistance) return salons
+
+    const shouldSortByDistance = sort === "nearest" || Boolean(nearFromUrl)
+    const radius = radiusKm ?? null
+
+    const withDistance = salons.map((salon) => {
+      const distanceKm = distanceToSalonKm(
+        salon,
+        coords!.latitude,
+        coords!.longitude,
+      )
+      return { ...salon, distanceKm }
+    })
+
+    const filtered =
+      radius != null ? withDistance.filter((s) => s.distanceKm <= radius) : withDistance
+
+    if (shouldSortByDistance) {
+      return filtered.sort((a, b) => a.distanceKm - b.distanceKm)
+    }
+
+    return filtered
+  }, [salons, coords, sort, nearFromUrl, radiusKm])
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {displaySalons.map((salon) => (
-        <SalonCard key={salon.id} salon={salon} />
+        <SalonCard
+          key={salon.id}
+          salon={salon}
+          favorite={
+            salon.crmSalonId
+              ? {
+                  authenticated,
+                  initialFavorited: favoriteSet.has(salon.crmSalonId),
+                }
+              : undefined
+          }
+        />
       ))}
     </div>
   )

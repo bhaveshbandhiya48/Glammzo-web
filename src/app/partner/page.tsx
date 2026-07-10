@@ -13,7 +13,7 @@ import { Footer } from "@/components/sections/parts/footer"
 const { partner } = siteCopy
 
 export const metadata: Metadata = {
-  title: "Partner with Glamzzo",
+  title: "Partner with Glammzo",
   description: "Grow your salon with modern booking tools and premium discovery.",
 }
 
@@ -44,7 +44,7 @@ export default function PartnerPage() {
           <PageHeader
             eyebrow="For salons"
             title="List your space. Fill your calendar."
-            subtitle="Glamzzo helps independent studios and premium chains get discovered, booked, and loved, without the chaos."
+            subtitle="Glammzo helps independent studios and premium chains get discovered, booked, and loved, without the chaos."
           />
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" className="h-12 rounded-full px-8">

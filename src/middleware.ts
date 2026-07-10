@@ -14,7 +14,16 @@ export function middleware(req: NextRequest) {
   if (!token) {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
-    url.searchParams.set("next", pathname)
+    // If user hits dashboard while logged out, send them to home after login.
+    // For booking pages, preserve the exact path so they can continue.
+    const next = pathname.startsWith("/book")
+      ? pathname
+      : pathname.startsWith("/dashboard/")
+        ? pathname
+        : pathname === "/dashboard"
+          ? "/dashboard/bookings"
+          : "/"
+    url.searchParams.set("next", next)
     return NextResponse.redirect(url)
   }
 

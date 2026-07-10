@@ -15,7 +15,7 @@ export function ServiceCategoryGridCard({ category, priority }: ServiceCategoryG
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <CategoryImage
           src={category.imageUrl}
-          alt={`${category.eyebrow} services at Glamzzo`}
+          alt={`${category.eyebrow} services at Glammzo`}
           priority={priority}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

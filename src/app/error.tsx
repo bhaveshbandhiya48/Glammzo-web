@@ -15,7 +15,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error("[Glamzzo]", error)
+    console.error("[Glammzo]", error)
   }, [error])
 
   return (

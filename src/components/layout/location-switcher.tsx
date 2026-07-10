@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { useNearMe } from "@/hooks/use-near-me"
 import {
   GLAMZZO_LOCATIONS,
+  DEFAULT_CITY_NAME,
   type GlamzzoLocation,
   type StoredLocation,
   formatStoredLocationLabel,
@@ -54,8 +55,6 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
   useEffect(() => {
     try {
       syncFromStorage()
-      const parsed = readStoredLocation()
-      if (!parsed) setOpen(true)
     } catch {
       // localStorage unavailable
     }
@@ -92,8 +91,11 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
     }
   }
 
-  const displayLabel = formatStoredLocationLabel(current, stored)
+  const displayLabel = stored
+    ? formatStoredLocationLabel(current, stored)
+    : "Detecting…"
   const isNearMe = hasActiveNearMe(stored)
+  const nearMeCityLabel = stored?.city ?? current.label
 
   const exploreNearHref =
     isNearMe && stored?.latitude != null && stored?.longitude != null
@@ -170,8 +172,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               {isNearMe ? (
                 <p className="mt-1 text-xs text-foreground/55">
                   {stored?.inServiceArea
-                    ? "Detected from your device — showing salons in Bengaluru nearest to you"
-                    : "Detected from your device — Glamzzo salons are in Bengaluru; distances are from your location"}
+                    ? `Detected from your device — showing salons in ${nearMeCityLabel} nearest to you`
+                    : `Detected from your device — Glammzo salons are currently in ${DEFAULT_CITY_NAME}; distances are from your location`}
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-foreground/55">
@@ -257,7 +259,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
 
           <DialogFooter className="mt-6 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted-foreground">
-              Not in Bengaluru yet? We&apos;re expanding to more cities soon.
+              Not in your city yet? We&apos;re expanding to more cities soon.
             </p>
           </DialogFooter>
         </DialogContent>

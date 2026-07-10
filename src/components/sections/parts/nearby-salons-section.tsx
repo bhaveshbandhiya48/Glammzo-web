@@ -4,17 +4,35 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRightIcon, MapPinIcon, StarIcon } from "lucide-react"
 
-import { nearbySalons } from "@/data/landing"
+import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
 import { SectionHeader } from "@/components/shared/section-header"
 import { Button } from "@/components/ui/button"
 import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/motion"
+import type { Salon } from "@/types/salon"
+
 import { cn } from "@/lib/utils"
 
-const { salons } = siteCopy
+const { salons: salonsCopy } = siteCopy
+
+function toNearbyPreview(salon: Salon) {
+  return {
+    id: salon.id,
+    name: salon.name,
+    area: salon.area,
+    imageUrl: salon.imageUrl,
+    rating: salon.rating,
+    reviews: salon.reviews,
+    distanceKm: salon.distanceKm,
+    isOpenNow: salon.isOpenNow,
+    priceFrom: salon.priceFrom,
+  }
+}
 
 export function NearbySalonsSection() {
+  const { salons: catalog } = useSalonCatalog()
+  const nearbySalons = catalog.slice(0, 4).map(toNearbyPreview)
   return (
     <MotionSection
       id="nearby"
@@ -28,15 +46,15 @@ export function NearbySalonsSection() {
         <MotionDiv variants={fadeUp}>
           <SectionHeader
             theme="dark"
-            eyebrow={salons.eyebrow}
-            title={salons.title}
-            subtitle={salons.subtitle}
+            eyebrow={salonsCopy.eyebrow}
+            title={salonsCopy.title}
+            subtitle={salonsCopy.subtitle}
             action={
               <Link
                 href="/partner-signup"
                 className="inline-flex items-center gap-2 text-sm font-medium text-background/70 transition-colors hover:text-primary"
               >
-                {salons.partnerCta}
+                {salonsCopy.partnerCta}
                 <ArrowRightIcon className="size-4" />
               </Link>
             }

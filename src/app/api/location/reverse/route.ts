@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const res = await fetch(url.toString(), {
       headers: {
         Accept: "application/json",
-        "User-Agent": "Glamzzo/1.0 (https://glamzzo.com; location lookup)",
+        "User-Agent": "Glammzo/1.0 (https://glammzo.com; location lookup)",
       },
       next: { revalidate: 86400 },
     })

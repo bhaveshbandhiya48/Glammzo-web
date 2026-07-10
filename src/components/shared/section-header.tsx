@@ -1,9 +1,11 @@
+import type { ReactNode } from "react"
+
 import { cn } from "@/lib/utils"
 
 type SectionHeaderProps = {
   eyebrow?: string
-  title: string
-  subtitle?: string
+  title: ReactNode
+  subtitle?: ReactNode
   align?: "left" | "center"
   theme?: "light" | "dark"
   className?: string

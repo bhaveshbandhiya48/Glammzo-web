@@ -1,4 +1,10 @@
-export type BookingStatus = "confirmed" | "upcoming" | "completed" | "cancelled"
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "upcoming"
+  | "completed"
+  | "cancelled"
+  | "declined"
 
 export type BookingServiceItem = {
   id: string
@@ -12,6 +18,12 @@ export type Booking = {
   salonId: string
   salonName: string
   salonArea: string
+  /** CRM appointment id when booked via Supabase. */
+  crmAppointmentId?: string
+  /** True only when CRM appointment status is `completed`. */
+  isCrmCompleted?: boolean
+  /** True only when a verified customer review already exists. */
+  hasVerifiedReview?: boolean
   /** One or more services in the same visit */
   services: BookingServiceItem[]
   date: string
@@ -22,6 +34,8 @@ export type Booking = {
   durationMin: number
   notes?: string
   status: BookingStatus
+  /** Shown when salon declined the booking request. */
+  declineReason?: string
   createdAt: string
 }
 
