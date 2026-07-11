@@ -1,10 +1,12 @@
 import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 
+import { resolveAuthSecret } from "@/lib/auth/auth-secret"
 import {
   resolveSessionDisplayEmail,
   resolveSessionDisplayName,
 } from "@/lib/auth/display"
+import { authCookieOptions } from "@/lib/auth/cookie-options"
 
 const COOKIE_NAME = "glamzzo_session"
 
@@ -17,55 +19,38 @@ type SessionPayload = {
 
 export type WebSession = SessionPayload
 
-function getSecret() {
-  const secret = process.env.AUTH_SECRET
-  if (secret) return new TextEncoder().encode(secret)
-
-  // Local/dev fallback so auth flows work out-of-the-box.
-  // In production we require an explicit secret.
-  if (process.env.NODE_ENV !== "production") {
-    return new TextEncoder().encode("glamzzo-dev-auth-secret")
+export async function createSessionToken(payload: SessionPayload) {
+  const secretResult = resolveAuthSecret()
+  if (!secretResult.ok) {
+    throw new Error(secretResult.message)
   }
 
-  throw new Error("Missing AUTH_SECRET env var")
-}
-
-export async function createSessionToken(payload: SessionPayload) {
-  const secret = getSecret()
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("14d")
-    .sign(secret)
+    .sign(secretResult.secret)
 }
 
 export async function verifySessionToken(token: string) {
-  const secret = getSecret()
-  const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] })
+  const secretResult = resolveAuthSecret()
+  if (!secretResult.ok) {
+    throw new Error(secretResult.message)
+  }
+
+  const { payload } = await jwtVerify(token, secretResult.secret, { algorithms: ["HS256"] })
   return payload as unknown as SessionPayload
 }
 
 export async function setSessionCookie(payload: SessionPayload) {
   const token = await createSessionToken(payload)
   const jar = await cookies()
-  jar.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 14,
-  })
+  jar.set(COOKIE_NAME, token, authCookieOptions(60 * 60 * 24 * 14))
 }
 
 export async function clearSessionCookie() {
   const jar = await cookies()
-  jar.set(COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  })
+  jar.set(COOKIE_NAME, "", authCookieOptions(0))
 }
 
 export async function getSession() {

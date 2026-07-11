@@ -62,7 +62,15 @@ export type CrmSalonReviewRow = {
   comment: string
   verified: boolean
   created_at: string
-  customer?: { full_name?: string | null } | null
+  customer?: {
+    full_name?: string | null
+    first_name?: string | null
+    last_name?: string | null
+  } | {
+    full_name?: string | null
+    first_name?: string | null
+    last_name?: string | null
+  }[] | null
   staff?: {
     full_name?: string | null
     designation?: string | null

@@ -401,8 +401,24 @@
 }
 
 .marquee-band {
-  overflow-x: clip;
+  overflow: hidden;
   contain: layout style;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.marquee-band::-webkit-scrollbar {
+  display: none;
+}
+
+.marquee-viewport {
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.marquee-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes marquee {

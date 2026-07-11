@@ -30,12 +30,53 @@ const LUCIDE_AMENITY_ICON_IDS = new Set([
 
 const FALLBACK_IMAGES = Object.values(media.salons)
 
+function resolveJoin<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) {
+    return null
+  }
+
+  return Array.isArray(value) ? (value[0] ?? null) : value
+}
+
+function resolveCustomerReviewName(
+  customer:
+    | {
+        full_name?: string | null
+        first_name?: string | null
+        last_name?: string | null
+      }
+    | null
+    | undefined,
+) {
+  if (!customer) {
+    return "Customer"
+  }
+
+  if (customer.full_name?.trim()) {
+    return customer.full_name.trim()
+  }
+
+  const name = [customer.first_name, customer.last_name].filter(Boolean).join(" ").trim()
+  return name || "Customer"
+}
+
+function guestIdFromCustomerId(customerId: string | null | undefined) {
+  if (!customerId) {
+    return "guest"
+  }
+
+  return `GZ-${customerId.replace(/-/g, "").slice(0, 6).toUpperCase()}`
+}
+
 function hashString(value: string): number {
   let hash = 0
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash << 5) - hash + value.charCodeAt(i)
-    hash |= 0
+
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    hash = (hash << 5) - hash + code
+    hash = hash | 0
   }
+
   return Math.abs(hash)
 }
 
@@ -227,26 +268,30 @@ export function mapCrmSalonToWeb(
       ? (r.review_type as SalonReviewType)
       : "Overall experience"
 
+    const customer = resolveJoin(r.customer)
+    const staff = resolveJoin(r.staff)
+    const service = resolveJoin(r.service)
+
     const staffRole =
-      (r.staff?.staff_roles &&
-        (Array.isArray(r.staff.staff_roles)
-          ? r.staff.staff_roles[0]?.name
-          : r.staff.staff_roles.name)) ||
-      r.staff?.designation ||
+      (staff?.staff_roles &&
+        (Array.isArray(staff.staff_roles)
+          ? staff.staff_roles[0]?.name
+          : staff.staff_roles.name)) ||
+      staff?.designation ||
       null
 
     return {
       id: r.id,
-      userId: r.customer_id ?? "guest",
-      authorName: r.customer?.full_name ?? "Customer",
+      userId: guestIdFromCustomerId(r.customer_id),
+      authorName: resolveCustomerReviewName(customer),
       reviewType,
       rating: r.rating,
       date: r.created_at
         ? new Date(r.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "2-digit" })
         : "",
-      serviceName: r.service?.name ?? "Service",
+      serviceName: service?.name ?? "Service",
       staffMember: {
-        name: r.staff?.full_name ?? "Staff",
+        name: staff?.full_name ?? "Staff",
         role: staffRole ?? "Specialist",
       },
       comment: r.comment,

@@ -78,7 +78,6 @@ export const siteCopy = {
 export const navItems: NavItem[] = [
   { label: "Services", href: "/services" },
   { label: "Explore", href: "/explore" },
-  { label: "Map", href: "/customer/map" },
   { label: "For salons", href: "/partner" },
 ]
 

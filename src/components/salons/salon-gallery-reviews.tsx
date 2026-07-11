@@ -60,7 +60,7 @@ function ReviewCard({ review }: { review: SalonReview }) {
             {guestInitialsLabel}
           </span>
           <div>
-            <p className="font-heading text-base font-semibold tracking-tight">{review.userId}</p>
+            <p className="font-heading text-base font-semibold tracking-tight">{review.authorName}</p>
             <p className="text-sm text-foreground/55">{review.reviewType}</p>
           </div>
         </div>

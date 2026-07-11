@@ -224,7 +224,7 @@ export function HeroSearchForm() {
   }, [activePanel, debouncedAreaQuery])
 
   return (
-    <div className="relative z-30 mt-8 max-w-xl">
+    <div className={cn("relative mt-8 max-w-xl", panelOpen ? "z-50" : "z-30")}>
       <div
         ref={formRef}
         className={cn(

@@ -4,20 +4,13 @@ import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
 
+import { resolveAuthSecret, shouldExposeDebugOtp } from "@/lib/auth/auth-secret"
+import type { AuthState } from "@/lib/auth/auth-types"
+import { authCookieOptions } from "@/lib/auth/cookie-options"
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session"
 import { normalizeCustomerPhoneDigits, normalizeCustomerPhone } from "@/lib/phone/normalize"
 import { getActiveSmsProvider } from "@/lib/sms"
-
-type AuthState =
-  | { ok: true }
-  | {
-      ok: false
-      message: string
-      step?: "phone" | "otp"
-      fieldErrors?: Partial<Record<string, string>>
-      /** Only set in dev to help test OTP without SMS provider. */
-      debugOtp?: string
-    }
+import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-types"
 
 const CHALLENGE_COOKIE = "glamzzo_phone_challenge"
 
@@ -27,33 +20,20 @@ type ChallengePayload = {
   otp: string
 }
 
-function getSecret() {
-  const secret = process.env.AUTH_SECRET
-  if (secret) return new TextEncoder().encode(secret)
-
-  if (process.env.NODE_ENV !== "production") {
-    return new TextEncoder().encode("glamzzo-dev-auth-secret")
+async function setChallengeCookie(payload: ChallengePayload) {
+  const secretResult = resolveAuthSecret()
+  if (!secretResult.ok) {
+    throw new Error(secretResult.message)
   }
 
-  throw new Error("Missing AUTH_SECRET env var")
-}
-
-async function setChallengeCookie(payload: ChallengePayload) {
-  const secret = getSecret()
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
-    .sign(secret)
+    .sign(secretResult.secret)
 
   const jar = await cookies()
-  jar.set(CHALLENGE_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 10,
-  })
+  jar.set(CHALLENGE_COOKIE, token, authCookieOptions(60 * 10))
 }
 
 async function readChallengeCookie(): Promise<ChallengePayload | null> {
@@ -61,9 +41,11 @@ async function readChallengeCookie(): Promise<ChallengePayload | null> {
   const token = jar.get(CHALLENGE_COOKIE)?.value
   if (!token) return null
 
+  const secretResult = resolveAuthSecret()
+  if (!secretResult.ok) return null
+
   try {
-    const secret = getSecret()
-    const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] })
+    const { payload } = await jwtVerify(token, secretResult.secret, { algorithms: ["HS256"] })
     return payload as unknown as ChallengePayload
   } catch {
     return null
@@ -72,109 +54,143 @@ async function readChallengeCookie(): Promise<ChallengePayload | null> {
 
 async function clearChallengeCookie() {
   const jar = await cookies()
-  jar.set(CHALLENGE_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  })
+  jar.set(CHALLENGE_COOKIE, "", authCookieOptions(0))
 }
 
 export async function requestOtpAction(
   _prevState: AuthState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthState> {
-  const phoneRaw = String(formData.get("phone") ?? "").trim()
+  try {
+    const secretResult = resolveAuthSecret()
+    if (!secretResult.ok) {
+      return { ok: false, message: secretResult.message, step: "phone" }
+    }
 
-  const fieldErrors: Record<string, string> = {}
-  if (!phoneRaw) fieldErrors.phone = "Mobile number is required."
+    const phoneRaw = String(formData.get("phone") ?? "").trim()
 
-  if (Object.keys(fieldErrors).length) {
-    return { ok: false, message: "Please check the form.", fieldErrors, step: "phone" }
-  }
+    const fieldErrors: Record<string, string> = {}
+    if (!phoneRaw) fieldErrors.phone = "Mobile number is required."
 
-  const phoneDigits = normalizeCustomerPhoneDigits(phoneRaw)
-  const isIndianMobile = /^91[6-9]\d{9}$/.test(phoneDigits)
-  if (!isIndianMobile) {
+    if (Object.keys(fieldErrors).length) {
+      return { ok: false, message: "Please check the form.", fieldErrors, step: "phone" }
+    }
+
+    const phoneDigits = normalizeCustomerPhoneDigits(phoneRaw)
+    const isIndianMobile = /^91[6-9]\d{9}$/.test(phoneDigits)
+    if (!isIndianMobile) {
+      return {
+        ok: false,
+        message: "Enter a valid mobile number.",
+        fieldErrors: { phone: "Enter a valid mobile number." },
+        step: "phone",
+      }
+    }
+
+    const phoneE164 = normalizeCustomerPhone(phoneRaw)
+    const otp = String(Math.floor(100000 + Math.random() * 900000))
+
+    await setChallengeCookie({ phoneDigits, phoneE164, otp })
+
+    const sms = getActiveSmsProvider()
+    const smsResult = await sms.sendSms({
+      to: phoneE164,
+      body: `Your Glammzo verification code is ${otp}. It expires in 10 minutes.`,
+    })
+
+    if (!smsResult.success && process.env.SMS_PROVIDER !== "mock") {
+      return {
+        ok: false,
+        message: "We couldn't send a verification code. Please try again shortly.",
+        step: "phone",
+      }
+    }
+
     return {
       ok: false,
-      message: "Enter a valid mobile number.",
-      fieldErrors: { phone: "Enter a valid mobile number." },
-      step: "phone",
+      message: "We sent a 6-digit code to your mobile number.",
+      step: "otp",
+      debugOtp: shouldExposeDebugOtp() ? otp : undefined,
     }
-  }
-
-  const phoneE164 = normalizeCustomerPhone(phoneRaw)
-  const otp = String(Math.floor(100000 + Math.random() * 900000))
-
-  await setChallengeCookie({ phoneDigits, phoneE164, otp })
-
-  const sms = getActiveSmsProvider()
-  const smsResult = await sms.sendSms({
-    to: phoneE164,
-    body: `Your Glammzo verification code is ${otp}. It expires in 10 minutes.`,
-  })
-
-  if (!smsResult.success && process.env.NODE_ENV === "production") {
+  } catch (error) {
+    console.error("[auth] requestOtpAction failed:", error)
     return {
       ok: false,
-      message: "We couldn't send a verification code. Please try again shortly.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "We couldn't send a verification code. Please try again.",
       step: "phone",
     }
-  }
-
-  return {
-    ok: false,
-    message: "We sent a 6-digit code to your mobile number.",
-    step: "otp",
-    debugOtp: process.env.NODE_ENV === "production" ? undefined : otp,
   }
 }
 
 export async function verifyOtpAction(
   _prevState: AuthState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AuthState> {
-  const otp = String(formData.get("otp") ?? "").trim()
-  const nextPathRaw = String(formData.get("next") ?? "/") || "/"
-
-  const fieldErrors: Record<string, string> = {}
-  if (!otp) fieldErrors.otp = "Code is required."
-  else if (!/^\d{6}$/.test(otp)) fieldErrors.otp = "Enter the 6-digit code."
-
-  if (Object.keys(fieldErrors).length) {
-    return { ok: false, message: "Please check the form.", fieldErrors, step: "otp" }
-  }
-
-  const challenge = await readChallengeCookie()
-  if (!challenge) {
-    return {
-      ok: false,
-      message: "That code expired. Request a new one.",
-      step: "phone",
+  try {
+    const secretResult = resolveAuthSecret()
+    if (!secretResult.ok) {
+      return { ok: false, message: secretResult.message, step: "phone" }
     }
-  }
 
-  if (otp !== challenge.otp) {
+    const otp = String(formData.get("otp") ?? "").trim()
+    const nextPathRaw = String(formData.get("next") ?? "/") || "/"
+
+    const fieldErrors: Record<string, string> = {}
+    if (!otp) fieldErrors.otp = "Code is required."
+    else if (!/^\d{6}$/.test(otp)) fieldErrors.otp = "Enter the 6-digit code."
+
+    if (Object.keys(fieldErrors).length) {
+      return { ok: false, message: "Please check the form.", fieldErrors, step: "otp" }
+    }
+
+    const challenge = await readChallengeCookie()
+    if (!challenge) {
+      return {
+        ok: false,
+        message: "That code expired. Request a new one.",
+        step: "phone",
+      }
+    }
+
+    if (otp !== challenge.otp) {
+      return {
+        ok: false,
+        message: "Incorrect code. Try again.",
+        fieldErrors: { otp: "Incorrect code. Try again." },
+        step: "otp",
+        debugOtp: shouldExposeDebugOtp() ? challenge.otp : undefined,
+      }
+    }
+
+    await clearChallengeCookie()
+
+    await setSessionCookie({
+      sub: `phone:${challenge.phoneDigits}`,
+      phone: challenge.phoneE164,
+    })
+
+    const safeNext = resolveSafeNextPath(nextPathRaw)
+    redirect(safeNext)
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error
+    }
+
+    console.error("[auth] verifyOtpAction failed:", error)
     return {
       ok: false,
-      message: "Incorrect code. Try again.",
-      fieldErrors: { otp: "Incorrect code. Try again." },
+      message: "We couldn't verify that code. Please try again.",
       step: "otp",
-      debugOtp: process.env.NODE_ENV === "production" ? undefined : challenge.otp,
     }
   }
-
-  await clearChallengeCookie()
-
-  await setSessionCookie({
-    sub: `phone:${challenge.phoneDigits}`,
-    phone: challenge.phoneE164,
-  })
-
-  const safeNext = resolveSafeNextPath(nextPathRaw)
-  redirect(safeNext)
 }
 
 export async function logoutAction() {
@@ -190,7 +206,6 @@ function resolveSafeNextPath(value: string) {
   const raw = value.trim()
   const next = raw.startsWith("/") ? raw : "/"
 
-  // Normalize (strip query/hash) so `/login?next=/book/...` is treated as `/login`.
   let pathname = next
   try {
     pathname = new URL(next, "http://local").pathname
@@ -209,4 +224,3 @@ function resolveSafeNextPath(value: string) {
 
   return next
 }
-

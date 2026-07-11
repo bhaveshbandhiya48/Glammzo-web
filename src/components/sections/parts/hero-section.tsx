@@ -29,16 +29,18 @@ export function HeroSection() {
       initial={false}
       animate="show"
       variants={stagger}
-      className="section-y-hero relative overflow-x-hidden"
+      className="section-y-hero relative z-20 overflow-x-clip overflow-y-visible"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 glam-glow" />
-      <div className="pointer-events-none absolute -right-32 top-16 -z-10 size-[480px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-coral)_12%,transparent)_0%,transparent_70%)]" />
-      <div className="pointer-events-none absolute -left-24 bottom-0 -z-10 size-[360px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-sand)_80%,transparent)_0%,transparent_65%)]" />
-      <FloatingGradientBlob />
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-x-clip" aria-hidden>
+        <div className="glam-glow absolute inset-0" />
+        <div className="absolute -right-32 top-16 size-[480px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-coral)_12%,transparent)_0%,transparent_70%)]" />
+        <div className="absolute -left-24 bottom-0 size-[360px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--glam-sand)_80%,transparent)_0%,transparent_65%)]" />
+        <FloatingGradientBlob />
+      </div>
 
       <Container>
         <div className="grid items-start gap-14 lg:grid-cols-2 lg:items-center lg:gap-12 xl:gap-20">
-          <MotionDiv variants={fadeUp} className="max-w-xl lg:max-w-none">
+          <MotionDiv variants={fadeUp} className="relative z-30 max-w-xl lg:max-w-none">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-sm text-foreground/80 shadow-sm backdrop-blur-sm">
               <SparklesIcon className="size-3.5 text-primary" />
               <span className="font-medium text-foreground">

@@ -5,6 +5,7 @@ import { Loader2Icon, LocateFixedIcon, Maximize2Icon, Minimize2Icon } from "luci
 
 import { useMapLatLngScreenPosition } from "@/hooks/use-map-lat-lng-screen-position"
 import { requestUserLocation } from "@/lib/geo"
+import { getSpreadMarkerPositions } from "@/lib/maps/marker-positions"
 import { loadGoogleMaps, type GoogleMapsRuntime } from "@/lib/maps/google-maps-loader"
 import { getMapPopoverPlacement } from "@/lib/maps/popover-placement"
 import {
@@ -65,6 +66,8 @@ export function CustomerSalonMapCanvas({
         : null,
     [selectedSalon],
   )
+
+  const markerPositions = useMemo(() => getSpreadMarkerPositions(salons), [salons])
 
   const markerScreenPos = useMapLatLngScreenPosition(mapInstance, selectedLatLng)
 
@@ -172,9 +175,13 @@ export function CustomerSalonMapCanvas({
 
       const markers = salons.map((salon) => {
         const isSelected = selectedSalonId === salon.id
+        const position = markerPositions.get(salon.id) ?? {
+          lat: salon.latitude,
+          lng: salon.longitude,
+        }
         const marker = new Marker({
           map: mapRef.current!,
-          position: { lat: salon.latitude, lng: salon.longitude },
+          position,
           title: salon.name,
           icon: buildSalonPriceMarkerIcon(Size, Point, salon.priceFrom, isSelected),
           zIndex: isSelected ? 500 : 100,
@@ -195,7 +202,13 @@ export function CustomerSalonMapCanvas({
         if (boundsKey !== lastBoundsKeyRef.current) {
           const bounds = new LatLngBounds()
           bounds.extend(center)
-          salons.forEach((salon) => bounds.extend({ lat: salon.latitude, lng: salon.longitude }))
+          salons.forEach((salon) => {
+            const position = markerPositions.get(salon.id) ?? {
+              lat: salon.latitude,
+              lng: salon.longitude,
+            }
+            bounds.extend(position)
+          })
           mapRef.current.fitBounds(bounds, 80)
           lastBoundsKeyRef.current = boundsKey
         }
@@ -209,7 +222,7 @@ export function CustomerSalonMapCanvas({
     return () => {
       cancelled = true
     }
-  }, [center, onClearSelection, onSelectSalon, salons, selectedSalonId])
+  }, [center, markerPositions, onClearSelection, onSelectSalon, salons, selectedSalonId])
 
   useEffect(() => {
     if (!mapInstance) return

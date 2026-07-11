@@ -7,10 +7,10 @@ export function MarqueeBand() {
 
   return (
     <div
-      className="marquee-band relative w-full max-w-[100vw] border-y border-border/80 bg-foreground py-3.5 text-background"
+      className="marquee-band relative z-10 w-full border-y border-border/80 bg-foreground py-3.5 text-background"
       aria-hidden
     >
-      <div className="overflow-hidden">
+      <div className="marquee-viewport">
         <div className="marquee-track flex w-max whitespace-nowrap will-change-transform">
           {track.map((item, i) => (
             <span

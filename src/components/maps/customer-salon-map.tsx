@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Loader2Icon, MapPinIcon, SearchIcon } from "lucide-react"
 
 import { MapSkeleton } from "@/components/maps/map-skeleton"
-import { SalonCard } from "@/components/salons/salon-card"
 import { SalonMapPopoverCard } from "@/components/maps/salon-map-popover-card"
+import { SalonMapSidebarList } from "@/components/maps/salon-map-sidebar-list"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -16,7 +16,6 @@ import {
 } from "@/lib/maps/config"
 import type { NearbySalonRecord, NearbySalonsResponse } from "@/lib/maps/nearby-salon.types"
 import { requestUserLocation } from "@/lib/geo"
-import { nearbyRecordToSalonPreview } from "@/lib/maps/explore-map"
 import { cn } from "@/lib/utils"
 
 const CustomerSalonMapCanvas = dynamic(
@@ -222,20 +221,13 @@ export function CustomerSalonMap() {
         ) : null}
 
         {!mapExpanded && viewState === "ready" ? (
-          <div className="min-h-[min(72vh,42rem)]">
-            {selectedSalon ? (
-              <SalonCard salon={nearbyRecordToSalonPreview(selectedSalon)} />
-            ) : (
-              <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/40 px-6 text-center">
-                <p className="font-medium">Select a salon on the map</p>
-                <p className="mt-2 text-sm text-foreground/55">
-                  {salons.length === 0
-                    ? "No published salons with map pins were found in this area yet."
-                    : `${salons.length} salon${salons.length === 1 ? "" : "s"} nearby`}
-                </p>
-              </div>
-            )}
-          </div>
+          <SalonMapSidebarList
+            salons={salons}
+            selectedSalonId={selectedSalonId}
+            onSelectSalon={setSelectedSalonId}
+            className="min-h-[min(72vh,42rem)]"
+            emptyMessage="No published salons with map pins were found in this area yet."
+          />
         ) : null}
 
         {(viewState === "locating" || viewState === "loading") && (

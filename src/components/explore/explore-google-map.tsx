@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import { MapSkeleton } from "@/components/maps/map-skeleton"
 import { SalonMapPopoverCard } from "@/components/maps/salon-map-popover-card"
-import { SalonCard } from "@/components/salons/salon-card"
+import { SalonMapSidebarList } from "@/components/maps/salon-map-sidebar-list"
 import { getFallbackMapCenter, mapSalonsToNearbyRecords } from "@/lib/maps/explore-map"
 import { DEFAULT_MAP_CENTER, isGoogleMapsConfigured } from "@/lib/maps/config"
 import {
@@ -49,8 +49,6 @@ export function ExploreGoogleMap({
   nearFromUrl,
   urlLatitude,
   urlLongitude,
-  favoriteSalonIds = [],
-  authenticated = false,
 }: ExploreGoogleMapProps) {
   const [center, setCenter] = useState<{ latitude: number; longitude: number } | null>(null)
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null)
@@ -112,16 +110,6 @@ export function ExploreGoogleMap({
     [mapSalons, selectedSalonId],
   )
 
-  const selectedListSalon = useMemo(() => {
-    if (!selectedSalonId) return null
-    const salon = salons.find((item) => item.id === selectedSalonId)
-    if (!salon) return null
-    if (selectedSalon) {
-      return { ...salon, distanceKm: selectedSalon.distanceKm }
-    }
-    return salon
-  }, [salons, selectedSalon, selectedSalonId])
-
   const mapCenter = center ?? {
     latitude: DEFAULT_MAP_CENTER.latitude,
     longitude: DEFAULT_MAP_CENTER.longitude,
@@ -174,30 +162,12 @@ export function ExploreGoogleMap({
       </CustomerSalonMapCanvas>
 
       {!mapExpanded ? (
-        <div className={cn("min-h-80", mapHeightClass)}>
-          {selectedListSalon ? (
-            <SalonCard
-              salon={selectedListSalon}
-              favorite={
-                selectedListSalon.crmSalonId
-                  ? {
-                      authenticated,
-                      initialFavorited: favoriteSalonIds.includes(selectedListSalon.crmSalonId),
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <div className="flex h-full min-h-80 flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/40 px-6 text-center">
-              <p className="font-medium">Select a salon on the map</p>
-              <p className="mt-2 text-sm text-foreground/55">
-                {mapSalons.length === 0
-                  ? "No salons with map locations match your filters yet."
-                  : `${mapSalons.length} salon${mapSalons.length === 1 ? "" : "s"} on the map`}
-              </p>
-            </div>
-          )}
-        </div>
+        <SalonMapSidebarList
+          salons={mapSalons}
+          selectedSalonId={selectedSalonId}
+          onSelectSalon={setSelectedSalonId}
+          className={cn("min-h-80", mapHeightClass)}
+        />
       ) : null}
     </div>
   )

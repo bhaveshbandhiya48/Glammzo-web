@@ -145,7 +145,7 @@ async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {
 }
 
 const REVIEW_SELECT =
-  "id, salon_id, customer_id, appointment_id, staff_id, service_id, rating, review_type, comment, verified, created_at, customer:customers(full_name), staff:staff(full_name, designation, staff_roles(name)), service:services(name)"
+  "id, salon_id, customer_id, appointment_id, staff_id, service_id, rating, review_type, comment, verified, created_at, customer:customers(full_name, first_name, last_name), staff:staff(full_name, designation, staff_roles(name)), service:services(name)"
 
 async function fetchReviewsForSalons(salonIds: string[]): Promise<CrmSalonReviewRow[]> {
   if (salonIds.length === 0) return []
