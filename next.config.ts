@@ -1,6 +1,13 @@
 import type { NextConfig } from "next"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   images: {
     remotePatterns: [
       {
@@ -18,7 +25,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // Suppress future Next.js dev warning for LAN testing (optional, but keeps console clean).
-  allowedDevOrigins: ["http://localhost:3000", "http://192.168.1.10:3000"],
+  allowedDevOrigins: ["http://localhost:4008"],
 }
 
 export default nextConfig

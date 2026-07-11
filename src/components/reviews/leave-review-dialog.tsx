@@ -11,7 +11,15 @@ import {
 } from "@/components/ui/dialog"
 import { LeaveReviewForm } from "@/components/reviews/leave-review-form"
 
-export function LeaveReviewDialog({ appointmentId, salonName }: { appointmentId: string; salonName: string }) {
+export function LeaveReviewDialog({
+  appointmentId,
+  salonName,
+  staffName,
+}: {
+  appointmentId: string
+  salonName: string
+  staffName?: string
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -20,18 +28,21 @@ export function LeaveReviewDialog({ appointmentId, salonName }: { appointmentId:
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Review {salonName}</DialogTitle>
+      <DialogContent className="max-w-md sm:max-w-lg">
+        <DialogHeader className="gap-2 pb-1">
+          <DialogTitle className="text-xl">How was {salonName}?</DialogTitle>
           <DialogDescription>
-            Your rating helps others discover the right salon. This will be marked as a verified visit.
+            Share your experience to help others choose the right salon.
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4">
-          <LeaveReviewForm appointmentId={appointmentId} salonName={salonName} />
+        <div className="pt-2">
+          <LeaveReviewForm
+            appointmentId={appointmentId}
+            salonName={salonName}
+            staffName={staffName}
+          />
         </div>
       </DialogContent>
     </Dialog>
   )
 }
-

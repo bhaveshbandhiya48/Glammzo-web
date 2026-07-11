@@ -24,6 +24,9 @@ export type Booking = {
   isCrmCompleted?: boolean
   /** True only when a verified customer review already exists. */
   hasVerifiedReview?: boolean
+  /** Assigned team member for this visit (CRM). */
+  staffId?: string
+  staffName?: string
   /** One or more services in the same visit */
   services: BookingServiceItem[]
   date: string

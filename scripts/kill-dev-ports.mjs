@@ -3,7 +3,7 @@
  */
 import { execSync } from "node:child_process"
 
-const ports = [3000, 3001, 3002]
+import { DEV_PORTS_TO_KILL } from "./dev-port.mjs"
 
 function killPortWin(port) {
   try {
@@ -38,7 +38,7 @@ function killPortUnix(port) {
   }
 }
 
-for (const port of ports) {
+for (const port of DEV_PORTS_TO_KILL) {
   if (process.platform === "win32") killPortWin(port)
   else killPortUnix(port)
 }

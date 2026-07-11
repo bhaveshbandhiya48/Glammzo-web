@@ -22,6 +22,7 @@ type AppointmentRow = {
   internal_notes: string | null
   cancellation_reason: string | null
   created_at: string
+  staff_id: string | null
   salons: { id: string; name: string; slug: string; city: string | null } | null
   services: {
     id: string
@@ -29,6 +30,7 @@ type AppointmentRow = {
     price: string
     duration_minutes: number
   } | null
+  staff: { full_name: string } | { full_name: string }[] | null
 }
 
 type AppointmentServiceRow = {
@@ -164,8 +166,10 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       internal_notes,
       cancellation_reason,
       created_at,
+      staff_id,
       salons ( id, name, slug, city ),
-      services ( id, name, price, duration_minutes )
+      services ( id, name, price, duration_minutes ),
+      staff ( full_name )
     `,
     )
     .in("customer_id", customerIds)
@@ -205,6 +209,7 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
   return appointmentRows.map((row) => {
     const salon = Array.isArray(row.salons) ? row.salons[0] : row.salons
     const service = Array.isArray(row.services) ? row.services[0] : row.services
+    const staff = Array.isArray(row.staff) ? row.staff[0] : row.staff
     const linkedServices = serviceMap.get(row.id)
     const services =
       linkedServices && linkedServices.length > 0
@@ -236,6 +241,8 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       status,
       isCrmCompleted: row.status === "completed",
       hasVerifiedReview: verifiedReviewAppointmentIds.has(row.id),
+      staffId: row.staff_id ?? undefined,
+      staffName: staff?.full_name?.trim() || undefined,
       declineReason: extractDeclineReasonForDisplay(row.cancellation_reason) ?? undefined,
       createdAt: row.created_at,
     }

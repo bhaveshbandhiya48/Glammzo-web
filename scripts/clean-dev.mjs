@@ -2,6 +2,8 @@ import { execSync } from "node:child_process"
 import { existsSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
+import { DEV_PORTS_TO_KILL } from "./dev-port.mjs"
+
 const root = process.cwd()
 const nextDir = join(root, ".next")
 
@@ -76,7 +78,7 @@ async function removeNextDir() {
 }
 
 async function main() {
-  for (const port of [3000, 3001, 3002]) killPort(port)
+  for (const port of DEV_PORTS_TO_KILL) killPort(port)
   await sleep(600)
   const ok = await removeNextDir()
   try {

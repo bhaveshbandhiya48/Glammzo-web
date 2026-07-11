@@ -99,7 +99,7 @@ export function cleanNext({ reason, exitOnFailure = true } = {}) {
   const ok = removeNextDir()
   if (!ok) {
     console.error(
-      "[glamzzo] Could not remove .next — stop other dev servers (port 3000), close the folder in your editor, then run: npm run clean"
+      "[glamzzo] Could not remove .next — stop other dev servers (port 4008), close the folder in your editor, then run: npm run clean"
     )
     if (exitOnFailure) process.exit(1)
     return false

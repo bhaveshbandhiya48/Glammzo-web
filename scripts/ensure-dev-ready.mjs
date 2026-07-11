@@ -18,7 +18,7 @@ function stopStaleDevServers() {
   }
 }
 
-// Always free 3000/3001 so a zombie dev process cannot serve broken chunks after cache changes.
+// Always free dev ports so a zombie process cannot serve broken chunks after cache changes.
 stopStaleDevServers()
 
 if (shouldClearBeforeDev()) {

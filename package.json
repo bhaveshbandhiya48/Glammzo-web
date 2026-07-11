@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4008",
     "predev": "node scripts/ensure-dev-ready.mjs",
-    "dev:clean": "node scripts/kill-dev-ports.mjs && node scripts/clean-next.mjs && next dev",
+    "dev:clean": "node scripts/kill-dev-ports.mjs && node scripts/clean-next.mjs && next dev -p 4008",
     "clean": "node scripts/clean-next.mjs",
     "prebuild": "node scripts/clean-next.mjs",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4008",
     "media:sync": "node scripts/download-media.mjs",
     "lint": "next lint"
   },

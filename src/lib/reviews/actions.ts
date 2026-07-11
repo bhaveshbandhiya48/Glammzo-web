@@ -17,6 +17,7 @@ export async function createSalonReviewAction(formData: FormData) {
   const ratingRaw = formData.get("rating")
   const reviewTypeRaw = String(formData.get("reviewType") ?? "").trim()
   const comment = String(formData.get("comment") ?? "").trim()
+  const includeStaffReview = formData.get("includeStaffReview") === "1"
 
   const rating = Number(ratingRaw)
   const reviewType = SALON_REVIEW_TYPES.includes(reviewTypeRaw as SalonReviewType)
@@ -81,7 +82,7 @@ export async function createSalonReviewAction(formData: FormData) {
     salon_id: appointment.salon_id,
     appointment_id: appointmentId,
     customer_id: appointment.customer_id,
-    staff_id: appointment.staff_id,
+    staff_id: includeStaffReview ? appointment.staff_id : null,
     service_id: appointment.service_id,
     rating,
     review_type: reviewType,
