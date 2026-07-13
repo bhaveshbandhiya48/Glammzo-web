@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/layout/navbar"
 import { MarqueeBand } from "@/components/shared/marquee-band"
 import { MotionProvider } from "@/components/shared/motion"
+import { NearbySalonsMarqueeSection } from "@/components/sections/parts/nearby-salons-marquee-section"
 import { CategoriesSection } from "@/components/sections/parts/categories-section"
 import { FeaturedExperienceSection } from "@/components/sections/parts/featured-experience-section"
 import { Footer } from "@/components/sections/parts/footer"
@@ -20,6 +21,7 @@ export function LandingPage() {
       <main className="page-main">
         <HeroSection />
         <MarqueeBand />
+        <NearbySalonsMarqueeSection />
         <HowItWorksSection />
         <CategoriesSection />
         <NearbySalonsSection />

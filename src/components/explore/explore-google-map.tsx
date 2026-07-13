@@ -6,13 +6,15 @@ import { useEffect, useMemo, useState } from "react"
 import { MapSkeleton } from "@/components/maps/map-skeleton"
 import { SalonMapPopoverCard } from "@/components/maps/salon-map-popover-card"
 import { SalonMapSidebarList } from "@/components/maps/salon-map-sidebar-list"
-import { getFallbackMapCenter, mapSalonsToNearbyRecords } from "@/lib/maps/explore-map"
-import { DEFAULT_MAP_CENTER, isGoogleMapsConfigured } from "@/lib/maps/config"
+import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
+import { applySalonDistances } from "@/lib/explore-distance"
 import {
   LOCATION_UPDATED_EVENT,
-  hasActiveNearMe,
   readStoredLocation,
+  writeStoredLocation,
 } from "@/lib/location-storage"
+import { getExploreMapCenter, mapSalonsToNearbyRecords } from "@/lib/maps/explore-map"
+import { isGoogleMapsConfigured } from "@/lib/maps/config"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
 
@@ -39,53 +41,34 @@ type ExploreGoogleMapProps = {
 const MAP_HEIGHT_DEFAULT = "h-[min(72vh,42rem)]"
 const MAP_HEIGHT_EXPANDED = "h-[min(85vh,56rem)]"
 
-function parseCoord(value: number | undefined): number | null {
-  if (value == null || Number.isNaN(value)) return null
-  return value
-}
-
 export function ExploreGoogleMap({
   salons,
   nearFromUrl,
   urlLatitude,
   urlLongitude,
+  favoriteSalonIds = [],
+  authenticated = false,
 }: ExploreGoogleMapProps) {
-  const [center, setCenter] = useState<{ latitude: number; longitude: number } | null>(null)
+  const origin = useExploreDistanceOrigin({ nearFromUrl, urlLatitude, urlLongitude })
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null)
   const [mapExpanded, setMapExpanded] = useState(false)
 
-  useEffect(() => {
-    const syncCenter = () => {
-      const urlLat = parseCoord(urlLatitude)
-      const urlLng = parseCoord(urlLongitude)
+  const mapCenter = getExploreMapCenter(origin)
 
-      if (nearFromUrl && urlLat != null && urlLng != null) {
-        setCenter({ latitude: urlLat, longitude: urlLng })
-        return
-      }
-
-      const stored = readStoredLocation()?.stored
-      if (hasActiveNearMe(stored) && stored?.latitude != null && stored?.longitude != null) {
-        setCenter({ latitude: stored.latitude, longitude: stored.longitude })
-        return
-      }
-
-      setCenter(getFallbackMapCenter(salons))
-    }
-
-    syncCenter()
-    window.addEventListener(LOCATION_UPDATED_EVENT, syncCenter)
-    window.addEventListener("storage", syncCenter)
-    return () => {
-      window.removeEventListener(LOCATION_UPDATED_EVENT, syncCenter)
-      window.removeEventListener("storage", syncCenter)
-    }
-  }, [nearFromUrl, salons, urlLatitude, urlLongitude])
+  const salonsWithDistance = useMemo(
+    () => applySalonDistances(salons, origin),
+    [salons, origin],
+  )
 
   const mapSalons = useMemo(
-    () => mapSalonsToNearbyRecords(salons, center),
-    [salons, center],
+    () => mapSalonsToNearbyRecords(salonsWithDistance),
+    [salonsWithDistance],
   )
+
+  const sidebarSalons = useMemo(() => {
+    const mapIds = new Set(mapSalons.map((salon) => salon.id))
+    return salonsWithDistance.filter((salon) => mapIds.has(salon.id))
+  }, [salonsWithDistance, mapSalons])
 
   useEffect(() => {
     if (mapSalons.length === 0) {
@@ -110,11 +93,6 @@ export function ExploreGoogleMap({
     [mapSalons, selectedSalonId],
   )
 
-  const mapCenter = center ?? {
-    latitude: DEFAULT_MAP_CENTER.latitude,
-    longitude: DEFAULT_MAP_CENTER.longitude,
-  }
-
   const mapHeightClass = mapExpanded ? MAP_HEIGHT_EXPANDED : MAP_HEIGHT_DEFAULT
 
   if (!isGoogleMapsConfigured()) {
@@ -130,15 +108,11 @@ export function ExploreGoogleMap({
     )
   }
 
-  if (!center) {
-    return <MapSkeleton />
-  }
-
   return (
     <div
       className={cn(
         "grid gap-4 lg:items-start",
-        mapExpanded ? "grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_360px]",
+        mapExpanded ? "grid-cols-1" : "lg:grid-cols-2",
       )}
     >
       <CustomerSalonMapCanvas
@@ -147,7 +121,18 @@ export function ExploreGoogleMap({
         selectedSalonId={selectedSalonId}
         onSelectSalon={setSelectedSalonId}
         onClearSelection={() => setSelectedSalonId(null)}
-        onUserLocationFound={setCenter}
+        onUserLocationFound={(coords) => {
+          const current = readStoredLocation()?.stored
+          if (current) {
+            writeStoredLocation({
+              ...current,
+              nearMe: true,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            })
+          }
+          window.dispatchEvent(new CustomEvent(LOCATION_UPDATED_EVENT))
+        }}
         showMapPopover={mapExpanded}
         mapExpanded={mapExpanded}
         onToggleMapExpanded={() => setMapExpanded((current) => !current)}
@@ -163,10 +148,13 @@ export function ExploreGoogleMap({
 
       {!mapExpanded ? (
         <SalonMapSidebarList
-          salons={mapSalons}
+          salons={sidebarSalons}
           selectedSalonId={selectedSalonId}
           onSelectSalon={setSelectedSalonId}
           className={cn("min-h-80", mapHeightClass)}
+          emptyMessage="No salons with map coordinates are available yet."
+          favoriteSalonIds={favoriteSalonIds}
+          authenticated={authenticated}
         />
       ) : null}
     </div>

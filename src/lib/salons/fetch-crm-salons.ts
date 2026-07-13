@@ -3,7 +3,7 @@ import "server-only"
 import { cache } from "react"
 
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
-import type { CrmSalonReviewRow, CrmSalonRow, CrmServiceRow, CrmStaffRow } from "@/lib/salons/crm-types"
+import type { CrmSalonReviewRow, CrmSalonRow, CrmOfferRow, CrmPackageRow, CrmServiceRow, CrmStaffRow } from "@/lib/salons/crm-types"
 import { mapCrmSalonToWeb } from "@/lib/salons/map-crm-salon"
 import type { Salon } from "@/types/salon"
 
@@ -69,6 +69,9 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
   return (data ?? []) as CrmSalonRow[]
 }
 
+const SERVICE_SELECT_WITH_MARKETPLACE =
+  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, recommended_for, before_care, after_care, service_categories(name), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+
 const SERVICE_SELECT_WITH_IMAGE =
   "id, salon_id, name, description, image_url, duration_minutes, price, is_active, service_categories(name)"
 
@@ -79,17 +82,46 @@ function isMissingServiceImageColumn(message: string) {
   return message.toLowerCase().includes("image_url")
 }
 
+function isMissingServiceMarketplaceColumns(message: string) {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes("recommended_for") ||
+    lower.includes("before_care") ||
+    lower.includes("after_care") ||
+    lower.includes("service_add_ons")
+  )
+}
+
+function normalizeServiceRows(rows: unknown[]): CrmServiceRow[] {
+  return rows.map((row) => ({
+    ...(row as Omit<CrmServiceRow, "image_url">),
+    image_url: (row as CrmServiceRow).image_url ?? null,
+  }))
+}
+
 async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow[]> {
   if (salonIds.length === 0) return []
 
   const supabase = createAdminClient()
+  let select = SERVICE_SELECT_WITH_MARKETPLACE
   let { data, error } = await supabase
     .from("services")
-    .select(SERVICE_SELECT_WITH_IMAGE)
+    .select(select)
     .in("salon_id", salonIds)
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
+
+  if (error && isMissingServiceMarketplaceColumns(error.message)) {
+    select = SERVICE_SELECT_WITH_IMAGE
+    ;({ data, error } = await supabase
+      .from("services")
+      .select(select)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }))
+  }
 
   if (error && isMissingServiceImageColumn(error.message)) {
     const fallback = await supabase
@@ -116,10 +148,7 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
     return []
   }
 
-  return (data ?? []).map((row) => ({
-    ...(row as Omit<CrmServiceRow, "image_url">),
-    image_url: (row as CrmServiceRow).image_url ?? null,
-  }))
+  return normalizeServiceRows(data ?? [])
 }
 
 async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {
@@ -171,14 +200,141 @@ async function fetchReviewsForSalons(salonIds: string[]): Promise<CrmSalonReview
   }
 }
 
+const PACKAGE_SELECT_EXTENDED =
+  "id, salon_id, name, description, short_description, detailed_description, image_url, package_price, original_price, amount_saved, discount_percentage, total_duration, badge, is_featured, marketplace_visible, show_compare_price, show_savings, allow_online_booking, service_preview_count, is_active, status, sort_order, salon_package_items(id, service_id, quantity, sort_order, services(name, price, duration_minutes))"
+
+const PACKAGE_SELECT_WITH_COMPARE =
+  "id, salon_id, name, description, image_url, package_price, original_price, show_compare_price, is_active, sort_order, salon_package_items(id, service_id, quantity, services(name, price))"
+
+const PACKAGE_SELECT_BASE =
+  "id, salon_id, name, description, package_price, is_active, sort_order, salon_package_items(id, service_id, quantity, services(name, price))"
+
+function isMissingPackageExtendedColumns(message: string) {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes("short_description") ||
+    lower.includes("detailed_description") ||
+    lower.includes("badge") ||
+    lower.includes("marketplace_visible") ||
+    lower.includes("show_savings") ||
+    lower.includes("allow_online_booking") ||
+    lower.includes("service_preview_count") ||
+    lower.includes("total_duration") ||
+    lower.includes("amount_saved") ||
+    lower.includes("discount_percentage") ||
+    lower.includes("status") ||
+    lower.includes("is_featured")
+  )
+}
+
+function isMissingPackageCompareColumns(message: string) {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes("image_url") ||
+    lower.includes("original_price") ||
+    lower.includes("show_compare_price")
+  )
+}
+
+async function fetchPackagesForSalons(salonIds: string[]): Promise<CrmPackageRow[]> {
+  if (salonIds.length === 0) return []
+
+  try {
+    const supabase = createAdminClient()
+    let { data, error } = await supabase
+      .from("salon_packages")
+      .select(PACKAGE_SELECT_EXTENDED)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true })
+
+    if (error && isMissingPackageExtendedColumns(error.message)) {
+      const compareFallback = await supabase
+        .from("salon_packages")
+        .select(PACKAGE_SELECT_WITH_COMPARE)
+        .in("salon_id", salonIds)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true })
+
+      data = compareFallback.data as typeof data
+      error = compareFallback.error
+    }
+
+    if (error && isMissingPackageCompareColumns(error.message)) {
+      const fallback = await supabase
+        .from("salon_packages")
+        .select(PACKAGE_SELECT_BASE)
+        .in("salon_id", salonIds)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true })
+
+      if (fallback.error) {
+        console.error("[salons] Failed to fetch CRM packages:", fallback.error.message)
+        return []
+      }
+
+      return ((fallback.data ?? []) as Omit<CrmPackageRow, "image_url" | "original_price" | "show_compare_price">[]).map(
+        (row) => ({
+          ...row,
+          image_url: null,
+          original_price: null,
+          show_compare_price: true,
+        }),
+      )
+    }
+
+    if (error) {
+      console.error("[salons] Failed to fetch CRM packages:", error.message)
+      return []
+    }
+
+    return (data ?? []) as CrmPackageRow[]
+  } catch (err) {
+    console.error("[salons] CRM packages fetch error:", err)
+    return []
+  }
+}
+
+async function fetchOffersForSalons(salonIds: string[]): Promise<CrmOfferRow[]> {
+  if (salonIds.length === 0) return []
+
+  try {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase
+      .from("salon_offers")
+      .select(
+        "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, salon_offer_services(service_id)",
+      )
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("[salons] Failed to fetch CRM offers:", error.message)
+      return []
+    }
+
+    return (data ?? []) as CrmOfferRow[]
+  } catch (err) {
+    console.error("[salons] CRM offers fetch error:", err)
+    return []
+  }
+}
+
 async function mapSalonRow(row: CrmSalonRow): Promise<Salon> {
-  const [services, staff, reviews] = await Promise.all([
+  const [services, staff, reviews, packages, offers] = await Promise.all([
     fetchServicesForSalons([row.id]),
     fetchStaffForSalons([row.id]),
     fetchReviewsForSalons([row.id]),
+    fetchPackagesForSalons([row.id]),
+    fetchOffersForSalons([row.id]),
   ])
 
-  return mapCrmSalonToWeb(row, services, staff, reviews)
+  return mapCrmSalonToWeb(row, services, staff, reviews, packages, offers)
 }
 
 export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
@@ -189,10 +345,12 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
     if (salonRows.length === 0) return []
 
     const salonIds = salonRows.map((s) => s.id)
-    const [serviceRows, staffRows, reviewRows] = await Promise.all([
+    const [serviceRows, staffRows, reviewRows, packageRows, offerRows] = await Promise.all([
       fetchServicesForSalons(salonIds),
       fetchStaffForSalons(salonIds),
       fetchReviewsForSalons(salonIds),
+      fetchPackagesForSalons(salonIds),
+      fetchOffersForSalons(salonIds),
     ])
 
     const servicesBySalon = new Map<string, CrmServiceRow[]>()
@@ -216,12 +374,28 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
       reviewsBySalon.set(review.salon_id, list)
     }
 
+    const packagesBySalon = new Map<string, CrmPackageRow[]>()
+    for (const pkg of packageRows) {
+      const list = packagesBySalon.get(pkg.salon_id) ?? []
+      list.push(pkg)
+      packagesBySalon.set(pkg.salon_id, list)
+    }
+
+    const offersBySalon = new Map<string, CrmOfferRow[]>()
+    for (const offer of offerRows) {
+      const list = offersBySalon.get(offer.salon_id) ?? []
+      list.push(offer)
+      offersBySalon.set(offer.salon_id, list)
+    }
+
     return salonRows.map((row) =>
       mapCrmSalonToWeb(
         row,
         servicesBySalon.get(row.id) ?? [],
         staffBySalon.get(row.id) ?? [],
-        reviewsBySalon.get(row.id) ?? []
+        reviewsBySalon.get(row.id) ?? [],
+        packagesBySalon.get(row.id) ?? [],
+        offersBySalon.get(row.id) ?? [],
       )
     )
   } catch (err) {

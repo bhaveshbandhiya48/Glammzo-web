@@ -8,6 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon, StarIcon } from "lucide-
 import { media } from "@/data/media"
 import { MirrorShine } from "@/components/hero/MirrorShine"
 import { sortSalonsByDistance } from "@/lib/geo"
+import type { DistanceOrigin } from "@/lib/explore-distance"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
 
@@ -15,8 +16,9 @@ type SalonWithDistance = Salon & { distanceKm: number }
 
 type HeroSalonSliderProps = {
   salons: Salon[]
-  coords: { latitude: number; longitude: number } | null
+  origin: DistanceOrigin
   browseCity: string
+  hasDeviceLocation?: boolean
   maxSlides?: number
 }
 
@@ -113,8 +115,9 @@ function HeroSalonSlide({
 
 export function HeroSalonSlider({
   salons,
-  coords,
+  origin,
   browseCity,
+  hasDeviceLocation = false,
   maxSlides = 6,
 }: HeroSalonSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -122,11 +125,8 @@ export function HeroSalonSlider({
 
   const slides = useMemo((): SalonWithDistance[] => {
     if (salons.length === 0) return []
-    if (coords) {
-      return sortSalonsByDistance(salons, coords.latitude, coords.longitude).slice(0, maxSlides)
-    }
-    return salons.slice(0, maxSlides).map((salon) => ({ ...salon, distanceKm: salon.distanceKm }))
-  }, [salons, coords, maxSlides])
+    return sortSalonsByDistance(salons, origin.latitude, origin.longitude).slice(0, maxSlides)
+  }, [salons, origin.latitude, origin.longitude, maxSlides])
 
   const syncActiveIndex = useCallback(() => {
     const container = scrollRef.current
@@ -147,7 +147,7 @@ export function HeroSalonSlider({
   useEffect(() => {
     setActiveIndex(0)
     scrollRef.current?.scrollTo({ left: 0, behavior: "instant" })
-  }, [slides.length, coords?.latitude, coords?.longitude])
+  }, [slides.length, origin.latitude, origin.longitude])
 
   const scrollTo = (index: number) => {
     const container = scrollRef.current
@@ -182,7 +182,7 @@ export function HeroSalonSlider({
     )
   }
 
-  const showDistance = Boolean(coords)
+  const showDistance = hasDeviceLocation || !origin.isDefaultCity
   const canNavigate = slides.length > 1
 
   return (

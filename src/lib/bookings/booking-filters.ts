@@ -5,7 +5,7 @@ export const BOOKING_FILTERS = ["all", "upcoming", "completed", "cancelled"] as 
 export type BookingFilter = (typeof BOOKING_FILTERS)[number]
 
 const UPCOMING_STATUSES: BookingStatus[] = ["pending", "confirmed", "upcoming"]
-const CANCELLED_STATUSES: BookingStatus[] = ["cancelled", "declined"]
+const CANCELLED_STATUSES: BookingStatus[] = ["cancelled", "declined", "expired"]
 
 export function parseBookingFilter(value: string | undefined): BookingFilter {
   if (value && BOOKING_FILTERS.includes(value as BookingFilter)) {

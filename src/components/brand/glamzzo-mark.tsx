@@ -7,7 +7,7 @@ type GlamzzoMarkProps = {
 }
 
 /**
- * Glammzo brand mark — scissors + comb in a circle medallion (salon / self-care).
+ * Glammzo brand mark, scissors + comb in a circle medallion (salon / self-care).
  */
 export function GlamzzoMark({ className, size = 32, inverse = false }: GlamzzoMarkProps) {
   const id = inverse ? "glamzzo-mark-inv" : "glamzzo-mark"
@@ -44,7 +44,7 @@ export function GlamzzoMark({ className, size = 32, inverse = false }: GlamzzoMa
       <circle cx="16" cy="16" r="11.5" fill={medallion} />
       <circle cx="16" cy="16" r="11" stroke={sand} strokeWidth="0.6" fill="none" opacity={inverse ? 0.4 : 0.9} />
 
-      {/* Scissors + comb — unified salon silhouette */}
+      {/* Scissors + comb, unified salon silhouette */}
       <g fill={iconFill}>
         {/* Comb (behind) */}
         <path d="M12.25 10.25h1.85c0 0 .15 11.2.15 11.2h-2c0 0-.15-11.2-.15-11.2z" />

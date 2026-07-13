@@ -1,6 +1,6 @@
 /**
  * Great-circle distance between two WGS84 points (kilometres).
- * No Google Distance Matrix — pure math.
+ * No Google Distance Matrix, pure math.
  */
 export function haversineKm(
   lat1: number,

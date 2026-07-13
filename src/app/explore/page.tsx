@@ -10,9 +10,9 @@ import { Navbar } from "@/components/layout/navbar"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
 import { SectionHeader } from "@/components/shared/section-header"
+import { ExploreFeaturedGrid } from "@/components/explore/explore-featured-grid"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreResultsSection } from "@/components/explore/explore-results-section"
-import { SalonCard } from "@/components/salons/salon-card"
 import {
   ExploreEmptyCityMessage,
   ExplorePageTitle,
@@ -38,6 +38,8 @@ export const metadata: Metadata = {
   title: "Explore salons",
   description: siteCopy.brand.description,
 }
+
+export const dynamic = "force-dynamic"
 
 type ExploreSearchParams = {
   category?: string | string[]
@@ -230,23 +232,11 @@ export default async function ExplorePage({
                       subtitle="Salons highlighted on Glammzo this week."
                       className="mb-4"
                     />
-                    <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {featuredSalons.map((salon) => (
-                        <li key={`featured-${salon.id}`}>
-                          <SalonCard
-                            salon={salon}
-                            favorite={
-                              salon.crmSalonId
-                                ? {
-                                    authenticated: Boolean(session),
-                                    initialFavorited: favoriteSalonIds.includes(salon.crmSalonId),
-                                  }
-                                : undefined
-                            }
-                          />
-                        </li>
-                      ))}
-                    </ul>
+                    <ExploreFeaturedGrid
+                      salons={featuredSalons}
+                      favoriteSalonIds={favoriteSalonIds}
+                      authenticated={Boolean(session)}
+                    />
                   </>
                 ) : null
               }

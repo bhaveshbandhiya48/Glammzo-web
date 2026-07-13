@@ -25,7 +25,7 @@ const benefits = [
   },
   {
     icon: CalendarIcon,
-    title: "Fewer no-shows",
+    title: "Fewer no shows",
     description: "Confirmed appointments, reminders, and clear policies keep chairs full.",
   },
   {

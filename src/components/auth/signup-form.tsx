@@ -33,7 +33,7 @@ export function SignupForm({ nextPath }: { nextPath: string }) {
           Create your account
         </div>
         <p className="mt-2 text-sm leading-6 text-foreground/65">
-          Use your mobile number. We&apos;ll verify it with a one-time code.
+          Use your mobile number. We&apos;ll verify it with a one time code.
         </p>
       </div>
 

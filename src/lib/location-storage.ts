@@ -32,7 +32,7 @@ function normalizeStored(parsed: Partial<StoredLocation>): StoredLocation | null
     country: parsed.country,
     inServiceArea: parsed.inServiceArea,
   }
-  // Legacy saves used "Near me" as override — prefer resolved area for display
+  // Legacy saves used "Near me" as override, prefer resolved area for display
   if (
     parsed.areaLabelOverride &&
     parsed.areaLabelOverride !== "Near me"
@@ -42,7 +42,7 @@ function normalizeStored(parsed: Partial<StoredLocation>): StoredLocation | null
   if (stored.nearMe && stored.resolvedArea) {
     stored.areaLabelOverride = undefined
   } else if (parsed.areaLabelOverride === "Near me") {
-    // Legacy: had label only — drop so UI uses real area from id
+    // Legacy: had label only, drop so UI uses real area from id
     stored.areaLabelOverride = undefined
     stored.nearMe = false
   }

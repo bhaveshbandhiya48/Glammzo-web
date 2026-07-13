@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 
+import { ExploreAvailabilityNotice } from "@/components/explore/explore-availability-notice"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreGoogleMap } from "@/components/explore/explore-google-map"
 import { ExploreSalonGrid } from "@/components/explore/explore-salon-grid"
@@ -56,6 +57,8 @@ export function ExploreResultsSection({
       />
 
       <ExploreFilters state={searchState} />
+
+      <ExploreAvailabilityNotice salons={salons} />
 
       {featured ? <div className="mb-8 mt-6">{featured}</div> : null}
 

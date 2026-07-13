@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react"
 
 import { readStoredLocation, resolveInitialLocation } from "@/lib/location-storage"
 
-/** Prompts for geolocation on first visit; no UI — browser handles the permission dialog. */
+/** Prompts for geolocation on first visit; no UI, browser handles the permission dialog. */
 export function LocationBootstrap() {
   const started = useRef(false)
 

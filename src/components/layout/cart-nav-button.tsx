@@ -8,6 +8,7 @@ import { useBookingCart } from "@/hooks/use-booking-cart"
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { getCartLines, type BookingCartLine } from "@/lib/bookings/cart"
 import { formatDuration, resolveServices, sumServiceDuration } from "@/lib/bookings/utils"
+import { serviceIdsMatchPackage } from "@/lib/salons/catalog-utils"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,16 @@ export function CartNavButton({ className }: CartNavButtonProps) {
     [cart, salons],
   )
 
+  const matchedPackage = useMemo(() => {
+    if (!cart || !catalogSalon) return null
+    if (cart.packageId) {
+      return catalogSalon.packages.find((pkg) => pkg.id === cart.packageId) ?? null
+    }
+    return (
+      catalogSalon.packages.find((pkg) => serviceIdsMatchPackage(cart.serviceIds, pkg)) ?? null
+    )
+  }, [cart, catalogSalon])
+
   const lines = useMemo(() => {
     const fromCart = getCartLines(cart)
     if (fromCart.length > 0) return fromCart
@@ -47,6 +58,9 @@ export function CartNavButton({ className }: CartNavButtonProps) {
 
   const salonName = cart?.salonName ?? catalogSalon?.name
   const salonArea = catalogSalon?.area
+  const extraLineCount = matchedPackage
+    ? lines.filter((line) => line.id !== matchedPackage.id).length
+    : 0
   const totalDuration = sumServiceDuration(
     lines.map((line) => ({
       id: line.id,
@@ -59,8 +73,16 @@ export function CartNavButton({ className }: CartNavButtonProps) {
     })),
   )
 
+  const displayCount = matchedPackage ? 1 + extraLineCount : count
+
   const label =
-    count > 0 ? `Cart, ${count} service${count === 1 ? "" : "s"}` : "Cart, empty"
+    displayCount > 0
+      ? matchedPackage
+        ? extraLineCount > 0
+          ? `Cart, 1 package + ${extraLineCount} service${extraLineCount === 1 ? "" : "s"}`
+          : "Cart, 1 package"
+        : `Cart, ${displayCount} service${displayCount === 1 ? "" : "s"}`
+      : "Cart, empty"
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -101,12 +123,12 @@ export function CartNavButton({ className }: CartNavButtonProps) {
             )}
           >
             <ShoppingBagIcon className="size-5 shrink-0" strokeWidth={2} aria-hidden />
-            {count > 0 ? (
+            {displayCount > 0 ? (
               <span
                 className="pointer-events-none absolute right-0 top-0 flex size-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-primary text-[10px] font-semibold leading-none text-primary-foreground ring-2 ring-background"
                 aria-hidden
               >
-                {count > 9 ? "9+" : count}
+                {displayCount > 9 ? "9+" : displayCount}
               </span>
             ) : null}
           </Link>
@@ -144,12 +166,25 @@ export function CartNavButton({ className }: CartNavButtonProps) {
                     key={line.id}
                     className="flex items-start justify-between gap-3 rounded-xl px-2 py-2.5 text-sm"
                   >
-                    <span className="min-w-0 font-medium leading-snug text-foreground/85">
-                      {line.name}
-                    </span>
+                    <div className="min-w-0">
+                      {matchedPackage && line.id === matchedPackage.id ? (
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                          Package
+                        </p>
+                      ) : matchedPackage ? (
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/45">
+                          Add-on
+                        </p>
+                      ) : null}
+                      <span className="font-medium leading-snug text-foreground/85">
+                        {line.name}
+                      </span>
+                    </div>
                     <span className="shrink-0 text-right text-foreground/55 tabular-nums">
                       {line.price > 0 ? `₹${line.price}` : "—"}
-                      <span className="block text-xs">{line.durationMin} min</span>
+                      {line.durationMin > 0 ? (
+                        <span className="block text-xs">{formatDuration(line.durationMin)}</span>
+                      ) : null}
                     </span>
                   </li>
                 ))}
@@ -157,7 +192,11 @@ export function CartNavButton({ className }: CartNavButtonProps) {
 
               <div className="border-t border-border/60 px-4 py-3">
                 <p className="text-sm text-foreground/60">
-                  {lines.length} service{lines.length === 1 ? "" : "s"}
+                  {matchedPackage
+                    ? extraLineCount > 0
+                      ? `1 package + ${extraLineCount} service${extraLineCount === 1 ? "" : "s"}`
+                      : "1 package"
+                    : `${lines.length} service${lines.length === 1 ? "" : "s"}`}
                   {totalDuration > 0 ? ` · ~${formatDuration(totalDuration)}` : null}
                 </p>
                 <Button asChild size="sm" className="mt-3 h-9 w-full rounded-full">

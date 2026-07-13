@@ -11,7 +11,7 @@ export default function ForgotPasswordPage() {
           Password reset not available
         </div>
         <p className="mt-2 text-sm leading-6 text-foreground/65">
-          Glammzo uses mobile number sign-in with one-time codes. Please return to sign in.
+          Glammzo uses mobile number sign in with one time codes. Please return to sign in.
         </p>
       </div>
 

@@ -1,4 +1,6 @@
 import type { GlamzzoLocationId } from "@/lib/location"
+import { DEFAULT_MAP_CENTER } from "@/lib/maps/config"
+import { resolvePlaceCentroid, resolveSalonCoordinates } from "@/lib/salon-coordinates"
 import type { Salon } from "@/types/salon"
 
 /** Approximate centroids for Bengaluru areas (demo data). */
@@ -53,25 +55,26 @@ export function haversineKm(
 }
 
 export function getSalonCoordinates(
-  salon: Pick<Salon, "id" | "area" | "latitude" | "longitude">
+  salon: Pick<Salon, "id" | "area" | "address" | "latitude" | "longitude">,
 ) {
-  if (
-    typeof salon.latitude === "number" &&
-    typeof salon.longitude === "number" &&
-    Number.isFinite(salon.latitude) &&
-    Number.isFinite(salon.longitude)
-  ) {
-    return { lat: salon.latitude, lng: salon.longitude }
+  const resolved = resolveSalonCoordinates(salon)
+  if (resolved) {
+    return resolved
   }
 
-  return (
-    SALON_COORDINATES[salon.id] ??
-    AREA_COORDINATES[salon.area] ?? { lat: 12.9716, lng: 77.5946 }
-  )
+  const cityCentroid = resolvePlaceCentroid(salon.area, salon.address)
+  if (cityCentroid) {
+    return cityCentroid
+  }
+
+  return {
+    lat: DEFAULT_MAP_CENTER.latitude,
+    lng: DEFAULT_MAP_CENTER.longitude,
+  }
 }
 
 export function distanceToSalonKm(
-  salon: Pick<Salon, "id" | "area" | "latitude" | "longitude">,
+  salon: Pick<Salon, "id" | "area" | "address" | "latitude" | "longitude">,
   latitude: number,
   longitude: number,
 ): number {

@@ -5,8 +5,63 @@ export type SalonService = {
   price: number
   category: string
   imageUrl: string
-  /** Short list of what the guest receives — shown in service picker */
+  /** Full service description from CRM, used in detail drawer */
+  description?: string
+  /** Short list of what the guest receives, shown in service picker */
   includes: string[]
+  /** Owner-defined audience tags from CRM. Hidden on Glammzo when not set. */
+  recommendedFor?: string[]
+  /** Owner-defined prep note from CRM. Hidden on Glammzo when not set. */
+  beforeCare?: string
+  /** Owner-defined aftercare note from CRM. Hidden on Glammzo when not set. */
+  afterCare?: string
+  /** Linked add-on service IDs from CRM. Empty = auto-suggested from same category. */
+  addOnIds?: string[]
+}
+
+export type SalonPackageItem = {
+  serviceId: string
+  serviceName: string
+  quantity: number
+}
+
+export type SalonOffer = {
+  id: string
+  code: string
+  title: string
+  description: string | null
+  discountType: "percent" | "fixed"
+  discountValue: number
+  appliesTo: "all_services" | "selected_services"
+  serviceIds: string[]
+  startsAt: string | null
+  endsAt: string | null
+  maxRedemptions: number | null
+  redemptionCount: number
+  isActive: boolean
+}
+
+export type SalonPackage = {
+  id: string
+  name: string
+  /** @deprecated Use shortDescription */
+  description: string
+  shortDescription: string
+  detailedDescription: string
+  imageUrl: string
+  packagePrice: number
+  comparePrice: number
+  amountSaved: number
+  discountPercent: number
+  totalDurationMin: number
+  showComparePrice: boolean
+  showSavings: boolean
+  allowOnlineBooking: boolean
+  servicePreviewCount: number
+  badge: string | null
+  isFeatured: boolean
+  sortOrder: number
+  items: SalonPackageItem[]
 }
 
 export type SalonStaffMember = {
@@ -66,7 +121,7 @@ export type SalonReview = {
 
 export type Salon = {
   id: string
-  /** CRM salons UUID — used for Supabase writes. */
+  /** CRM salons UUID, used for Supabase writes. */
   crmSalonId?: string
   name: string
   area: string
@@ -77,7 +132,7 @@ export type Salon = {
   rating: number
   reviews: number
   distanceKm: number
-  /** WGS84 coordinates from CRM map pin — used for accurate distance. */
+  /** WGS84 coordinates from CRM map pin, used for accurate distance. */
   latitude?: number
   longitude?: number
   /** Platform-promoted listing (Phase 4). */
@@ -89,6 +144,8 @@ export type Salon = {
   phone: string
   hours: string
   services: SalonService[]
+  packages: SalonPackage[]
+  offers: SalonOffer[]
   gallery: string[]
   customerReviews: SalonReview[]
   team: SalonTeamMember[]

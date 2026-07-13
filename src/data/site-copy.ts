@@ -1,6 +1,6 @@
 import type { NavItem, Stat } from "@/types/landing"
 
-/** Lightweight copy + nav — safe for client components (no salon/image graph). */
+/** Lightweight copy + nav, safe for client components (no salon/image graph). */
 export const siteCopy = {
   brand: {
     name: "Glammzo",
@@ -39,20 +39,26 @@ export const siteCopy = {
     eyebrow: "Services",
     title: "Everything you book in one place",
     subtitle:
-      "From everyday grooming to special-occasion glam. Explore by category and book with clear pricing.",
+      "From everyday grooming to special occasion glam. Explore by category and book with clear pricing.",
   },
   salons: {
     eyebrow: "Featured partners",
     title: "Salons on Glammzo right now",
     subtitle:
-      "We’re starting with hand-picked partners. More cities and studios are on the way.",
+      "We’re starting with hand picked partners. More cities and studios are on the way.",
     partnerCta: "Own a salon? Join us",
+  },
+  nearbySalonsMarquee: {
+    eyebrow: "Near you",
+    title: "Salons near you",
+    subtitle: "Live listings within 10 km — tap any card to view services and book.",
+    viewAllCta: "View all salons",
   },
   experience: {
     eyebrow: "The experience",
     title: "Premium salons. A booking flow that doesn’t get in the way.",
     subtitle:
-      "Real photos, honest reviews, open hours, and instant confirmation, so you spend less time coordinating and more time enjoying the visit.",
+      "Real photos, honest reviews, open hours, and instant confirmation so you spend less time coordinating and more time enjoying the visit.",
   },
   testimonials: {
     eyebrow: "Early feedback",
@@ -63,7 +69,7 @@ export const siteCopy = {
     eyebrow: "For salon owners",
     title: "Grow with Glammzo",
     subtitle:
-      "Fill empty slots, reach new clients, and manage bookings from one calm dashboard, built for independent studios and growing chains.",
+      "Fill empty slots, reach new clients, and manage bookings from one calm dashboard built for independent studios and growing chains.",
   },
   mobile: {
     eyebrow: "Mobile app",
@@ -104,7 +110,7 @@ export const howItWorksSteps = [
     num: "03",
     title: "Confirm",
     description:
-      "Choose a time slot, book instantly, and get a clear confirmation, with reminders included.",
+      "Choose a time slot, book instantly, and get a clear confirmation with reminders included.",
   },
 ] as const
 

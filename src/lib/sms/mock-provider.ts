@@ -8,7 +8,7 @@ export class MockSmsProvider implements SmsProvider {
       return { success: false, error: "Message body is required." }
     }
 
-    if (process.env.NODE_ENV !== "production" || process.env.SMS_PROVIDER === "mock") {
+    if (process.env.NODE_ENV !== "production") {
       console.info("[sms:mock] OTP to", input.to, ":", input.body)
     }
 

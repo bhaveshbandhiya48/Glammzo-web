@@ -124,7 +124,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
           className
         )}
         onClick={() => setOpen(true)}
-        title={isNearMe ? "Using your current location — click to change" : "Change location"}
+        title={isNearMe ? "Using your current location, click to change" : "Change location"}
       >
         <MapPinIcon
           className={cn("mr-1.5 shrink-0 text-primary", size === "xs" ? "size-3" : "size-3.5")}
@@ -172,8 +172,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               {isNearMe ? (
                 <p className="mt-1 text-xs text-foreground/55">
                   {stored?.inServiceArea
-                    ? `Detected from your device — showing salons in ${nearMeCityLabel} nearest to you`
-                    : `Detected from your device — Glammzo salons are currently in ${DEFAULT_CITY_NAME}; distances are from your location`}
+                    ? `Detected from your device, showing salons in ${nearMeCityLabel} nearest to you`
+                    : `Detected from your device, Glammzo salons are currently in ${DEFAULT_CITY_NAME}; distances are from your location`}
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-foreground/55">

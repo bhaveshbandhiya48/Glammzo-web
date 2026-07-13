@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { HeartIcon } from "lucide-react"
+import { HeartIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { toggleFavoriteSalonAction } from "@/lib/favorites/actions"
@@ -74,7 +74,11 @@ export function FavoriteSalonButton({
         })
       }}
     >
-      <HeartIcon className={cn("size-4", favorited && "fill-current")} />
+      {isPending ? (
+        <Loader2Icon className="size-4 animate-spin" aria-hidden />
+      ) : (
+        <HeartIcon className={cn("size-4", favorited && "fill-current")} />
+      )}
     </Button>
   )
 }

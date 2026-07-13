@@ -1,5 +1,5 @@
 /**
- * Light, minimal map styling — pale land, soft roads, hidden POI clutter.
+ * Light, minimal map styling, pale land, soft roads, hidden POI clutter.
  */
 export const SALON_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#f5f2ec" }] },

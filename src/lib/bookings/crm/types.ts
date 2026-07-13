@@ -35,8 +35,10 @@ export type BookableStaffMember = {
 
 export type SalonBookingContext = {
   crmSalonId: string
+  salonName: string
   timezone: string
   businessHours: BusinessHoursSettings
+  businessClosures: import("@/lib/bookings/crm/booking-confirmation-engine").BusinessClosure[]
   staffIds: string[]
   staffMembers: BookableStaffMember[]
   staffServiceMap: Record<string, string[]>
@@ -57,6 +59,9 @@ export type CreateCrmBookingInput = {
   customerEmail?: string
   notes?: string
   preferredStaffId?: string
+  packageBooking?: boolean
+  packageId?: string
+  promoCode?: string
 }
 
 export type CreateCrmBookingResult =

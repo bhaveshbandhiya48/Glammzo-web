@@ -11,8 +11,8 @@ import {
   parseServiceIds,
   resolveServices,
   sumServiceDuration,
-  sumServicePrice,
 } from "@/lib/bookings/utils"
+import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
 import { addBooking } from "@/lib/bookings/store"
 import { getSession, updateSessionProfile } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -42,16 +42,25 @@ export async function createBookingAction(formData: FormData) {
     formData.get("customerPhone") ?? session.phone ?? "",
   ).trim()
   const preferredStaffId = String(formData.get("preferredStaffId") ?? "").trim() || undefined
+  const packageId = String(formData.get("packageId") ?? "").trim()
+  const promoCode = String(formData.get("promoCode") ?? "").trim()
 
   const salon = await getSalonById(salonId)
   const serviceIds = parseServiceIds(serviceIdsRaw)
   const services = salon ? resolveServices(salon.services, serviceIds) : []
+  const selectedPackage = packageId
+    ? salon?.packages.find((pkg) => pkg.id === packageId) ?? null
+    : null
 
   if (!salon || services.length === 0 || !date || !time) {
     redirect(`/salons/${salonId}?error=missing`)
   }
 
-  const totalPrice = sumServicePrice(services)
+  const totalPrice = computeBookingSubtotal({
+    services: salon.services,
+    selectedServiceIds: serviceIds,
+    selectedPackage,
+  })
   const totalDuration = sumServiceDuration(services)
   const displayTime = time.includes("AM") || time.includes("PM") ? time : formatSlotLabel(time)
 
@@ -72,11 +81,25 @@ export async function createBookingAction(formData: FormData) {
       customerEmail,
       notes: notes || undefined,
       preferredStaffId,
+      packageBooking: Boolean(packageId),
+      packageId: packageId || undefined,
+      promoCode: promoCode || undefined,
     })
 
     if (!result.success) {
-      const errorCode = result.code === "slot_taken" ? "slot" : "booking"
-      redirect(`/book/${salonId}?services=${serviceIds.join(",")}&error=${errorCode}`)
+      const errorCode =
+        result.code === "slot_taken"
+          ? "slot"
+          : promoCode && result.code === "invalid"
+            ? "promo"
+            : "booking"
+      const query = new URLSearchParams({
+        services: serviceIds.join(","),
+        error: errorCode,
+      })
+      if (packageId) query.set("package", packageId)
+      if (promoCode && errorCode === "promo") query.set("promo", promoCode)
+      redirect(`/book/${salonId}?${query.toString()}`)
     }
 
     const booking: Booking = {

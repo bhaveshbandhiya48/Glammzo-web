@@ -1,7 +1,7 @@
 import { haversineKm, resolveNearestArea, type NearestAreaResult } from "@/lib/geo"
 import type { GlamzzoLocationId } from "@/lib/location"
 
-/** Bengaluru metro — salons on Glammzo are listed here */
+/** Bengaluru metro, salons on Glammzo are listed here */
 const BENGALURU_CENTER = { lat: 12.9716, lng: 77.5946 }
 const BENGALURU_SERVICE_RADIUS_KM = 40
 
@@ -14,7 +14,7 @@ export type ResolvedGpsLocation = {
   state?: string
   country?: string
   inServiceArea: boolean
-  /** Nearest Bengaluru neighbourhood — only when inServiceArea */
+  /** Nearest Bengaluru neighbourhood, only when inServiceArea */
   nearestArea?: NearestAreaResult
   locationId: GlamzzoLocationId
 }

@@ -1,15 +1,22 @@
 import { media } from "@/data/media"
+import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
+import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
 import type {
   CrmSalonReviewRow,
   CrmSalonRow,
+  CrmOfferRow,
+  CrmPackageRow,
   CrmServiceRow,
   CrmStaffRow,
 } from "@/lib/salons/crm-types"
+import { filterBookableOffers } from "@/lib/salons/offer-utils"
 import type {
   Salon,
   SalonAmenities,
   SalonCancellationPolicy,
+  SalonOffer,
+  SalonPackage,
   SalonReview,
   SalonReviewType,
   SalonService,
@@ -125,6 +132,10 @@ function fallbackServiceImage(serviceId: string): string {
 function mapService(row: CrmServiceRow): SalonService {
   const category = relationName(row.service_categories) ?? "General"
   const imageUrl = row.image_url?.trim() || fallbackServiceImage(row.id)
+  const addOnIds = [...(row.service_add_ons ?? [])]
+    .sort((left, right) => left.sort_order - right.sort_order)
+    .map((entry) => entry.add_on_service_id)
+
   return {
     id: row.id,
     name: row.name,
@@ -132,7 +143,12 @@ function mapService(row: CrmServiceRow): SalonService {
     price: Number.parseFloat(row.price) || 0,
     category,
     imageUrl,
+    description: row.description?.trim() || undefined,
     includes: parseServiceIncludes(row.description),
+    recommendedFor: row.recommended_for?.length ? row.recommended_for : undefined,
+    beforeCare: row.before_care?.trim() || undefined,
+    afterCare: row.after_care?.trim() || undefined,
+    addOnIds: addOnIds.length > 0 ? addOnIds : undefined,
   }
 }
 
@@ -220,11 +236,91 @@ function parseCancellationPolicy(settings: unknown): SalonCancellationPolicy | u
   }
 }
 
+function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
+  const items = [...(row.salon_package_items ?? [])]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((item) => {
+      const service = resolveJoin(item.services)
+
+      return {
+        serviceId: item.service_id,
+        serviceName: service?.name ?? "Service",
+        quantity: item.quantity,
+      }
+    })
+
+  const individualTotal = (row.salon_package_items ?? []).reduce((sum, item) => {
+    const service = resolveJoin(item.services)
+    const price = Number(service?.price ?? 0)
+    return sum + price * item.quantity
+  }, 0)
+
+  const packagePrice = Number(row.package_price)
+  const comparePrice =
+    row.original_price != null && row.original_price !== ""
+      ? Number(row.original_price)
+      : individualTotal
+  const amountSaved =
+    row.amount_saved != null && row.amount_saved !== ""
+      ? Number(row.amount_saved)
+      : Math.max(0, comparePrice - packagePrice)
+  const discountPercent =
+    row.discount_percentage != null && row.discount_percentage !== ""
+      ? Number(row.discount_percentage)
+      : comparePrice > 0 && packagePrice < comparePrice
+        ? Math.round(((comparePrice - packagePrice) / comparePrice) * 100)
+        : 0
+
+  const shortDescription = row.short_description?.trim() || row.description?.trim() || ""
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: shortDescription,
+    shortDescription,
+    detailedDescription: row.detailed_description?.trim() || row.description?.trim() || "",
+    imageUrl: row.image_url?.trim() || fallbackImage,
+    packagePrice,
+    comparePrice,
+    amountSaved,
+    discountPercent,
+    totalDurationMin: row.total_duration ?? 0,
+    showComparePrice: row.show_compare_price !== false,
+    showSavings: row.show_savings !== false,
+    allowOnlineBooking: row.allow_online_booking !== false,
+    servicePreviewCount: row.service_preview_count ?? 3,
+    badge: row.badge ?? null,
+    isFeatured: row.is_featured === true,
+    sortOrder: row.sort_order ?? 0,
+    items,
+  }
+}
+
+function mapOffer(row: CrmOfferRow): SalonOffer {
+  return {
+    id: row.id,
+    code: row.code.trim().toUpperCase(),
+    title: row.title,
+    description: row.description?.trim() || null,
+    discountType: row.discount_type,
+    discountValue: Number.parseFloat(String(row.discount_value)) || 0,
+    appliesTo: row.applies_to,
+    serviceIds: (row.salon_offer_services ?? []).map((link) => link.service_id),
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    maxRedemptions: row.max_redemptions,
+    redemptionCount: row.redemption_count ?? 0,
+    isActive: row.is_active,
+  }
+}
+
 export function mapCrmSalonToWeb(
   row: CrmSalonRow,
   services: CrmServiceRow[],
   staff: CrmStaffRow[],
   reviews: CrmSalonReviewRow[] = [],
+  packages: CrmPackageRow[] = [],
+  offers: CrmOfferRow[] = [],
 ): Salon {
   const activeServices = services
     .filter((s) => s.is_active)
@@ -246,14 +342,27 @@ export function mapCrmSalonToWeb(
   const fallback = fallbackImageForSalon(row.id)
   const imageUrl = listUrl || coverUrl || fallback
   const coverImageUrl = coverUrl || listUrl || fallback
+
+  const activePackages = packages
+    .filter((pkg) => pkg.is_active && (pkg.status == null || pkg.status === "active"))
+    .filter((pkg) => pkg.marketplace_visible !== false)
+    .sort((a, b) => {
+      const featuredDiff = Number(b.is_featured) - Number(a.is_featured)
+      if (featuredDiff !== 0) return featuredDiff
+      return a.sort_order - b.sort_order || a.name.localeCompare(b.name)
+    })
+    .map((pkg) => mapPackage(pkg, imageUrl))
+
+  const activeOffers = filterBookableOffers(
+    offers.filter((offer) => offer.is_active).map(mapOffer),
+  ).sort((a, b) => a.title.localeCompare(b.title))
+
   const description =
     activeServices[0]?.includes[0] ??
     `Book trusted services at ${row.name} in ${area}. Transparent pricing and easy online booking.`
 
-  const latitude =
-    typeof row.latitude === "number" && Number.isFinite(row.latitude) ? row.latitude : undefined
-  const longitude =
-    typeof row.longitude === "number" && Number.isFinite(row.longitude) ? row.longitude : undefined
+  const latitude = parseSalonCoordinate(row.latitude)
+  const longitude = parseSalonCoordinate(row.longitude)
 
   const REVIEW_TYPES: SalonReviewType[] = [
     "Skill & technique",
@@ -311,8 +420,10 @@ export function mapCrmSalonToWeb(
   const isFeatured =
     row.is_featured === true && (featuredUntil == null || featuredUntil > Date.now())
 
+  const salonId = row.slug || row.id
+
   return {
-    id: row.slug || row.id,
+    id: salonId,
     crmSalonId: row.id,
     name: row.name,
     area,
@@ -331,10 +442,15 @@ export function mapCrmSalonToWeb(
     phone: row.phone?.trim() || "Contact salon for details",
     hours: formatSalonHours(row.settings),
     services: activeServices,
-    gallery: (() => {
-      const urls = [coverUrl, listUrl].filter((url): url is string => Boolean(url))
-      return urls.length > 0 ? urls : imageUrl ? [imageUrl] : []
-    })(),
+    packages: activePackages,
+    offers: activeOffers,
+    gallery: buildSalonGalleryImages({
+      imageUrl,
+      coverImageUrl: coverUrl,
+      listImageUrl: listUrl,
+      settings: row.settings,
+      serviceImageUrls: activeServices.map((service) => service.imageUrl),
+    }),
     customerReviews,
     team: activeStaff,
     amenities,

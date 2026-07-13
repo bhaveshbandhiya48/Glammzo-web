@@ -20,7 +20,7 @@ function buildOwnerWhatsAppMessage(input: {
     `${input.customerName} booked ${input.serviceNames}.`,
     `When: ${input.appointmentDate} at ${input.startTime}`,
     "",
-    "You have a new appointment — please open Glammzo CRM to accept or decline.",
+    "You have a new appointment. Please open Glammzo CRM to accept or decline.",
   ].join("\n")
 }
 

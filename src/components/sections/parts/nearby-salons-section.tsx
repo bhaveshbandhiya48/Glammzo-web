@@ -3,8 +3,11 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRightIcon, MapPinIcon, StarIcon } from "lucide-react"
+import { useMemo } from "react"
 
+import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
+import { applySalonDistances } from "@/lib/explore-distance"
 import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
 import { SectionHeader } from "@/components/shared/section-header"
@@ -32,7 +35,11 @@ function toNearbyPreview(salon: Salon) {
 
 export function NearbySalonsSection() {
   const { salons: catalog } = useSalonCatalog()
-  const nearbySalons = catalog.slice(0, 4).map(toNearbyPreview)
+  const origin = useExploreDistanceOrigin({})
+  const nearbySalons = useMemo(
+    () => applySalonDistances(catalog, origin).slice(0, 4).map(toNearbyPreview),
+    [catalog, origin],
+  )
   return (
     <MotionSection
       id="nearby"
@@ -81,8 +88,12 @@ export function NearbySalonsSection() {
                       <div className="flex flex-wrap items-center gap-2 text-sm text-white/70">
                         <MapPinIcon className="size-4 shrink-0" />
                         <span>{s.area}</span>
-                        <span>·</span>
-                        <span>{s.distanceKm.toFixed(1)} km</span>
+                        {s.distanceKm > 0 ? (
+                          <>
+                            <span>·</span>
+                            <span>{s.distanceKm.toFixed(1)} km</span>
+                          </>
+                        ) : null}
                         {s.isOpenNow ? (
                           <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
                             Open now

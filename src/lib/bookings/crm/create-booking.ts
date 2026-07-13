@@ -1,6 +1,6 @@
 import "server-only"
 
-import { pickStaffForSlot } from "@/lib/bookings/crm/availability"
+import { pickStaffForSlot, uniqueServiceIds } from "@/lib/bookings/crm/availability"
 import { validateAppointmentBusinessHours } from "@/lib/bookings/crm/business-hours"
 import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
 import type { CreateCrmBookingInput, CreateCrmBookingResult } from "@/lib/bookings/crm/types"
@@ -14,9 +14,21 @@ import {
   normalizeCustomerPhone,
   normalizeCustomerPhoneDigits,
 } from "@/lib/phone/normalize"
+import { getConsumerProfile } from "@/lib/auth/consumer-profile"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { notifySalonNewWebBooking } from "@/lib/bookings/crm/notify-salon-web-booking"
-import { computeResponseDeadline } from "@/lib/bookings/crm/web-booking-sla"
+import { notifyCustomerWebBookingPending } from "@/lib/bookings/crm/notify-customer-web-booking-pending"
+import {
+  incrementSalonOfferRedemption,
+  resolveBookingOfferDiscount,
+} from "@/lib/bookings/crm/validate-salon-offer"
+import {
+  BOOKING_ENGINE_CONFIG,
+  computeBookingExpiresAt,
+  isAppointmentBlockedByClosures,
+  isDateBeyondMaxAdvance,
+  isSalonOpenAt,
+} from "@/lib/bookings/crm/booking-confirmation-engine"
 
 export async function createCrmWebBooking(
   input: CreateCrmBookingInput,
@@ -59,12 +71,13 @@ export async function createCrmWebBooking(
   }
 
   const supabase = createAdminClient()
+  const uniqueIds = uniqueServiceIds(input.serviceIds)
 
   const { data: serviceRows } = await supabase
     .from("services")
     .select("id, name, duration_minutes, price, is_active")
     .eq("salon_id", input.crmSalonId)
-    .in("id", input.serviceIds)
+    .in("id", uniqueIds)
     .is("deleted_at", null)
 
   const services = (serviceRows ?? []) as Array<{
@@ -75,7 +88,7 @@ export async function createCrmWebBooking(
     is_active: boolean
   }>
 
-  if (services.length !== input.serviceIds.length) {
+  if (services.length !== uniqueIds.length) {
     return {
       success: false,
       error: "One or more selected services are no longer available.",
@@ -91,10 +104,90 @@ export async function createCrmWebBooking(
     }
   }
 
-  const durationMinutes = services.reduce(
-    (total, service) => total + service.duration_minutes,
+  const serviceById = new Map(services.map((service) => [service.id, service]))
+  const durationMinutes = input.serviceIds.reduce(
+    (total, serviceId) => total + (serviceById.get(serviceId)?.duration_minutes ?? 0),
     0,
   )
+
+  const selectedPackage = input.packageId
+    ? (
+        await supabase
+          .from("salon_packages")
+          .select(
+            "id, package_price, salon_package_items(service_id, quantity, services(name, price, duration_minutes))",
+          )
+          .eq("id", input.packageId)
+          .eq("salon_id", input.crmSalonId)
+          .is("deleted_at", null)
+          .maybeSingle()
+      ).data
+    : null
+
+  const webServices = services.map((service) => ({
+    id: service.id,
+    name: service.name,
+    durationMin: service.duration_minutes,
+    price: Number.parseFloat(String(service.price)) || 0,
+    category: "",
+    imageUrl: "",
+    includes: [] as string[],
+  }))
+
+  const mappedPackage =
+    selectedPackage && input.packageBooking
+      ? {
+          id: (selectedPackage as { id: string }).id,
+          name: "",
+          description: "",
+          shortDescription: "",
+          detailedDescription: "",
+          imageUrl: "",
+          packagePrice:
+            Number.parseFloat(
+              String((selectedPackage as { package_price: string | number }).package_price),
+            ) || 0,
+          comparePrice: 0,
+          amountSaved: 0,
+          discountPercent: 0,
+          totalDurationMin: 0,
+          showComparePrice: false,
+          showSavings: false,
+          allowOnlineBooking: true,
+          servicePreviewCount: 3,
+          badge: null,
+          isFeatured: false,
+          sortOrder: 0,
+          items: (
+            (selectedPackage as {
+              salon_package_items?: Array<{ service_id: string; quantity: number }>
+            }).salon_package_items ?? []
+          ).map((item) => ({
+            serviceId: item.service_id,
+            serviceName: "",
+            quantity: item.quantity,
+          })),
+        }
+      : null
+
+  const offerResult = await resolveBookingOfferDiscount({
+    salonId: input.crmSalonId,
+    promoCode: input.promoCode,
+    services: webServices,
+    selectedServiceIds: uniqueIds,
+    selectedPackage: mappedPackage,
+  })
+
+  if (!offerResult.ok) {
+    return {
+      success: false,
+      error: offerResult.error,
+      code: "invalid",
+    }
+  }
+
+  const appliedOffer = offerResult.discount
+
   const startTime = normalizeTime(input.startTime)
   const endTime = addMinutesToTime(startTime, durationMinutes)
 
@@ -119,6 +212,29 @@ export async function createCrmWebBooking(
     }
   }
 
+  if (isDateBeyondMaxAdvance(input.appointmentDate, context.timezone)) {
+    return {
+      success: false,
+      error: `Appointments can only be booked up to ${BOOKING_ENGINE_CONFIG.maxAdvanceBookingDays} days in advance.`,
+      code: "invalid",
+    }
+  }
+
+  if (
+    isAppointmentBlockedByClosures(
+      input.appointmentDate,
+      startTime,
+      endTime,
+      context.businessClosures,
+    )
+  ) {
+    return {
+      success: false,
+      error: "This salon is closed for the selected date and time.",
+      code: "invalid",
+    }
+  }
+
   const hoursCheck = validateAppointmentBusinessHours(
     context.businessHours,
     input.appointmentDate,
@@ -132,11 +248,12 @@ export async function createCrmWebBooking(
 
   const staffId = pickStaffForSlot(
     context,
-    input.serviceIds,
+    uniqueIds,
     input.appointmentDate,
     startTime,
     endTime,
     input.preferredStaffId,
+    { packageBooking: input.packageBooking },
   )
 
   if (!staffId) {
@@ -163,13 +280,36 @@ export async function createCrmWebBooking(
     }
   }
 
-  const serviceNames = services.map((service) => service.name).join(", ")
+  const serviceNames = input.serviceIds
+    .map((serviceId) => serviceById.get(serviceId)?.name)
+    .filter((name): name is string => Boolean(name))
+    .join(", ")
   const noteParts = [`Web booking: ${serviceNames}`]
+  if (appliedOffer) {
+    noteParts.push(
+      `Promo ${appliedOffer.code} applied (estimated savings ${appliedOffer.discountAmount})`,
+    )
+  }
   if (input.notes?.trim()) {
     noteParts.push(input.notes.trim())
   }
 
-  const responseDeadline = computeResponseDeadline(context.webBooking.responseSlaMinutes)
+  let internalNotes = "source:glamzzo_web"
+  if (appliedOffer) {
+    internalNotes += `|promo:${appliedOffer.code}|offer_id:${appliedOffer.offerId}|discount:${appliedOffer.discountAmount}`
+  }
+
+  const bookedAt = new Date()
+  const createdDuringClosedHours = !isSalonOpenAt(
+    context.businessHours,
+    context.timezone,
+    bookedAt,
+  )
+  const expiresAt = computeBookingExpiresAt(
+    context.businessHours,
+    context.timezone,
+    bookedAt,
+  )
 
   const { data: appointment, error: insertError } = await supabase
     .from("appointments")
@@ -181,12 +321,15 @@ export async function createCrmWebBooking(
       appointment_date: input.appointmentDate,
       start_time: startTime,
       end_time: endTime,
-      status: "scheduled",
+      status: "pending",
       notes: noteParts.join("\n"),
-      internal_notes: "source:glamzzo_web",
+      internal_notes: internalNotes,
       booking_source: "glamzzo_web",
       duration_minutes: durationMinutes,
-      response_deadline: responseDeadline,
+      expires_at: expiresAt,
+      response_deadline: expiresAt,
+      slot_reserved: true,
+      created_during_closed_hours: createdDuringClosedHours,
     })
     .select("id")
     .single()
@@ -203,7 +346,7 @@ export async function createCrmWebBooking(
   const appointmentId = (appointment as { id: string }).id
 
   const appointmentServices = input.serviceIds.map((serviceId, index) => {
-    const service = services.find((item) => item.id === serviceId)
+    const service = serviceById.get(serviceId)
     return {
       appointment_id: appointmentId,
       service_id: serviceId,
@@ -221,6 +364,10 @@ export async function createCrmWebBooking(
     console.error("[bookings] appointment_services insert failed:", servicesError.message)
   }
 
+  if (appliedOffer) {
+    await incrementSalonOfferRedemption(appliedOffer.offerId)
+  }
+
   try {
     await notifySalonNewWebBooking({
       salonId: input.crmSalonId,
@@ -230,6 +377,17 @@ export async function createCrmWebBooking(
       serviceNames,
       appointmentDate: input.appointmentDate,
       startTime,
+    })
+    await notifyCustomerWebBookingPending({
+      salonId: input.crmSalonId,
+      appointmentId,
+      customerId,
+      customerName,
+      customerPhone,
+      serviceNames,
+      appointmentDate: input.appointmentDate,
+      startTime,
+      salonName: context.salonName,
     })
   } catch (error) {
     console.error("[bookings] salon notify failed:", error)
@@ -254,6 +412,17 @@ async function resolveCustomerId(
 ) {
   const normalizedPhone = normalizeCustomerPhone(phone)
   const phoneDigits = normalizeCustomerPhoneDigits(phone)
+  const profile = await getConsumerProfile(phone)
+
+  const customerFields = {
+    full_name: fullName,
+    first_name: fullName.split(" ")[0] ?? fullName,
+    last_name: fullName.split(" ").slice(1).join(" ") || null,
+    email: email?.trim() || profile?.email?.trim() || null,
+    gender: profile?.gender ?? null,
+    date_of_birth: profile?.dateOfBirth ?? null,
+    address: profile?.address ?? null,
+  }
 
   const { data: existing } = await supabase
     .from("customers")
@@ -264,33 +433,20 @@ async function resolveCustomerId(
     .maybeSingle()
 
   if (existing) {
-    const [firstName, ...rest] = fullName.split(" ")
-    const normalizedEmail = email?.trim() || null
-
     await supabase
       .from("customers")
-      .update({
-        first_name: firstName ?? fullName,
-        last_name: rest.join(" ") || null,
-        full_name: fullName,
-        email: normalizedEmail,
-      })
+      .update(customerFields)
       .eq("id", (existing as { id: string }).id)
 
     return (existing as { id: string }).id
   }
 
-  const [firstName, ...rest] = fullName.split(" ")
-
   const { data: created, error } = await supabase
     .from("customers")
     .insert({
       salon_id: salonId,
-      first_name: firstName ?? fullName,
-      last_name: rest.join(" ") || null,
-      full_name: fullName,
+      ...customerFields,
       phone: normalizedPhone,
-      email: email?.trim() || null,
       total_spent: 0,
       lifetime_spend: 0,
       total_visits: 0,

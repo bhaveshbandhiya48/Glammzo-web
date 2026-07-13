@@ -44,6 +44,8 @@ export const demoSalons: Salon[] = [
     gallery: [media.salons.s1, media.categories.hair],
     customerReviews: salonCustomerReviews.s1,
     team: salonTeamBySalonId.s1,
+    packages: [],
+    offers: [],
     services: [
       {
         id: "s1-1",
@@ -98,6 +100,8 @@ export const demoSalons: Salon[] = [
     gallery: [media.salons.s2, media.categories.spa],
     customerReviews: salonCustomerReviews.s2,
     team: salonTeamBySalonId.s2,
+    packages: [],
+    offers: [],
     services: [
       {
         id: "s2-1",
@@ -144,6 +148,8 @@ export const demoSalons: Salon[] = [
     gallery: [media.salons.s3, media.categories.nails],
     customerReviews: salonCustomerReviews.s3,
     team: salonTeamBySalonId.s3,
+    packages: [],
+    offers: [],
     services: [
       {
         id: "s3-1",
@@ -190,6 +196,8 @@ export const demoSalons: Salon[] = [
     gallery: [media.salons.s4, media.categories.makeup],
     customerReviews: salonCustomerReviews.s4,
     team: salonTeamBySalonId.s4,
+    packages: [],
+    offers: [],
     services: [
       {
         id: "s4-1",

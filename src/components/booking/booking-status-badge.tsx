@@ -14,7 +14,7 @@ export function BookingStatusBadge({ status, className }: BookingStatusBadgeProp
       ? "default"
       : status === "pending"
         ? "secondary"
-        : status === "declined"
+        : status === "declined" || status === "expired"
           ? "destructive"
           : "secondary"
 

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect } from "react"
 
 /**
- * Minimal error UI — no app components or CSS variables so this still loads
+ * Minimal error UI, no app components or CSS variables so this still loads
  * when the build cache or main bundle is broken.
  */
 export default function Error({

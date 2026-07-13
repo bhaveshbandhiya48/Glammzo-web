@@ -40,14 +40,15 @@ export async function cancelCrmWebBooking(
     return { success: false, error: "You cannot cancel this booking." }
   }
 
-  if (row.status === "cancelled" || row.status === "completed") {
+  if (row.status === "cancelled" || row.status === "completed" || row.status === "rejected" || row.status === "expired") {
     return { success: false, error: "This booking can no longer be cancelled." }
   }
 
   const { error: updateError } = await supabase
     .from("appointments")
     .update({
-      status: "cancelled",
+      status: "cancelled_by_customer",
+      slot_reserved: false,
       cancelled_at: new Date().toISOString(),
       cancellation_reason: CUSTOMER_CANCELLED_REASON,
     })

@@ -1,7 +1,7 @@
 import Link from "next/link"
 
+import { LogoutFormButton } from "@/components/auth/logout-form-button"
 import { resolveSessionGreeting } from "@/lib/auth/display"
-import { logoutAction } from "@/lib/auth/auth-actions"
 import { getSession } from "@/lib/auth/session"
 import { DashboardNav } from "@/components/layout/dashboard-nav"
 import { Logo } from "@/components/layout/logo"
@@ -20,11 +20,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <Button asChild variant="ghost" className="rounded-full text-sm">
               <Link href="/explore">Explore</Link>
             </Button>
-            <form action={logoutAction}>
-              <Button variant="outline" size="sm" className="rounded-full">
-                Log out
-              </Button>
-            </form>
+            <LogoutFormButton variant="outline" size="sm" className="rounded-full" pendingLabel="Logging out…">
+              Log out
+            </LogoutFormButton>
           </div>
         </Container>
       </header>

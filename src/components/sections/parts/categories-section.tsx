@@ -11,7 +11,7 @@ import { CategoryStackCard } from "@/components/services/category-stack-card"
 import { Button } from "@/components/ui/button"
 import { MotionDiv, MotionSection, fadeUpSubtle } from "@/components/shared/motion"
 
-/** Sticky offset under navbar — small step = subtle stack overlap */
+/** Sticky offset under navbar, small step = subtle stack overlap */
 const STACK_TOP_BASE = "5.25rem"
 const STACK_TOP_STEP = "0.4rem"
 

@@ -15,6 +15,7 @@ import {
   isGoogleMapsConfigured,
 } from "@/lib/maps/config"
 import type { NearbySalonRecord, NearbySalonsResponse } from "@/lib/maps/nearby-salon.types"
+import { nearbyRecordToSalonPreview } from "@/lib/maps/explore-map"
 import { requestUserLocation } from "@/lib/geo"
 import { cn } from "@/lib/utils"
 
@@ -49,6 +50,11 @@ export function CustomerSalonMap() {
   const selectedSalon = useMemo(
     () => salons.find((salon) => salon.id === selectedSalonId) ?? null,
     [salons, selectedSalonId],
+  )
+
+  const sidebarSalons = useMemo(
+    () => salons.map((salon) => nearbyRecordToSalonPreview(salon)),
+    [salons],
   )
 
   const loadNearbySalons = useCallback(
@@ -187,7 +193,7 @@ export function CustomerSalonMap() {
         <div
           className={cn(
             "grid gap-4 lg:items-start",
-            mapExpanded ? "grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_360px]",
+            mapExpanded ? "grid-cols-1" : "lg:grid-cols-2",
           )}
         >
         {viewState === "locating" || viewState === "loading" ? (
@@ -222,7 +228,7 @@ export function CustomerSalonMap() {
 
         {!mapExpanded && viewState === "ready" ? (
           <SalonMapSidebarList
-            salons={salons}
+            salons={sidebarSalons}
             selectedSalonId={selectedSalonId}
             onSelectSalon={setSelectedSalonId}
             className="min-h-[min(72vh,42rem)]"

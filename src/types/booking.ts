@@ -5,6 +5,7 @@ export type BookingStatus =
   | "completed"
   | "cancelled"
   | "declined"
+  | "expired"
 
 export type BookingServiceItem = {
   id: string

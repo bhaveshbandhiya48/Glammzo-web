@@ -19,6 +19,7 @@ export function mapCrmAppointmentToBookingStatus(input: {
   status: string
   appointmentDate: string
   cancellationReason?: string | null
+  rejectReason?: string | null
   bookingSource?: string | null
   internalNotes?: string | null
 }): BookingStatus {
@@ -26,6 +27,22 @@ export function mapCrmAppointmentToBookingStatus(input: {
     bookingSource: input.bookingSource,
     internalNotes: input.internalNotes,
   })
+
+  if (input.status === "pending" && isWebBooking) {
+    return "pending"
+  }
+
+  if (input.status === "rejected") {
+    return "declined"
+  }
+
+  if (input.status === "expired") {
+    return "expired"
+  }
+
+  if (input.status === "cancelled_by_customer") {
+    return "cancelled"
+  }
 
   if (input.status === "cancelled" || input.status === "no_show") {
     if (
@@ -45,7 +62,7 @@ export function mapCrmAppointmentToBookingStatus(input: {
     return "pending"
   }
 
-  if (input.status === "confirmed" || input.status === "in_progress") {
+  if (input.status === "confirmed" || input.status === "checked_in" || input.status === "in_progress") {
     const today = new Date().toISOString().slice(0, 10)
     if (input.appointmentDate >= today) {
       return "confirmed"
@@ -64,11 +81,13 @@ export function mapCrmAppointmentToBookingStatus(input: {
 export function getBookingStatusLabel(status: BookingStatus): string {
   switch (status) {
     case "pending":
-      return "Pending salon confirmation"
+      return "Pending confirmation"
     case "confirmed":
       return "Confirmed"
     case "declined":
-      return "Declined by salon"
+      return "Rejected"
+    case "expired":
+      return "Expired"
     case "cancelled":
       return "Cancelled"
     case "completed":
@@ -80,7 +99,16 @@ export function getBookingStatusLabel(status: BookingStatus): string {
   }
 }
 
-export function extractDeclineReasonForDisplay(cancellationReason?: string | null) {
+export function extractDeclineReasonForDisplay(input: {
+  rejectReason?: string | null
+  cancellationReason?: string | null
+}) {
+  if (input.rejectReason?.trim()) {
+    return input.rejectReason.trim()
+  }
+
+  const cancellationReason = input.cancellationReason
+
   if (!cancellationReason?.trim()) {
     return null
   }
@@ -106,5 +134,5 @@ export function canConsumerRescheduleBooking(status: BookingStatus) {
 }
 
 export function canConsumerRebookBooking(status: BookingStatus) {
-  return status === "completed" || status === "cancelled" || status === "declined"
+  return status === "completed" || status === "cancelled" || status === "declined" || status === "expired"
 }

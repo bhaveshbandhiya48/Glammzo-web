@@ -55,12 +55,14 @@ export function TimeSlotPicker({
     [slots, value],
   )
 
-  const isUnavailable = !hasDate || closed || slots.length === 0
+  const isUnavailable = !hasDate || (closed && slots.length === 0)
   const unavailableMessage = !hasDate
     ? waitingMessage
     : closed
       ? closedMessage
       : emptyMessage
+
+  const hasSelectableSlot = slots.some((slot) => !slot.disabled)
 
   const selectSlot = (slot: TimeSlotOption) => {
     if (slot.disabled) return
@@ -87,7 +89,12 @@ export function TimeSlotPicker({
           )}
         >
           <span className="truncate">
-            {selectedLabel || (isUnavailable ? unavailableMessage : placeholder)}
+            {selectedLabel ||
+              (isUnavailable
+                ? unavailableMessage
+                : hasSelectableSlot
+                  ? placeholder
+                  : "All slots booked")}
           </span>
           <span
             className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground"
@@ -102,38 +109,57 @@ export function TimeSlotPicker({
         align="start"
       >
         <div className="border-b border-border/70 px-3 py-2.5">
-          <p className="font-heading text-sm font-semibold text-foreground">
-            Available slots
+          <p className="font-heading text-sm font-semibold text-foreground">Time slots</p>
+          <p className="mt-0.5 text-xs text-foreground/55">
+            Booked slots are shown but cannot be selected.
           </p>
         </div>
         <div className="max-h-56 overflow-y-auto p-3">
-          <div className="grid grid-cols-2 gap-2">
-            {slots.map((slot) => {
-              const active = value === slot.value
+          {slots.length === 0 ? (
+            <p className="px-1 py-2 text-center text-xs text-foreground/55">{emptyMessage}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {slots.map((slot) => {
+                const active = value === slot.value
 
-              return (
-                <button
-                  key={slot.value}
-                  type="button"
-                  disabled={slot.disabled}
-                  title={slot.hint}
-                  onClick={() => selectSlot(slot)}
-                  className={cn(
-                    "cursor-pointer rounded-full border px-2 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors sm:text-sm",
-                    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
-                    slot.disabled &&
-                      "cursor-not-allowed border-border/50 text-foreground/35 line-through",
-                    !slot.disabled &&
-                      (active
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                        : "border-border/80 bg-background hover:border-primary/30 hover:bg-accent/40"),
-                  )}
-                >
-                  {slot.label}
-                </button>
-              )
-            })}
-          </div>
+                return (
+                  <button
+                    key={slot.value}
+                    type="button"
+                    disabled={slot.disabled}
+                    title={slot.hint}
+                    onClick={() => selectSlot(slot)}
+                    className={cn(
+                      "cursor-pointer rounded-full border px-2 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors sm:text-sm",
+                      "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
+                      slot.disabled &&
+                        "cursor-not-allowed border-border/50 bg-muted/30 text-foreground/40",
+                      !slot.disabled &&
+                        (active
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                          : "border-border/80 bg-background hover:border-primary/30 hover:bg-accent/40"),
+                    )}
+                  >
+                    <span className={cn(slot.disabled && slot.hint === "Already booked" && "line-through")}>
+                      {slot.label}
+                    </span>
+                    {slot.disabled && slot.hint ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 block text-[10px] font-normal uppercase tracking-wide",
+                          slot.hint === "Already booked"
+                            ? "text-foreground/45"
+                            : "text-foreground/40",
+                        )}
+                      >
+                        {slot.hint}
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
         {value ? (
           <div className="border-t border-border/70 px-3 py-2">

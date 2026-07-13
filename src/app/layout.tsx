@@ -2,6 +2,9 @@ import type { Metadata } from "next"
 import { Bricolage_Grotesque, Inter, Sora } from "next/font/google"
 
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
+import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
+import { ExploreDistanceOriginProvider } from "@/providers/explore-distance-origin-provider"
+import { SalonCatalogProvider } from "@/providers/salon-catalog-provider"
 import "./globals.css"
 
 const inter = Inter({
@@ -64,10 +67,17 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${sora.variable} ${logoFont.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full overflow-x-clip bg-background text-foreground">
+      <body
+        className="min-h-full overflow-x-clip bg-background text-foreground"
+        suppressHydrationWarning
+      >
         <LocationBootstrap />
-        {children}
+        <NavigationScrollManager />
+        <ExploreDistanceOriginProvider>
+          <SalonCatalogProvider>{children}</SalonCatalogProvider>
+        </ExploreDistanceOriginProvider>
       </body>
     </html>
   )

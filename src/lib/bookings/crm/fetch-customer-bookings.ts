@@ -243,7 +243,10 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       hasVerifiedReview: verifiedReviewAppointmentIds.has(row.id),
       staffId: row.staff_id ?? undefined,
       staffName: staff?.full_name?.trim() || undefined,
-      declineReason: extractDeclineReasonForDisplay(row.cancellation_reason) ?? undefined,
+      declineReason:
+        extractDeclineReasonForDisplay({
+          cancellationReason: row.cancellation_reason,
+        }) ?? undefined,
       createdAt: row.created_at,
     }
   })

@@ -21,6 +21,12 @@ export function toggleServiceId(ids: string[], id: string): string[] {
   return ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
 }
 
+export function removeOneServiceId(ids: string[], id: string): string[] {
+  const index = ids.indexOf(id)
+  if (index === -1) return ids
+  return [...ids.slice(0, index), ...ids.slice(index + 1)]
+}
+
 export function sumServicePrice(services: Pick<SalonService, "price">[]): number {
   return services.reduce((sum, s) => sum + s.price, 0)
 }
@@ -40,12 +46,19 @@ export function formatDuration(totalMin: number): string {
 export function buildBookHref(
   salonId: string,
   serviceIds: string[],
-  authenticated: boolean
+  authenticated: boolean,
+  packageId?: string | null,
 ): string {
-  const base =
-    serviceIds.length > 0
-      ? `/book/${salonId}?services=${serviceIds.join(",")}`
-      : `/book/${salonId}`
+  const params = new URLSearchParams()
+  if (serviceIds.length > 0) {
+    params.set("services", serviceIds.join(","))
+  }
+  if (packageId) {
+    params.set("package", packageId)
+  }
+
+  const qs = params.toString()
+  const base = qs ? `/book/${salonId}?${qs}` : `/book/${salonId}`
   return authenticated ? base : `/login?next=${encodeURIComponent(base)}`
 }
 

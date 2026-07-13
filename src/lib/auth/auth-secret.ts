@@ -18,9 +18,13 @@ export function resolveAuthSecret():
 }
 
 export function shouldExposeDebugOtp() {
+  if (process.env.NODE_ENV === "production") {
+    return false
+  }
+
   return (
-    process.env.NODE_ENV !== "production" ||
     process.env.SMS_PROVIDER === "mock" ||
-    process.env.SMS_DEBUG_OTP === "true"
+    process.env.SMS_DEBUG_OTP === "true" ||
+    !process.env.SMS_PROVIDER?.trim()
   )
 }

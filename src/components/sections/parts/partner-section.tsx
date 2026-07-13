@@ -25,7 +25,7 @@ const benefits = [
   },
   {
     icon: CalendarCheckIcon,
-    title: "Fewer no-shows",
+    title: "Fewer no shows",
     description: "Reminders and clear confirmations keep chairs full.",
   },
   {
@@ -106,7 +106,7 @@ export function PartnerSection() {
                 </div>
               </div>
 
-              {/* Desktop CTA rail — centered stack (avoids large empty gap from justify-between) */}
+              {/* Desktop CTA rail, centered stack (avoids large empty gap from justify-between) */}
               <aside className="hidden flex-col justify-center gap-6 border-t border-border/60 bg-muted/25 p-8 lg:flex lg:border-l lg:border-t-0 lg:p-10">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground/45">

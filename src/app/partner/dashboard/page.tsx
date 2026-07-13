@@ -29,7 +29,7 @@ export default function PartnerDashboardPage() {
               <p className="font-heading text-lg font-semibold">Application in review</p>
               <p className="text-sm leading-relaxed text-foreground/65">
                 Once your salon is verified, you&apos;ll manage services, availability, staff,
-                and bookings here. Connect your account system to enable partner sign-in.
+                and bookings here. Connect your account system to enable partner sign in.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button asChild className="rounded-full">

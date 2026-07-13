@@ -4,12 +4,14 @@ import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 
 import { HeroSalonSlider } from "@/components/hero/hero-salon-slider"
+import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { useUserLocation } from "@/hooks/use-user-location"
 import { buildExploreNearMeHref } from "@/lib/location-storage"
 
 export function HeroVisual() {
-  const { browseCity, coords } = useUserLocation()
+  const { browseCity, coords, nearMe } = useUserLocation()
+  const origin = useExploreDistanceOrigin({})
   const { salons, loaded } = useSalonCatalog()
   const exploreHref = coords
     ? buildExploreNearMeHref(coords.latitude, coords.longitude)
@@ -24,7 +26,12 @@ export function HeroVisual() {
 
       <div className="relative space-y-3 rounded-[1.5rem] border border-border/80 bg-card/60 p-3 shadow-[0_24px_48px_-32px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.03] backdrop-blur-sm">
         {loaded ? (
-          <HeroSalonSlider salons={salons} coords={coords} browseCity={browseCity} />
+          <HeroSalonSlider
+            salons={salons}
+            origin={origin}
+            browseCity={browseCity}
+            hasDeviceLocation={nearMe}
+          />
         ) : (
           <div className="aspect-[4/3] w-full animate-pulse rounded-[1.25rem] bg-muted" />
         )}

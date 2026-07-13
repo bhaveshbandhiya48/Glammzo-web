@@ -14,7 +14,7 @@ import {
 
 type ExploreScatterMapProps = {
   salons: Salon[]
-  /** From URL ?near=1 — prefer sorting by user coordinates */
+  /** From URL ?near=1, prefer sorting by user coordinates */
   nearFromUrl?: boolean
   urlLatitude?: number
   urlLongitude?: number

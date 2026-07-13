@@ -151,7 +151,13 @@ export function HeroSearchForm() {
     }
   }, [])
 
-  const suggestions = getSearchSuggestions(salons, query)
+  const suggestions = useMemo(() => {
+    const trimmed = query.trim()
+    if (trimmed.length < 2) {
+      return { salons: [], services: [], categories: [] }
+    }
+    return getSearchSuggestions(salons, trimmed)
+  }, [salons, query])
   const hasQueryMatches =
     suggestions.salons.length > 0 ||
     suggestions.services.length > 0 ||

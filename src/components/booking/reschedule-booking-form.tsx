@@ -6,7 +6,8 @@ import { rescheduleBookingAction } from "@/lib/bookings/actions"
 import {
   findFirstAvailableDate,
   formatSlotLabel,
-  getAvailableSlotsForDate,
+  getTimeSlotOptionsForDate,
+  slotStatusHint,
 } from "@/lib/bookings/crm/availability"
 import type { SalonBookingContext } from "@/lib/bookings/crm/types"
 import { DATE_INPUT_PLACEHOLDER } from "@/lib/date-utils"
@@ -43,15 +44,17 @@ export function RescheduleBookingForm({
   const [submitting, setSubmitting] = useState(false)
 
   const slotResult = useMemo(
-    () => getAvailableSlotsForDate(bookingContext, date, durationMin, serviceIds),
+    () => getTimeSlotOptionsForDate(bookingContext, date, durationMin, serviceIds),
     [bookingContext, date, durationMin, serviceIds],
   )
 
   const timeSlotOptions = useMemo(
     () =>
-      (slotResult.slots ?? []).map((slot) => ({
-        value: slot,
-        label: formatSlotLabel(slot),
+      (slotResult.slots ?? []).map((entry) => ({
+        value: entry.slot,
+        label: formatSlotLabel(entry.slot),
+        disabled: entry.status !== "available",
+        hint: slotStatusHint(entry.status),
       })),
     [slotResult.slots],
   )
@@ -72,7 +75,7 @@ export function RescheduleBookingForm({
 
       <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground/75">
         Rescheduling your visit at <span className="font-medium text-foreground">{salonName}</span>.
-        Your services stay the same — pick a new date and time.
+        Your services stay the same. Pick a new date and time.
       </div>
 
       <div className="space-y-2">
@@ -99,6 +102,7 @@ export function RescheduleBookingForm({
           hasDate={Boolean(date)}
           closed={slotResult.closed}
           closedMessage={slotResult.closedMessage}
+          emptyMessage="No time slots for this day."
           slots={timeSlotOptions}
           placeholder="Select time"
         />

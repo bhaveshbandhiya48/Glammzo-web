@@ -29,10 +29,11 @@ import { PageSection } from "@/components/layout/page-section"
 import { SectionHeader } from "@/components/shared/section-header"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { SalonBookingCatalogSection } from "@/components/salons/salon-booking-catalog-section"
+import { SalonOffersSection } from "@/components/salons/salon-offers-section"
 import { SalonDistance } from "@/components/salons/salon-distance"
 import { SalonGalleryReviews } from "@/components/salons/salon-gallery-reviews"
 import { SalonListingPreviewBanner } from "@/components/salons/salon-listing-preview-banner"
-import { SalonServicesSection } from "@/components/salons/salon-services-section"
 import { FavoriteSalonButton } from "@/components/favorites/favorite-salon-button"
 import { Footer } from "@/components/sections/parts/footer"
 
@@ -177,18 +178,32 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
           </Container>
         </PageSection>
 
+        {salon.offers.length > 0 ? (
+          <PageSection>
+            <SalonOffersSection
+              offers={salon.offers}
+              salonId={salon.id}
+              authenticated={!!session}
+            />
+          </PageSection>
+        ) : null}
+
         <PageSection>
           <SectionHeader
-            eyebrow="Book"
-            title="Services & pricing"
-            subtitle="Add one or more treatments to your visit. Transparent pricing before you confirm."
+            eyebrow="Book online"
+            title="Packages & services"
+            subtitle="Start with a value package or choose individual services."
+            className="mb-8"
           />
-          <SalonServicesSection
+          <SalonBookingCatalogSection
             services={salon.services}
-            priceFrom={salon.priceFrom}
+            packages={salon.packages}
             salonId={salon.id}
             salonName={salon.name}
+            salonCoverImageUrl={salon.coverImageUrl}
             authenticated={!!session}
+            customerReviews={salon.customerReviews}
+            cancellationPolicy={salon.cancellationPolicy}
           />
         </PageSection>
 

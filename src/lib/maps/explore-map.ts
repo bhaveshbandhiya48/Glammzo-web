@@ -1,19 +1,27 @@
-import { distanceToSalonKm, getSalonCoordinates } from "@/lib/geo"
+import { computeSalonDistanceKm } from "@/lib/explore-distance"
+import { haversineKm } from "@/lib/geo"
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/config"
+import { resolveSalonCoordinates } from "@/lib/salon-coordinates"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
 import type { Salon } from "@/types/salon"
 
 export function mapSalonToNearbyRecord(
   salon: Salon,
   center?: { latitude: number; longitude: number } | null,
-): NearbySalonRecord {
-  const coords = getSalonCoordinates(salon)
+): NearbySalonRecord | null {
+  const coords = resolveSalonCoordinates(salon)
+  if (!coords) {
+    return null
+  }
+
   const distanceKm =
     center != null
-      ? distanceToSalonKm(salon, center.latitude, center.longitude)
-      : salon.distanceKm > 0
-        ? salon.distanceKm
-        : 0
+      ? haversineKm(center.latitude, center.longitude, coords.lat, coords.lng)
+      : computeSalonDistanceKm(salon, {
+          latitude: DEFAULT_MAP_CENTER.latitude,
+          longitude: DEFAULT_MAP_CENTER.longitude,
+          isDefaultCity: true,
+        }) ?? 0
 
   return {
     id: salon.id,
@@ -47,7 +55,17 @@ export function mapSalonsToNearbyRecords(
   salons: Salon[],
   center?: { latitude: number; longitude: number } | null,
 ): NearbySalonRecord[] {
-  return salons.map((salon) => mapSalonToNearbyRecord(salon, center))
+  return salons
+    .map((salon) => mapSalonToNearbyRecord(salon, center))
+    .filter((salon): salon is NearbySalonRecord => salon !== null)
+}
+
+/** Map center for explore, user GPS when available, otherwise Bengaluru default. */
+export function getExploreMapCenter(origin: { latitude: number; longitude: number }) {
+  return {
+    latitude: origin.latitude,
+    longitude: origin.longitude,
+  }
 }
 
 /** Minimal Salon shape for reusing SalonCard outside the explore list grid. */
@@ -69,6 +87,8 @@ export function nearbyRecordToSalonPreview(record: NearbySalonRecord): Salon {
     address: record.fullAddress,
     phone: "",
     hours: "",
+    packages: [],
+    offers: [],
     services: [],
     gallery: [],
     customerReviews: [],
@@ -76,14 +96,9 @@ export function nearbyRecordToSalonPreview(record: NearbySalonRecord): Salon {
   }
 }
 
-export function getFallbackMapCenter(salons: Salon[]) {
-  if (salons.length === 0) {
-    return {
-      latitude: DEFAULT_MAP_CENTER.latitude,
-      longitude: DEFAULT_MAP_CENTER.longitude,
-    }
+export function getFallbackMapCenter() {
+  return {
+    latitude: DEFAULT_MAP_CENTER.latitude,
+    longitude: DEFAULT_MAP_CENTER.longitude,
   }
-
-  const coords = getSalonCoordinates(salons[0]!)
-  return { latitude: coords.lat, longitude: coords.lng }
 }

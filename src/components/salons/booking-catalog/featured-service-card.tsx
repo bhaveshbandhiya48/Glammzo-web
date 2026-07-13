@@ -1,0 +1,108 @@
+"use client"
+
+import Image from "next/image"
+import { ClockIcon, PlusIcon, XIcon } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { formatInr, resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
+import type { SalonService } from "@/types/salon"
+import { cn } from "@/lib/utils"
+
+type FeaturedServiceCardProps = {
+  service: SalonService
+  badge?: ServiceBadge
+  selected?: boolean
+  onOpenDetails: () => void
+  onToggle: () => void
+  className?: string
+}
+
+export function FeaturedServiceCard({
+  service,
+  badge,
+  selected = false,
+  onOpenDetails,
+  onToggle,
+  className,
+}: FeaturedServiceCardProps) {
+  const thumbnail = resolveServiceThumbnail(service)
+
+  return (
+    <article
+      className={cn(
+        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border/70 bg-card/90 shadow-sm shadow-black/[0.03] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md hover:shadow-black/[0.05]",
+        selected && "border-primary/35 ring-2 ring-primary/15",
+        className,
+      )}
+      onClick={onOpenDetails}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onOpenDetails()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${service.name}`}
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/20">
+        <Image
+          src={thumbnail}
+          alt=""
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 640px) 40vw, 22vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+      </div>
+
+      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
+        {badge ? (
+          <Badge className="mb-1.5 w-fit rounded-full bg-primary/10 px-2 py-0 text-[10px] text-primary hover:bg-primary/10">
+            <span aria-hidden>{badge.emoji}</span> {badge.label}
+          </Badge>
+        ) : null}
+
+        <h3 className="line-clamp-2 font-heading text-[15px] font-semibold leading-snug text-foreground">
+          {service.name}
+        </h3>
+
+        <p className="mt-1 truncate text-xs text-foreground/55">{service.category}</p>
+
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2.5">
+          <p className="inline-flex items-center gap-1 text-xs text-foreground/55">
+            <ClockIcon className="size-3 shrink-0" />
+            {service.durationMin} min
+          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-heading text-base font-semibold tabular-nums text-foreground">
+              {formatInr(service.price)}
+            </p>
+            <Button
+              type="button"
+              size="icon"
+              variant={selected ? "secondary" : "outline"}
+              className={cn(
+                "relative z-10 size-8 shrink-0 rounded-full border-border/80 bg-background transition-transform duration-200 active:scale-95",
+                selected &&
+                  "border-foreground/20 bg-foreground/5 text-foreground/70 hover:bg-destructive/10 hover:text-destructive",
+              )}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggle()
+              }}
+              aria-label={
+                selected
+                  ? `Remove ${service.name} from booking`
+                  : `Add ${service.name} to booking`
+              }
+            >
+              {selected ? <XIcon className="size-3.5" /> : <PlusIcon className="size-3.5" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}

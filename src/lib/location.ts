@@ -15,7 +15,7 @@ export const DEFAULT_CITY_NAME = "Bengaluru"
 
 export type StoredLocation = {
   id: GlamzzoLocationId
-  /** Set when the user denies location on first visit — shows city-only header + default hero area */
+  /** Set when the user denies location on first visit, shows city-only header + default hero area */
   defaultFallback?: boolean
   /** Used for “Near me” or custom neighbourhoods */
   areaLabelOverride?: string
@@ -23,7 +23,7 @@ export type StoredLocation = {
   nearMe?: boolean
   latitude?: number
   longitude?: number
-  /** Nearest Bengaluru area — when user is in Bengaluru service zone */
+  /** Nearest Bengaluru area, when user is in Bengaluru service zone */
   resolvedArea?: string
   /** Full place name from GPS reverse geocode, e.g. "Jamnagar, Gujarat" */
   displayLabel?: string
@@ -146,12 +146,12 @@ export function formatBrowseSalonsCityLabel(
   return loc.label
 }
 
-/** Hero badge copy — “Now live in {city}”. */
+/** Hero badge copy, “Now live in {city}”. */
 export function formatLiveInCityBadge(city: string) {
   return `Now live in ${city}`
 }
 
-/** Location search placeholder — “Area in {city}”. */
+/** Location search placeholder, “Area in {city}”. */
 export function formatAreaInCityPlaceholder(city: string) {
   return `Area in ${city}`
 }

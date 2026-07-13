@@ -1,8 +1,7 @@
 import { getProfileDefaults } from "@/lib/auth/profile-actions"
-import { logoutAction } from "@/lib/auth/auth-actions"
+import { LogoutFormButton } from "@/components/auth/logout-form-button"
 import { ProfileSettingsForm } from "@/components/auth/profile-settings-form"
 import { PageHeader } from "@/components/layout/page-header"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default async function SettingsPage() {
@@ -13,7 +12,7 @@ export default async function SettingsPage() {
       <PageHeader
         eyebrow="Your account"
         title="Profile & settings"
-        subtitle="Your name and email are saved when you book. Update them here anytime."
+        subtitle="Keep your contact details and personal info up to date for faster bookings."
       />
 
       <Card className="rounded-2xl">
@@ -22,15 +21,16 @@ export default async function SettingsPage() {
             defaultName={profile.name}
             defaultEmail={profile.email}
             defaultPhone={profile.phone}
+            defaultGender={profile.gender}
+            defaultDateOfBirth={profile.dateOfBirth}
+            defaultAddress={profile.address}
           />
         </CardContent>
       </Card>
 
-      <form action={logoutAction}>
-        <Button variant="outline" className="rounded-full">
-          Sign out
-        </Button>
-      </form>
+      <LogoutFormButton variant="outline" className="rounded-full" pendingLabel="Signing out…">
+        Sign out
+      </LogoutFormButton>
     </div>
   )
 }

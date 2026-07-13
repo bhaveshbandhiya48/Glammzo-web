@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { MenuIcon, UserIcon } from "lucide-react"
 
@@ -20,12 +21,20 @@ import { CartNavButton } from "@/components/layout/cart-nav-button"
 import { Container } from "@/components/layout/container"
 import { Logo } from "@/components/layout/logo"
 import { LocationSwitcher } from "@/components/layout/location-switcher"
+import { LogoutFormButton, LogoutMenuButton } from "@/components/auth/logout-form-button"
 import { resolveSessionGreeting } from "@/lib/auth/display"
-import { logoutAction } from "@/lib/auth/auth-actions"
 
 export function Navbar() {
+  const pathname = usePathname()
   const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const [welcomeName, setWelcomeName] = useState<string>("")
+
+  const scrollToTopIfCurrentPage = (href: string) => {
+    const path = href.split("#")[0] || href
+    if (path === pathname) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -65,6 +74,7 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => scrollToTopIfCurrentPage(item.href)}
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-medium text-foreground/65 transition-colors hover:bg-foreground hover:text-background",
                 "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
@@ -115,14 +125,7 @@ export function Navbar() {
                   >
                     Settings
                   </Link>
-                  <form action={logoutAction}>
-                    <button
-                      type="submit"
-                      className="flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground/80 transition-colors hover:bg-accent"
-                    >
-                      Logout
-                    </button>
-                  </form>
+                  <LogoutMenuButton />
                 </PopoverContent>
               </Popover>
             </>
@@ -151,6 +154,7 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => scrollToTopIfCurrentPage(item.href)}
                     className="rounded-xl px-4 py-3 text-base font-medium transition-colors hover:bg-accent"
                   >
                     {item.label}
@@ -184,11 +188,10 @@ export function Navbar() {
                         </span>
                       </Link>
                     </Button>
-                    <form action={logoutAction}>
-                      <Button type="submit" variant="outline" className="h-11 w-full rounded-full">
-                        Logout
-                      </Button>
-                    </form>
+                    <LogoutFormButton
+                      variant="outline"
+                      className="h-11 w-full rounded-full"
+                    />
                   </>
                 ) : (
                   <Button asChild variant="outline" className="h-11 w-full rounded-full">

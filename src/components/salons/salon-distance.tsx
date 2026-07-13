@@ -3,34 +3,28 @@
 import { useEffect, useState } from "react"
 import { MapPinIcon } from "lucide-react"
 
-import { distanceToSalonKm } from "@/lib/geo"
 import {
-  LOCATION_UPDATED_EVENT,
-  hasActiveNearMe,
-  readStoredLocation,
-} from "@/lib/location-storage"
+  computeSalonDistanceKm,
+  resolveDistanceOriginFromStored,
+} from "@/lib/explore-distance"
+import { formatDistanceKm } from "@/lib/maps/haversine"
+import { LOCATION_UPDATED_EVENT, readStoredLocation } from "@/lib/location-storage"
 import type { Salon } from "@/types/salon"
 
 export function SalonDistance({
   salon,
   className,
 }: {
-  salon: Pick<Salon, "id" | "area" | "latitude" | "longitude" | "distanceKm">
+  salon: Pick<Salon, "id" | "area" | "address" | "latitude" | "longitude" | "distanceKm">
   className?: string
 }) {
-  const [distanceKm, setDistanceKm] = useState<number | null>(
-    salon.distanceKm > 0 ? salon.distanceKm : null,
-  )
+  const [distanceKm, setDistanceKm] = useState<number | null>(null)
 
   useEffect(() => {
     const sync = () => {
       const stored = readStoredLocation()?.stored
-      if (hasActiveNearMe(stored) && stored?.latitude != null && stored?.longitude != null) {
-        setDistanceKm(distanceToSalonKm(salon, stored.latitude, stored.longitude))
-        return
-      }
-
-      setDistanceKm(salon.distanceKm > 0 ? salon.distanceKm : null)
+      const origin = resolveDistanceOriginFromStored(stored)
+      setDistanceKm(computeSalonDistanceKm(salon, origin))
     }
 
     sync()
@@ -42,11 +36,13 @@ export function SalonDistance({
     }
   }, [salon])
 
+  const distanceLabel = distanceKm != null && distanceKm > 0 ? formatDistanceKm(distanceKm) : null
+
   return (
     <p className={className}>
       <MapPinIcon className="size-4 shrink-0 text-primary" />
       {salon.area}
-      {distanceKm != null ? ` · ${distanceKm.toFixed(1)} km away` : null}
+      {distanceLabel ? ` · ${distanceLabel}` : null}
     </p>
   )
 }

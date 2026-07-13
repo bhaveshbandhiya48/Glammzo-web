@@ -5,8 +5,8 @@ import { useMemo, useState } from "react"
 
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
 import { BookingsFilter } from "@/components/booking/bookings-filter"
+import { CancelBookingButton } from "@/components/booking/cancel-booking-button"
 import { LeaveReviewDialog } from "@/components/reviews/leave-review-dialog"
-import { cancelBookingAction } from "@/lib/bookings/actions"
 import {
   canConsumerCancelBooking,
   canConsumerRebookBooking,
@@ -131,12 +131,7 @@ export function BookingsSection({
                       ) : null}
 
                       {canConsumerCancelBooking(booking.status) ? (
-                        <form action={cancelBookingAction}>
-                          <input type="hidden" name="bookingId" value={booking.id} />
-                          <Button type="submit" variant="outline" size="sm" className="rounded-full">
-                            Cancel
-                          </Button>
-                        </form>
+                        <CancelBookingButton bookingId={booking.id} />
                       ) : null}
 
                       {canConsumerRebookBooking(booking.status) ? (

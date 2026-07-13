@@ -1,6 +1,6 @@
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
 
-/** ~30 m offset — enough to separate stacked pins without misleading users far away. */
+/** ~30 m offset, enough to separate stacked pins without misleading users far away. */
 const SPREAD_RADIUS_DEG = 0.00027
 
 function coordKey(latitude: number, longitude: number) {

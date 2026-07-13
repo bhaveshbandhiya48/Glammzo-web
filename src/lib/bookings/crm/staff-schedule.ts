@@ -1,4 +1,5 @@
 import type { DaySchedule, Weekday } from "@/lib/bookings/crm/types"
+import { timeToMinutes } from "@/lib/bookings/crm/time"
 
 export type StaffWeeklySchedule = Partial<Record<Weekday, DaySchedule>>
 
@@ -50,10 +51,10 @@ export function isStaffWorkingDuringSlot(
     return false
   }
 
-  const slotStart = startTime.slice(0, 5)
-  const slotEnd = endTime.slice(0, 5)
-  const open = schedule.open.slice(0, 5)
-  const close = schedule.close.slice(0, 5)
+  const slotStart = timeToMinutes(startTime)
+  const slotEnd = timeToMinutes(endTime)
+  const open = timeToMinutes(schedule.open)
+  const close = timeToMinutes(schedule.close)
 
   return slotStart >= open && slotEnd <= close
 }

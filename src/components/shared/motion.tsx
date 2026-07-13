@@ -11,7 +11,7 @@ import {
 
 import { cn } from "@/lib/utils"
 
-/** API markers — animations are CSS-based (no framer-motion / webpack HMR issues). */
+/** API markers, animations are CSS-based (no framer-motion / webpack HMR issues). */
 export const fadeUp = Symbol("fadeUp")
 export const fadeUpSubtle = Symbol("fadeUpSubtle")
 export const stagger = Symbol("stagger")
@@ -116,7 +116,7 @@ export const MotionSection = forwardRef<
   )
 })
 
-/** Child of MotionSection — animates when parent gets .motion-visible */
+/** Child of MotionSection, animates when parent gets .motion-visible */
 export function MotionDiv({
   className,
   children,

@@ -59,15 +59,16 @@ export function CustomerSalonMapCanvas({
     [salons, selectedSalonId],
   )
 
-  const selectedLatLng = useMemo(
-    () =>
-      selectedSalon
-        ? { lat: selectedSalon.latitude, lng: selectedSalon.longitude }
-        : null,
-    [selectedSalon],
-  )
-
   const markerPositions = useMemo(() => getSpreadMarkerPositions(salons), [salons])
+
+  const selectedLatLng = useMemo(() => {
+    if (!selectedSalon) {
+      return null
+    }
+
+    const position = markerPositions.get(selectedSalon.id)
+    return position ?? { lat: selectedSalon.latitude, lng: selectedSalon.longitude }
+  }, [markerPositions, selectedSalon])
 
   const markerScreenPos = useMapLatLngScreenPosition(mapInstance, selectedLatLng)
 
@@ -189,7 +190,7 @@ export function CustomerSalonMapCanvas({
 
         marker.addListener("click", () => {
           onSelectSalon(salon.id)
-          mapRef.current?.panTo({ lat: salon.latitude, lng: salon.longitude })
+          mapRef.current?.panTo(position)
         })
 
         return marker

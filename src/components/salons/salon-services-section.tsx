@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 
-import { buildCartSnapshot, writeBookingCart } from "@/lib/bookings/cart"
+import { useSalonCartSelection } from "@/hooks/use-salon-cart-selection"
 
 import { BookingSummary } from "@/components/booking/booking-summary"
 import { SelectedServicesList } from "@/components/booking/selected-services-list"
@@ -31,29 +31,7 @@ export function SalonServicesSection({
   salonName,
   authenticated,
 }: SalonServicesSectionProps) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-
-  useEffect(() => {
-    if (selectedIds.length === 0) {
-      writeBookingCart(null)
-      return
-    }
-
-    const selected = resolveServices(services, selectedIds)
-    writeBookingCart(
-      buildCartSnapshot(
-        salonId,
-        salonName,
-        selected.map((service) => ({
-          id: service.id,
-          name: service.name,
-          price: service.price,
-          durationMin: service.durationMin,
-        })),
-        selectedIds,
-      ),
-    )
-  }, [salonId, salonName, services, selectedIds])
+  const [selectedIds, setSelectedIds] = useSalonCartSelection(salonId, salonName, services)
 
   const selectedServices = useMemo(
     () => resolveServices(services, selectedIds),

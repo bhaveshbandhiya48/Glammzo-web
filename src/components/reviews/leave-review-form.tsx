@@ -4,6 +4,7 @@ import { useId, useState } from "react"
 import { BadgeCheckIcon } from "lucide-react"
 
 import { StarRatingInput } from "@/components/reviews/star-rating-input"
+import { FormSubmitButton } from "@/components/ui/form-submit-button"
 import { createSalonReviewAction } from "@/lib/reviews/actions"
 import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-types"
 import { Button } from "@/components/ui/button"
@@ -104,7 +105,7 @@ export function LeaveReviewForm({
           maxLength={2000}
           value={comment}
           onChange={(event) => setComment(event.target.value)}
-          placeholder="Tell others about your experience — service quality, ambience, staff, and anything that would help them decide."
+          placeholder="Tell others about your experience, service quality, ambience, staff, and anything that would help them decide."
           className="w-full resize-none rounded-2xl border border-input bg-background px-4 py-3 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring/50 focus-visible:ring-4 focus-visible:ring-ring/15"
         />
         <div className="flex items-center justify-between text-xs text-foreground/45">
@@ -114,9 +115,13 @@ export function LeaveReviewForm({
       </section>
 
       <section className="space-y-4 border-t border-border/60 pt-6">
-        <Button type="submit" className="h-11 w-full rounded-full" disabled={!canSubmit}>
+        <FormSubmitButton
+          className="h-11 w-full rounded-full"
+          disabled={!canSubmit}
+          pendingLabel="Posting…"
+        >
           Post review
-        </Button>
+        </FormSubmitButton>
         <p className="flex items-center justify-center gap-1.5 text-xs text-foreground/45">
           <BadgeCheckIcon className="size-3.5 text-primary" aria-hidden />
           Verified visit at {salonName}

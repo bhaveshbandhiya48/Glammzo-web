@@ -4,7 +4,7 @@ import { Container } from "@/components/layout/container"
 import { cn } from "@/lib/utils"
 
 /**
- * Section bands — shared with Home:
+ * Section bands, shared with Home:
  * base → light wash · statement → sand · featured → warm coral tint · dark → foreground
  */
 export type PageSectionTone = "default" | "base" | "statement" | "featured" | "dark"
@@ -24,14 +24,14 @@ type PageSectionProps = {
   className?: string
   containerClassName?: string
   bordered?: boolean
-  /** Marks a visual band transition — always keeps full vertical padding */
+  /** Marks a visual band transition, always keeps full vertical padding */
   separated?: boolean
   tone?: PageSectionTone
   padding?: PageSectionPadding
   bleed?: boolean
 }
 
-/** Standard vertical section padding — use on all marketing / content sections */
+/** Standard vertical section padding, use on all marketing / content sections */
 export function PageSection({
   children,
   className,

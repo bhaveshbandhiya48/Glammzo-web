@@ -1,24 +1,23 @@
-export const DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES = 240
+export const DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES = 60
 
 export type WebBookingSettings = {
   responseSlaMinutes: number
 }
 
+export {
+  BOOKING_ENGINE_CONFIG,
+  computeBookingExpiresAt as computeResponseDeadline,
+} from "@/lib/bookings/crm/booking-confirmation-engine"
+
 export function parseWebBookingSettings(settings: unknown): WebBookingSettings {
-  if (!settings || typeof settings !== "object") {
-    return { responseSlaMinutes: DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES }
-  }
-
-  const minutes = (settings as { webBooking?: { responseSlaMinutes?: number } }).webBooking
-    ?.responseSlaMinutes
-
-  if (typeof minutes === "number" && Number.isFinite(minutes) && minutes >= 15 && minutes <= 10080) {
-    return { responseSlaMinutes: Math.round(minutes) }
-  }
-
   return { responseSlaMinutes: DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES }
 }
 
-export function computeResponseDeadline(slaMinutes: number, from = new Date()) {
-  return new Date(from.getTime() + slaMinutes * 60_000).toISOString()
+export function formatSlaLabel(minutes: number) {
+  if (minutes < 60) {
+    return `${minutes} minutes`
+  }
+
+  const hours = Math.round(minutes / 60)
+  return hours === 1 ? "1 hour" : `${hours} hours`
 }
