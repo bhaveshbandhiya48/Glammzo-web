@@ -333,19 +333,25 @@ export function MobileBookingBar({
     : `${extraServices.length} service${extraServices.length === 1 ? "" : "s"}`
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
-      <div className="mb-3 flex items-center justify-between gap-3 px-1">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-foreground/55">Your booking</p>
-          <p className="truncate font-heading text-lg font-semibold tabular-nums">
-            {formatInr(total)}
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/98 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md lg:hidden">
+      <div className="mx-auto max-w-lg px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-[0.12em] text-foreground/60 uppercase">
+              Your booking
+            </p>
+            <p className="mt-0.5 truncate font-heading text-xl font-semibold tabular-nums text-foreground">
+              {formatInr(total)}
+            </p>
+          </div>
+          <p className="max-w-[45%] truncate text-right text-sm font-medium text-foreground/75">
+            {summaryLabel}
           </p>
         </div>
-        <p className="truncate text-sm text-foreground/60">{summaryLabel}</p>
+        <Button asChild className="h-12 w-full rounded-full text-base font-semibold shadow-sm" size="lg">
+          <Link href={bookHref}>Continue</Link>
+        </Button>
       </div>
-      <Button asChild className="w-full rounded-full" size="lg">
-        <Link href={bookHref}>Continue</Link>
-      </Button>
     </div>
   )
 }
