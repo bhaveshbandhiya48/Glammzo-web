@@ -1,5 +1,5 @@
 export type AuthState =
-  | { ok: true }
+  | { ok: true; redirectTo: string }
   | {
       ok: false
       message: string
@@ -15,4 +15,10 @@ export function isFailedAuthState(
   state: AuthState,
 ): state is Extract<AuthState, { ok: false }> {
   return !state.ok
+}
+
+export function isSuccessfulAuthState(
+  state: AuthState,
+): state is Extract<AuthState, { ok: true }> {
+  return state.ok
 }

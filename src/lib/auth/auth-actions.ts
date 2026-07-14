@@ -172,18 +172,13 @@ export async function verifyOtpAction(
       phone: challenge.phoneE164,
     })
 
-    const safeNext = resolveSafeNextPath(nextPathRaw)
-    redirect(safeNext)
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "digest" in error &&
-      String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
-    ) {
-      throw error
+    // Return the destination instead of redirect() — soft redirects from
+    // client-invoked server actions often fail in production ("page couldn't load").
+    return {
+      ok: true,
+      redirectTo: resolveSafeNextPath(nextPathRaw),
     }
-
+  } catch (error) {
     console.error("[auth] verifyOtpAction failed:", error)
     return {
       ok: false,

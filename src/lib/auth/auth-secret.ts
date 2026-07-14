@@ -17,14 +17,21 @@ export function resolveAuthSecret():
   }
 }
 
+/**
+ * When true, the request/verify OTP actions return `debugOtp` so the UI can show it.
+ * - Local: mock/unset SMS provider always exposes it.
+ * - Production/staging: only when SMS_DEBUG_OTP=true (opt-in; never by mock alone).
+ */
 export function shouldExposeDebugOtp() {
+  if (process.env.SMS_DEBUG_OTP === "true") {
+    return true
+  }
+
   if (process.env.NODE_ENV === "production") {
     return false
   }
 
   return (
-    process.env.SMS_PROVIDER === "mock" ||
-    process.env.SMS_DEBUG_OTP === "true" ||
-    !process.env.SMS_PROVIDER?.trim()
+    process.env.SMS_PROVIDER === "mock" || !process.env.SMS_PROVIDER?.trim()
   )
 }

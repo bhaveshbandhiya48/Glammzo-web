@@ -3,20 +3,15 @@
 import { useState, useTransition, type FormEvent } from "react"
 
 import type { AuthState } from "@/lib/auth/auth-types"
-import { INITIAL_AUTH_STATE, isFailedAuthState } from "@/lib/auth/auth-types"
+import {
+  INITIAL_AUTH_STATE,
+  isFailedAuthState,
+  isSuccessfulAuthState,
+} from "@/lib/auth/auth-types"
 
 type PhoneOtpActions = {
   requestOtp: (prev: AuthState, formData: FormData) => Promise<AuthState>
   verifyOtp: (prev: AuthState, formData: FormData) => Promise<AuthState>
-}
-
-function isNextRedirect(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "digest" in error &&
-    String((error as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
-  )
 }
 
 export function usePhoneOtpAuth(actions: PhoneOtpActions) {
@@ -43,12 +38,14 @@ export function usePhoneOtpAuth(actions: PhoneOtpActions) {
           }
 
           const result = await actions.verifyOtp(verifyState, formData)
-          setVerifyState(result)
-        } catch (error) {
-          if (isNextRedirect(error)) {
-            throw error
+
+          if (isSuccessfulAuthState(result)) {
+            window.location.assign(result.redirectTo)
+            return
           }
 
+          setVerifyState(result)
+        } catch (error) {
           const fallbackMessage = "Something went wrong. Please try again."
           const message = error instanceof Error ? error.message || fallbackMessage : fallbackMessage
 
