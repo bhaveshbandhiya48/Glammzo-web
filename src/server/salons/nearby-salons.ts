@@ -12,6 +12,7 @@ import {
 import { boundingBoxDeltas, haversineKm } from "@/lib/maps/haversine"
 import type { NearbySalonRecord, NearbySalonsRequest, NearbySalonsResponse } from "@/lib/maps/nearby-salon.types"
 import { isSalonOpenNow } from "@/lib/salons/business-hours"
+import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
 import type { CrmSalonRow, CrmServiceRow } from "@/lib/salons/crm-types"
 
 const SALON_SELECT =
@@ -23,24 +24,6 @@ const SERVICE_SELECT =
 function clampRadius(radiusKm?: number) {
   const value = radiusKm ?? DEFAULT_NEARBY_RADIUS_KM
   return Math.min(MAX_NEARBY_RADIUS_KM, Math.max(1, value))
-}
-
-function readAreaFromSettings(settings: unknown) {
-  if (!settings || typeof settings !== "object") {
-    return ""
-  }
-
-  const record = settings as Record<string, unknown>
-  const onboarding = record.onboarding
-
-  if (onboarding && typeof onboarding === "object") {
-    const area = (onboarding as Record<string, unknown>).area
-    if (typeof area === "string") {
-      return area.trim()
-    }
-  }
-
-  return ""
 }
 
 function averageRating(reviews: Array<{ rating: number }>) {
@@ -146,7 +129,7 @@ function mapNearbySalon(
   reviewStats: { rating: number; count: number },
   services: CrmServiceRow[],
 ): NearbySalonRecord {
-  const area = readAreaFromSettings(row.settings)
+  const area = resolveSalonArea(row, "")
   const timezone = row.timezone || "Asia/Kolkata"
   const openNow = isSalonOpenNow(row.settings, timezone)
   const topServices = services.slice(0, 4).map((service) => ({
@@ -274,7 +257,7 @@ export const fetchNearbySalons = cache(async (
   const salons = withinRadius
     .map(({ row, distanceKm }) => {
       const services = servicesBySalon.get(row.id) ?? []
-      const area = readAreaFromSettings(row.settings)
+      const area = resolveSalonArea(row, "")
       const serviceNames = services.map((service) => service.name)
 
       if (!matchesSearch(row, area, serviceNames, query)) {

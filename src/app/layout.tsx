@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter, Sora } from "next/font/google"
 
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
 import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
+import { getSalons } from "@/lib/salons"
 import { ExploreDistanceOriginProvider } from "@/providers/explore-distance-origin-provider"
 import { SalonCatalogProvider } from "@/providers/salon-catalog-provider"
 import "./globals.css"
@@ -58,11 +59,13 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialSalons = await getSalons()
+
   return (
     <html
       lang="en"
@@ -76,7 +79,9 @@ export default function RootLayout({
         <LocationBootstrap />
         <NavigationScrollManager />
         <ExploreDistanceOriginProvider>
-          <SalonCatalogProvider>{children}</SalonCatalogProvider>
+          <SalonCatalogProvider initialSalons={initialSalons}>
+            {children}
+          </SalonCatalogProvider>
         </ExploreDistanceOriginProvider>
       </body>
     </html>

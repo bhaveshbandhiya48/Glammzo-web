@@ -11,7 +11,6 @@ import { MobileAppCtaSection } from "@/components/sections/parts/mobile-app-cta-
 import { NearbySalonsSection } from "@/components/sections/parts/nearby-salons-section"
 import { PartnerSection } from "@/components/sections/parts/partner-section"
 import { StatementSection } from "@/components/sections/parts/statement-section"
-import { StatsSection } from "@/components/sections/parts/stats-section"
 import { TestimonialsSection } from "@/components/sections/parts/testimonials-section"
 
 export function LandingPage() {
@@ -26,7 +25,6 @@ export function LandingPage() {
         <CategoriesSection />
         <NearbySalonsSection />
         <StatementSection />
-        <StatsSection />
         <FeaturedExperienceSection />
         <TestimonialsSection />
         <PartnerSection />

@@ -69,9 +69,11 @@ export function FeaturedExperienceSection() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/20 bg-white/90 p-4 backdrop-blur-sm">
-                <p className="text-xs font-semibold uppercase tracking-wider text-foreground/45">Example booking</p>
-                <p className="mt-1 font-heading text-base font-semibold">Signature cut · Tomorrow 2:30 PM</p>
-                <p className="mt-0.5 text-sm text-foreground/55">Velvet & Co. · Confirmed</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-foreground/45">
+                  {experience.previewLabel}
+                </p>
+                <p className="mt-1 font-heading text-base font-semibold">{experience.previewTitle}</p>
+                <p className="mt-0.5 text-sm text-foreground/55">{experience.previewDetail}</p>
               </div>
             </div>
           </MotionDiv>

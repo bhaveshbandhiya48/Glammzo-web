@@ -26,9 +26,14 @@ export const siteCopy = {
     socialProof: "Trusted by early users across the city",
   },
   statement: {
-    title: "Salon booking, without the hassle.",
-    subtitle: "Discover trusted spaces, see real prices, and book in minutes.",
-    cta: "Browse salons",
+    eyebrow: "Why Glammzo",
+    title: "Great salons. Zero phone tag.",
+    subtitle:
+      "Compare trusted studios, see prices upfront, and lock your slot in under two minutes — no calls, no back-and-forth.",
+    cta: "Find salons near you",
+  },
+  stats: {
+    eyebrow: "Glammzo today",
   },
   howItWorks: {
     eyebrow: "How it works",
@@ -59,6 +64,9 @@ export const siteCopy = {
     title: "Premium salons. A booking flow that doesn’t get in the way.",
     subtitle:
       "Real photos, honest reviews, open hours, and instant confirmation so you spend less time coordinating and more time enjoying the visit.",
+    previewLabel: "Upcoming visit",
+    previewTitle: "Signature cut · Tomorrow 2:30 PM",
+    previewDetail: "Velvet & Co. · Confirmed",
   },
   testimonials: {
     eyebrow: "Early feedback",
@@ -88,9 +96,21 @@ export const navItems: NavItem[] = [
 ]
 
 export const stats: Stat[] = [
-  { value: "4+", label: "Partner salons", description: "Live today" },
-  { value: "5", label: "Service categories", description: "Hair, spa, nails & more" },
-  { value: "<2 min", label: "To book", description: "Search to confirmation" },
+  {
+    value: "4+",
+    label: "Salon partners",
+    description: "Verified listings live on Glammzo",
+  },
+  {
+    value: "5",
+    label: "Service categories",
+    description: "Hair, skin, nails & more",
+  },
+  {
+    value: "<2 min",
+    label: "To confirm",
+    description: "From search to booked slot",
+  },
 ]
 
 export const howItWorksSteps = [

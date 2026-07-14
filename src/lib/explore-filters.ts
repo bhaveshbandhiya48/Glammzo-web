@@ -199,7 +199,14 @@ export function filterExploreSalons(
 
   if (!state.nearMode && state.city) {
     const city = state.city.toLowerCase()
-    result = result.filter((salon) => salon.area.toLowerCase().includes(city))
+    result = result.filter((salon) => {
+      const salonCity = salon.city?.trim().toLowerCase()
+      if (salonCity) {
+        return salonCity.includes(city)
+      }
+
+      return salon.area.toLowerCase().includes(city)
+    })
   } else if (!state.nearMode && state.area) {
     const area = state.area.toLowerCase()
     result = result.filter((salon) => salon.area.toLowerCase().includes(area))
@@ -263,7 +270,8 @@ export function sortExploreSalons(salons: Salon[], sort: ExploreSortId): Salon[]
 export function getExploreCities(salons: Salon[]): string[] {
   const cities = new Set<string>()
   for (const salon of salons) {
-    if (salon.area?.trim()) cities.add(salon.area.trim())
+    const city = salon.city?.trim() || salon.area?.trim()
+    if (city) cities.add(city)
   }
   return [...cities].sort((a, b) => a.localeCompare(b))
 }

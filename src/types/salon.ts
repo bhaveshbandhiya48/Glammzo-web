@@ -124,7 +124,10 @@ export type Salon = {
   /** CRM salons UUID, used for Supabase writes. */
   crmSalonId?: string
   name: string
+  /** Neighborhood/locality shown on explore cards (e.g. MG Road). */
   area: string
+  /** City from CRM profile, used for city-level filters. */
+  city?: string
   /** Square-friendly thumbnail for explore and salon list cards. */
   imageUrl: string
   /** Wide hero image on the salon profile page (16:9). */

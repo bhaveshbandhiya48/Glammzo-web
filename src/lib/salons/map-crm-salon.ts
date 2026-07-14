@@ -11,6 +11,7 @@ import type {
   CrmStaffRow,
 } from "@/lib/salons/crm-types"
 import { filterBookableOffers } from "@/lib/salons/offer-utils"
+import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
 import type {
   Salon,
   SalonAmenities,
@@ -331,7 +332,8 @@ export function mapCrmSalonToWeb(
     .filter((s) => s.is_active && s.is_bookable)
     .map(mapStaff)
 
-  const area = row.city?.trim() || "Bengaluru"
+  const area = resolveSalonArea(row)
+  const city = row.city?.trim() || ""
   const priceFrom =
     activeServices.length > 0
       ? Math.min(...activeServices.map((s) => s.price))
@@ -427,6 +429,7 @@ export function mapCrmSalonToWeb(
     crmSalonId: row.id,
     name: row.name,
     area,
+    city,
     imageUrl,
     coverImageUrl,
     rating: ratingAvg,
