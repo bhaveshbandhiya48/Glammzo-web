@@ -9,36 +9,27 @@ const providers: Record<SmsProviderName, SmsProvider> = {
   twilio: twilioSmsProvider,
 }
 
-function isProduction() {
-  return process.env.NODE_ENV === "production"
+let warnedMockInProduction = false
+
+function warnMockInProductionOnce() {
+  if (process.env.NODE_ENV !== "production" || warnedMockInProduction) {
+    return
+  }
+
+  warnedMockInProduction = true
+  console.warn(
+    "[sms] Using mock SMS provider in production. OTPs are logged server-side until Twilio is configured.",
+  )
 }
 
 export function getActiveSmsProvider(): SmsProvider {
   const configured = process.env.SMS_PROVIDER as SmsProviderName | undefined
 
-  if (isProduction()) {
-    if (configured === "mock") {
-      throw new Error(
-        "SMS_PROVIDER=mock is not allowed in production. Set SMS_PROVIDER=twilio and configure Twilio credentials.",
-      )
-    }
-
-    if (configured === "twilio" || process.env.TWILIO_ACCOUNT_SID?.trim()) {
-      return providers.twilio
-    }
-
-    throw new Error(
-      "SMS is not configured for production. Set SMS_PROVIDER=twilio and TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SMS_FROM.",
-    )
-  }
-
-  if (configured && configured in providers) {
-    return providers[configured]
-  }
-
-  if (process.env.TWILIO_ACCOUNT_SID?.trim()) {
+  if (configured === "twilio" || (!configured && process.env.TWILIO_ACCOUNT_SID?.trim())) {
     return providers.twilio
   }
 
+  // Temporary: allow mock (or unset) until Twilio is wired last.
+  warnMockInProductionOnce()
   return providers.mock
 }
