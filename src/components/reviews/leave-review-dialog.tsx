@@ -23,7 +23,7 @@ export function LeaveReviewDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" size="sm" variant="outline" className="rounded-full">
+        <Button type="button" size="sm" variant="outline" className="h-9 rounded-full px-4">
           Leave a review
         </Button>
       </DialogTrigger>

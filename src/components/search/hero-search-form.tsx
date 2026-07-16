@@ -27,10 +27,11 @@ import {
   getSearchSuggestions,
   readRecentSearches,
   saveRecentSearch,
+  type HeroSearchLocation,
   type RecentSearch,
 } from "@/lib/search-suggestions"
 import { useNearMe } from "@/hooks/use-near-me"
-import { useSalonCatalog } from "@/hooks/use-salon-catalog"
+import { useCitySalonCatalog } from "@/hooks/use-city-salon-catalog"
 import { formatHeroAreaLabel } from "@/lib/location"
 import {
   LOCATION_UPDATED_EVENT,
@@ -47,6 +48,7 @@ type AreaSuggestion = {
   label: string
   lat: number
   lon: number
+  locality?: string | null
   city?: string | null
   state?: string | null
 }
@@ -108,18 +110,39 @@ export function HeroSearchForm() {
   const [query, setQuery] = useState("")
   const [area, setArea] = useState("")
   const [areaSelected, setAreaSelected] = useState(false)
+  const [searchLocation, setSearchLocation] = useState<HeroSearchLocation | null>(null)
   const [areaError, setAreaError] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
   const [recent, setRecent] = useState<RecentSearch[]>([])
   const [areaResults, setAreaResults] = useState<AreaSuggestion[]>([])
   const [areaLoading, setAreaLoading] = useState(false)
   const { busy: nearBusy, applyNearMe } = useNearMe()
-  const { salons } = useSalonCatalog()
+  const { salons } = useCitySalonCatalog()
 
   const syncAreaFromStorage = useCallback(() => {
     const parsed = readStoredLocation()
     if (!parsed) return
     setArea(formatHeroAreaLabel(parsed.location, parsed.stored))
+    setAreaSelected(true)
+    setAreaError(null)
+
+    if (
+      parsed.stored.nearMe &&
+      typeof parsed.stored.latitude === "number" &&
+      typeof parsed.stored.longitude === "number"
+    ) {
+      setSearchLocation({
+        latitude: parsed.stored.latitude,
+        longitude: parsed.stored.longitude,
+      })
+      return
+    }
+
+    const selectedArea =
+      parsed.stored.resolvedArea ||
+      parsed.stored.areaLabelOverride?.split(",")[0]?.trim() ||
+      parsed.location.areaLabel
+    setSearchLocation(selectedArea ? { area: selectedArea } : null)
   }, [])
 
   useEffect(() => {
@@ -164,13 +187,24 @@ export function HeroSearchForm() {
     suggestions.categories.length > 0
 
   const navigate = useCallback(
-    (nextQ: string, nextArea: string, category?: string) => {
+    (
+      nextQ: string,
+      nextArea: string,
+      category?: string,
+      location: HeroSearchLocation | null = searchLocation
+    ) => {
       saveRecentSearch(nextQ, nextArea)
       setRecent(readRecentSearches())
       setActivePanel(null)
-      router.push(buildExploreHref(nextQ, nextArea, category))
+      router.push(
+        buildExploreHref(
+          nextQ,
+          nextArea.trim() ? (location ?? { area: nextArea }) : undefined,
+          category
+        )
+      )
     },
-    [router]
+    [router, searchLocation]
   )
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -186,7 +220,10 @@ export function HeroSearchForm() {
   const applyRecent = (item: RecentSearch) => {
     setQuery(item.q)
     setArea(item.area)
-    navigate(item.q, item.area)
+    setAreaSelected(Boolean(item.area))
+    const recentLocation = item.area ? { area: item.area } : null
+    setSearchLocation(recentLocation)
+    navigate(item.q, item.area, undefined, recentLocation)
   }
 
   const handleClearRecent = () => {
@@ -251,6 +288,7 @@ export function HeroSearchForm() {
                   onChange={(e) => {
                     setArea(e.target.value)
                     setAreaSelected(false)
+                    setSearchLocation(null)
                     setAreaError(null)
                   }}
                   onFocus={() => setActivePanel("area")}
@@ -296,7 +334,7 @@ export function HeroSearchForm() {
               </div>
             </div>
 
-            <Button type="submit" className="h-11 shrink-0 rounded-xl px-5">
+            <Button type="submit" size="lg" className="shrink-0 px-5">
               Search
             </Button>
           </div>
@@ -448,10 +486,14 @@ export function HeroSearchForm() {
                   const result = await applyNearMe({ navigateToExplore: false, q: query })
                   if (result?.stored.displayLabel) {
                     setArea(
-                      result.stored.inServiceArea && result.stored.resolvedArea
-                        ? result.stored.resolvedArea
-                        : result.stored.displayLabel
+                      result.stored.city ||
+                        result.stored.displayLabel.split(",")[0]?.trim() ||
+                        result.stored.displayLabel
                     )
+                    setSearchLocation({
+                      latitude: result.position.latitude,
+                      longitude: result.position.longitude,
+                    })
                     setAreaSelected(true)
                     setAreaError(null)
                     setActivePanel(null)
@@ -484,8 +526,9 @@ export function HeroSearchForm() {
                         onClick={() => {
                           setArea(label)
                           setAreaSelected(true)
+                          setSearchLocation({ area: label })
                           setAreaError(null)
-                          navigate(query, label)
+                          setActivePanel(null)
                         }}
                       />
                     ))}
@@ -505,8 +548,17 @@ export function HeroSearchForm() {
                       <SuggestionButton
                         key={item.id}
                         onClick={() => {
-                          setArea(item.label)
+                          setArea(item.city?.trim() || item.label.split(",")[0]?.trim() || item.label)
                           setAreaSelected(true)
+                          const locality =
+                            item.locality?.trim() &&
+                            item.locality.trim().toLowerCase() !== item.city?.trim().toLowerCase()
+                              ? item.locality.trim()
+                              : null
+                          const nextLocation: HeroSearchLocation = locality
+                            ? { area: locality }
+                            : { city: item.city?.trim() || item.label }
+                          setSearchLocation(nextLocation)
                           setAreaError(null)
                           const current = readStoredLocation()
                           if (current?.stored) {
@@ -524,7 +576,7 @@ export function HeroSearchForm() {
                               areaLabelOverride: item.label,
                             })
                           }
-                          navigate(query, item.label)
+                          setActivePanel(null)
                         }}
                       >
                         <MapPinIcon className="size-4 shrink-0 text-primary" />

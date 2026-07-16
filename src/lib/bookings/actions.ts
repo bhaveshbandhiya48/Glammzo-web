@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { createCrmWebBooking } from "@/lib/bookings/crm/create-booking"
 import { cancelCrmWebBooking } from "@/lib/bookings/crm/cancel-booking"
 import { rescheduleCrmWebBooking } from "@/lib/bookings/crm/reschedule-booking"
+import { formatCustomerCancellationReason } from "@/lib/bookings/booking-status"
 import { formatSlotLabel } from "@/lib/bookings/crm/availability"
 import { getSalonById } from "@/lib/salons"
 import {
@@ -175,9 +176,20 @@ export async function cancelBookingAction(formData: FormData) {
   if (!session) redirect("/login")
 
   const bookingId = String(formData.get("bookingId") ?? "")
+  const reasonId = String(formData.get("cancelReason") ?? "").trim()
+  const details = String(formData.get("cancelDetails") ?? "").trim()
+
+  const cancellationReason = formatCustomerCancellationReason({
+    reasonId,
+    details,
+  })
+
+  if (!bookingId || !cancellationReason) {
+    redirect("/dashboard/bookings?error=cancel")
+  }
 
   if (isSupabaseConfigured() && session.phone && bookingId) {
-    const result = await cancelCrmWebBooking(bookingId, session.phone)
+    const result = await cancelCrmWebBooking(bookingId, session.phone, cancellationReason)
 
     if (!result.success) {
       return redirect("/dashboard/bookings?error=cancel")

@@ -90,8 +90,8 @@ export function SalonCard({
         </p>
         <Button
           asChild
-          size={compact ? "sm" : "default"}
-          className={cn("w-full rounded-full", compact ? "mt-2 h-8 text-xs" : "mt-4")}
+          size={compact ? "sm" : "md"}
+          className={cn("w-full", compact ? "mt-2" : "mt-4")}
         >
           <Link href={`/salons/${salon.id}`}>View details</Link>
         </Button>

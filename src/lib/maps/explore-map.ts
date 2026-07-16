@@ -28,7 +28,7 @@ export function mapSalonToNearbyRecord(
     slug: salon.id,
     name: salon.name,
     area: salon.area,
-    city: salon.area,
+    city: salon.city ?? "",
     state: "",
     country: "",
     fullAddress: salon.address,

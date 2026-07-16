@@ -1,17 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
+import { CalendarOffIcon } from "lucide-react"
+import { motion } from "framer-motion"
 
-import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
+import { AppointmentCard } from "@/components/booking/appointment-card"
 import { BookingsFilter } from "@/components/booking/bookings-filter"
-import { CancelBookingButton } from "@/components/booking/cancel-booking-button"
-import { LeaveReviewDialog } from "@/components/reviews/leave-review-dialog"
-import {
-  canConsumerCancelBooking,
-  canConsumerRebookBooking,
-  canConsumerRescheduleBooking,
-} from "@/lib/bookings/booking-status"
 import {
   filterBookings,
   getBookingFilterEmptyMessage,
@@ -19,9 +14,7 @@ import {
   parseBookingFilter,
   type BookingFilter,
 } from "@/lib/bookings/booking-filters"
-import { buildBookHref, formatBookingDate, formatDuration } from "@/lib/bookings/utils"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import type { Booking } from "@/types/booking"
 
 type BookingsSectionProps = {
@@ -39,6 +32,37 @@ function buildFilterCounts(bookings: Booking[]): Record<BookingFilter, number> {
   }
 }
 
+function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string
+  description: string
+  action?: ReactNode
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center rounded-2xl border border-border/65 bg-card px-6 py-12 text-center shadow-sm shadow-black/[0.03]"
+    >
+      <div
+        className="flex size-14 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-foreground/45"
+        aria-hidden
+      >
+        <CalendarOffIcon className="size-6" strokeWidth={1.6} />
+      </div>
+      <h2 className="mt-4 font-heading text-lg font-semibold tracking-tight text-foreground">
+        {title}
+      </h2>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-foreground/60">{description}</p>
+      {action ? <div className="mt-5">{action}</div> : null}
+    </motion.div>
+  )
+}
+
 export function BookingsSection({
   bookings,
   authenticated,
@@ -51,14 +75,15 @@ export function BookingsSection({
 
   if (bookings.length === 0) {
     return (
-      <Card className="rounded-2xl">
-        <CardContent className="px-6 py-10 text-center">
-          <p className="text-foreground/65">{getBookingFilterEmptyMessage("all")}</p>
-          <Button asChild className="mt-4 rounded-full">
-            <Link href="/explore">Explore salons</Link>
+      <EmptyState
+        title="No appointments yet"
+        description="Book your first appointment to get started."
+        action={
+          <Button asChild size="lg" className="rounded-full px-6">
+            <Link href="/explore">Explore Salons</Link>
           </Button>
-        </CardContent>
-      </Card>
+        }
+      />
     )
   }
 
@@ -67,95 +92,41 @@ export function BookingsSection({
       <BookingsFilter value={filter} onChange={setFilter} counts={counts} />
 
       {visibleBookings.length === 0 ? (
-        <Card className="rounded-2xl">
-          <CardContent className="px-6 py-10 text-center">
-            <p className="text-foreground/65">{getBookingFilterEmptyMessage(filter)}</p>
-            {filter !== "all" ? (
+        <EmptyState
+          title={getBookingFilterEmptyMessage(filter)}
+          description={
+            filter === "all"
+              ? "Book your first appointment to get started."
+              : "Try another filter to see more of your bookings."
+          }
+          action={
+            filter !== "all" ? (
               <Button
                 type="button"
                 variant="outline"
-                className="mt-4 rounded-full"
+                className="rounded-full px-5"
                 onClick={() => setFilter("all")}
               >
                 Show all appointments
               </Button>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : (
-        <ul className="space-y-4">
-          {visibleBookings.map((booking) => {
-            const serviceIds = booking.services.map((svc) => svc.id)
-            const rebookHref = buildBookHref(booking.salonId, serviceIds, authenticated)
-
-            return (
-              <li key={booking.id}>
-                <Card className="rounded-2xl">
-                  <CardContent className="flex flex-wrap items-start justify-between gap-4 px-6 py-6">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-heading text-lg font-semibold">{booking.salonName}</p>
-                        <BookingStatusBadge status={booking.status} />
-                      </div>
-                      <p className="mt-1 text-sm text-foreground/60">{booking.salonArea}</p>
-                      <ul className="mt-3 space-y-1 text-sm text-foreground/75">
-                        {booking.services.map((svc) => (
-                          <li key={svc.id}>
-                            {svc.name}
-                            <span className="text-foreground/50"> · ₹{svc.price}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-2 text-sm text-foreground/60">
-                        {formatBookingDate(booking.date)} · {booking.time} · ~
-                        {formatDuration(booking.durationMin)}
-                      </p>
-                      <p className="mt-2 font-medium tabular-nums">₹{booking.price} total</p>
-                      {booking.declineReason ? (
-                        <p className="mt-2 text-sm text-destructive/90">
-                          Salon note: {booking.declineReason}
-                        </p>
-                      ) : null}
-                      {booking.notes ? (
-                        <p className="mt-2 text-sm text-foreground/55">Note: {booking.notes}</p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                      {canConsumerRescheduleBooking(booking.status) ? (
-                        <Button asChild variant="outline" size="sm" className="rounded-full">
-                          <Link href={`/dashboard/bookings/${booking.id}/reschedule`}>
-                            Reschedule
-                          </Link>
-                        </Button>
-                      ) : null}
-
-                      {canConsumerCancelBooking(booking.status) ? (
-                        <CancelBookingButton bookingId={booking.id} />
-                      ) : null}
-
-                      {canConsumerRebookBooking(booking.status) ? (
-                        <Button asChild size="sm" className="rounded-full">
-                          <Link href={rebookHref}>Book again</Link>
-                        </Button>
-                      ) : null}
-
-                      {booking.status === "completed" &&
-                      booking.isCrmCompleted &&
-                      booking.crmAppointmentId &&
-                      !booking.hasVerifiedReview ? (
-                        <LeaveReviewDialog
-                          appointmentId={booking.crmAppointmentId}
-                          salonName={booking.salonName}
-                          staffName={booking.staffName}
-                        />
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </Card>
-              </li>
+            ) : (
+              <Button asChild className="rounded-full px-5">
+                <Link href="/explore">Explore Salons</Link>
+              </Button>
             )
-          })}
+          }
+        />
+      ) : (
+        <ul className="space-y-3.5">
+          {visibleBookings.map((booking, index) => (
+            <li key={booking.id}>
+              <AppointmentCard
+                booking={booking}
+                authenticated={authenticated}
+                index={index}
+              />
+            </li>
+          ))}
         </ul>
       )}
     </div>

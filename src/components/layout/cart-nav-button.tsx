@@ -137,7 +137,7 @@ export function CartNavButton({ className }: CartNavButtonProps) {
         <PopoverContent
           align="end"
           sideOffset={10}
-          className="w-[min(20rem,calc(100vw-2rem))] p-0"
+          className="w-[min(20rem,calc(100vw-2rem))] rounded-lg p-0"
           onMouseEnter={clearCloseTimer}
           onMouseLeave={scheduleClose}
           onOpenAutoFocus={(event) => event.preventDefault()}
@@ -199,7 +199,7 @@ export function CartNavButton({ className }: CartNavButtonProps) {
                     : `${lines.length} service${lines.length === 1 ? "" : "s"}`}
                   {totalDuration > 0 ? ` · ~${formatDuration(totalDuration)}` : null}
                 </p>
-                <Button asChild size="sm" className="mt-3 h-9 w-full rounded-full">
+                <Button asChild size="sm" className="mt-3 w-full">
                   <Link href={href}>
                     Continue booking
                     <ArrowRightIcon className="size-4" />
@@ -210,7 +210,7 @@ export function CartNavButton({ className }: CartNavButtonProps) {
           ) : (
             <div className="px-4 py-5">
               <p className="text-sm text-foreground/65">No services added yet.</p>
-              <Button asChild variant="outline" size="sm" className="mt-4 h-9 w-full rounded-full">
+              <Button asChild variant="outline" size="sm" className="mt-4 w-full">
                 <Link href="/explore">Browse salons</Link>
               </Button>
             </div>

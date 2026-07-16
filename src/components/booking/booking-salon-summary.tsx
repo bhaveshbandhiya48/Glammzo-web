@@ -76,7 +76,7 @@ export function BookingSalonSummary({ salon }: { salon: Salon }) {
           ) : null}
         </dl>
 
-        <Button asChild variant="outline" size="sm" className="h-9 w-full rounded-full">
+        <Button asChild variant="outline" size="sm" className="w-full">
           <Link href={`/salons/${salon.id}`}>
             View full profile
             <ArrowUpRightIcon className="size-3.5" aria-hidden />

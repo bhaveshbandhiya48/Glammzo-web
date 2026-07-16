@@ -32,7 +32,7 @@ export function MobileAppCtaSection() {
               </h2>
               <p className="mt-4 text-[15px] leading-7 text-background/65 sm:text-[17px]">{mobile.subtitle}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg" className="h-12 rounded-full bg-primary px-8 hover:bg-primary/90">
+                <Button asChild size="lg" className="bg-primary px-8 hover:bg-primary/90">
                   <Link href="/explore">
                     {mobile.primaryCta}
                     <ArrowRightIcon className="size-4" />
@@ -42,7 +42,7 @@ export function MobileAppCtaSection() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="h-12 rounded-full border-background/30 bg-transparent px-8 text-background hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                  className="border-background/30 bg-transparent px-8 text-background hover:border-primary hover:bg-primary hover:text-primary-foreground"
                 >
                   <Link href="mailto:hello@glammzo.com?subject=Mobile%20app%20waitlist">
                     {mobile.secondaryCta}

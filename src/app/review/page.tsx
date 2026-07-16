@@ -29,7 +29,7 @@ export default async function ReviewPage({
           />
 
           <div className="mt-6">
-            <Button asChild className="rounded-full">
+            <Button asChild>
               <Link href="/dashboard/bookings">Go to bookings</Link>
             </Button>
           </div>

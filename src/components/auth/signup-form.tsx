@@ -128,7 +128,7 @@ export function SignupForm({ nextPath }: { nextPath: string }) {
               <p className="text-sm text-destructive">{activeState.message}</p>
             ) : null}
 
-            <Button type="submit" className="h-11 rounded-xl" disabled={isPending}>
+            <Button type="submit" size="lg" disabled={isPending}>
               {isPending ? <Loader2Icon className="mr-2 size-4 animate-spin" /> : null}
               {step === "otp" ? "Verify & create account" : "Send code"}
             </Button>

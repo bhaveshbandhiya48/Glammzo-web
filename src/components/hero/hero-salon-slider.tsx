@@ -9,6 +9,7 @@ import { media } from "@/data/media"
 import { MirrorShine } from "@/components/hero/MirrorShine"
 import { sortSalonsByDistance } from "@/lib/geo"
 import type { DistanceOrigin } from "@/lib/explore-distance"
+import { isSalonInCity } from "@/lib/salons/city-filter"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
 
@@ -28,11 +29,27 @@ function formatDistanceKm(km: number): string {
   return `${Math.round(km)} km`
 }
 
-function badgeForSalon(salon: SalonWithDistance, index: number, hasCoords: boolean): string {
-  if (!hasCoords) return index === 0 ? "Trending in town" : "Popular nearby"
-  if (index === 0 && salon.distanceKm <= 8) return "Trending in your area"
+function badgeForSalon(
+  salon: SalonWithDistance,
+  index: number,
+  hasCoords: boolean,
+  browseCity: string,
+): string {
+  const sameCity = isSalonInCity(salon, browseCity)
+
+  if (!hasCoords) {
+    return index === 0 ? "Trending in town" : "Popular nearby"
+  }
+
+  if (salon.distanceKm <= 8) {
+    return index === 0 ? "Trending in your area" : "Nearby"
+  }
+
   if (salon.distanceKm <= 15) return "Nearby"
-  return "In your city"
+
+  if (sameCity) return "In your city"
+
+  return salon.isFeatured ? "Featured partner" : "Popular partner"
 }
 
 function HeroSalonSlide({
@@ -200,7 +217,7 @@ export function HeroSalonSlider({
           <div key={salon.id} className="w-full shrink-0 snap-center">
             <HeroSalonSlide
               salon={salon}
-              badge={badgeForSalon(salon, index, showDistance)}
+              badge={badgeForSalon(salon, index, showDistance, browseCity)}
               showDistance={showDistance}
               isActive={index === activeIndex}
             />

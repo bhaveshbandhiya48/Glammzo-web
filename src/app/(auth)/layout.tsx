@@ -42,7 +42,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
               <div className="mt-6 text-sm text-foreground/60">
                 <Link
-                  href="/partner-signup"
+                  href="/for-salons/start"
                   className="font-medium text-foreground underline underline-offset-4 hover:opacity-80"
                 >
                   Create a Salon Partner Account

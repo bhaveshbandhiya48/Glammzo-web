@@ -45,6 +45,17 @@ export function uniqueServiceIds(serviceIds: string[]) {
   return [...new Set(serviceIds)]
 }
 
+function requiredCategoryIds(context: SalonBookingContext, serviceIds: string[]) {
+  return [
+    ...new Set(
+      uniqueServiceIds(serviceIds).flatMap((serviceId) => {
+        const categoryId = context.serviceCategoryMap[serviceId]
+        return categoryId ? [categoryId] : []
+      }),
+    ),
+  ]
+}
+
 export function isStaffEligibleForServices(
   context: SalonBookingContext,
   staffId: string,
@@ -53,10 +64,43 @@ export function isStaffEligibleForServices(
   if (!context.staffIds.includes(staffId)) return false
 
   const required = uniqueServiceIds(serviceIds)
+
+  if (context.categoryAssignmentsEnabled) {
+    const requiredCategories = requiredCategoryIds(context, required)
+    if (required.length > 0 && requiredCategories.length === 0) return false
+
+    const assignedCategories = new Set(context.staffCategoryMap[staffId] ?? [])
+    return requiredCategories.every((categoryId) => assignedCategories.has(categoryId))
+  }
+
   const assigned = new Set(context.staffServiceMap[staffId] ?? [])
+  // Compatibility before category assignments are deployed.
   if (assigned.size === 0) return true
 
   return required.every((serviceId) => assigned.has(serviceId))
+}
+
+/** Staff can perform at least one selected service category. */
+export function isStaffPartiallyEligibleForServices(
+  context: SalonBookingContext,
+  staffId: string,
+  serviceIds: string[],
+) {
+  if (!context.staffIds.includes(staffId)) return false
+
+  const required = uniqueServiceIds(serviceIds)
+  if (required.length === 0) return true
+
+  if (context.categoryAssignmentsEnabled) {
+    const requiredCategories = requiredCategoryIds(context, required)
+    const assignedCategories = new Set(context.staffCategoryMap[staffId] ?? [])
+    return requiredCategories.some((categoryId) => assignedCategories.has(categoryId))
+  }
+
+  const assigned = new Set(context.staffServiceMap[staffId] ?? [])
+  if (assigned.size === 0) return true
+
+  return required.some((serviceId) => assigned.has(serviceId))
 }
 
 function getEligibleStaffIds(context: SalonBookingContext, serviceIds: string[]) {
@@ -65,7 +109,21 @@ function getEligibleStaffIds(context: SalonBookingContext, serviceIds: string[])
   )
 }
 
+function getPartiallyEligibleStaffIds(context: SalonBookingContext, serviceIds: string[]) {
+  return context.staffIds.filter((staffId) =>
+    isStaffPartiallyEligibleForServices(context, staffId, serviceIds),
+  )
+}
+
 export function hasEligibleStaffForServices(
+  context: SalonBookingContext,
+  serviceIds: string[],
+) {
+  return getEligibleStaffIds(context, serviceIds).length > 0
+}
+
+/** True when at least one team member can cover some of the cart. */
+export function hasAssignableStaffForServices(
   context: SalonBookingContext,
   serviceIds: string[],
 ) {
@@ -126,12 +184,39 @@ export function isStaffAvailableForSlot(
   }
 
   return !booked.some((appointment) => {
-    if (appointment.staffId !== input.staffId) return false
     if (appointment.date !== input.appointmentDate) return false
+    // Unassigned bookings block every staff member for this time window.
+    if (appointment.staffId && appointment.staffId !== input.staffId) return false
 
     return rangesOverlap(
       input.startTime,
       input.endTime,
+      appointment.startTime,
+      appointment.endTime,
+    )
+  })
+}
+
+function hasOverlappingBooking(
+  booked: BookedAppointment[],
+  appointmentDate: string,
+  startTime: string,
+  endTime: string,
+  staffIds?: string[],
+) {
+  return booked.some((appointment) => {
+    if (appointment.date !== appointmentDate) return false
+
+    if (staffIds && staffIds.length > 0) {
+      // Salon-level (no staff) OR overlapping one of the candidate staff.
+      if (appointment.staffId && !staffIds.includes(appointment.staffId)) {
+        return false
+      }
+    }
+
+    return rangesOverlap(
+      startTime,
+      endTime,
       appointment.startTime,
       appointment.endTime,
     )
@@ -145,76 +230,49 @@ export function pickStaffForSlot(
   startTime: string,
   endTime: string,
   preferredStaffId?: string | null,
-  options?: BookingAvailabilityOptions,
-) {
-  if (preferredStaffId) {
-    if (!isStaffEligibleForServices(context, preferredStaffId, serviceIds)) {
-      return null
-    }
-
-    return isStaffAvailableForSlot(context, context.booked, {
-      staffId: preferredStaffId,
+  _options?: BookingAvailabilityOptions,
+): string | null {
+  const isFree = (staffId: string) =>
+    isStaffAvailableForSlot(context, context.booked, {
+      staffId,
       appointmentDate,
       startTime,
       endTime,
     })
-      ? preferredStaffId
-      : null
+
+  if (preferredStaffId) {
+    if (!isStaffEligibleForServices(context, preferredStaffId, serviceIds)) {
+      return null
+    }
+    return isFree(preferredStaffId) ? preferredStaffId : null
   }
 
-  const candidates = options?.packageBooking
-    ? rankStaffByLoad(context, context.staffIds)
-    : rankStaffForServices(context, serviceIds)
-
-  for (const staffId of candidates) {
-    if (
-      !options?.packageBooking &&
-      !isStaffEligibleForServices(context, staffId, serviceIds)
-    ) {
-      continue
+  const tryPick = (candidates: string[]) => {
+    for (const staffId of candidates) {
+      if (isFree(staffId)) return staffId
     }
-
-    if (
-      isStaffAvailableForSlot(context, context.booked, {
-        staffId,
-        appointmentDate,
-        startTime,
-        endTime,
-      })
-    ) {
-      return staffId
-    }
+    return null
   }
 
-  return null
-}
+  const fullCoverIds = new Set(getEligibleStaffIds(context, serviceIds))
 
-function rankStaffByLoad(context: SalonBookingContext, staffIds: string[]) {
-  return [...staffIds].sort((left, right) => {
-    const leftLoad = context.booked.filter((booking) => booking.staffId === left).length
-    const rightLoad = context.booked.filter((booking) => booking.staffId === right).length
-    return leftLoad - rightLoad
-  })
+  const fullCover = tryPick(
+    rankStaffForServices(context, serviceIds).filter((id) => fullCoverIds.has(id)),
+  )
+  return fullCover
 }
 
 function resolveStaffPoolForSlots(
   context: SalonBookingContext,
   serviceIds: string[],
   preferredStaffId?: string | null,
-  options?: BookingAvailabilityOptions,
+  _options?: BookingAvailabilityOptions,
 ) {
   if (preferredStaffId) {
-    return isStaffEligibleForServices(context, preferredStaffId, serviceIds)
-      ? [preferredStaffId]
-      : []
+    return context.staffIds.includes(preferredStaffId) ? [preferredStaffId] : []
   }
 
-  if (options?.packageBooking) {
-    return context.staffIds
-  }
-
-  const eligible = getEligibleStaffIds(context, serviceIds)
-  return eligible.length > 0 ? eligible : context.staffIds
+  return getEligibleStaffIds(context, serviceIds)
 }
 
 function resolveSlotStatus(
@@ -241,6 +299,12 @@ function resolveSlotStatus(
     return "available"
   }
 
+  // Prefer "booked" whenever an existing appointment covers this window so the
+  // UI can show the slot as taken (disabled) instead of hiding it.
+  if (hasOverlappingBooking(context.booked, appointmentDate, startTime, endTime, staffPool)) {
+    return "booked"
+  }
+
   const workingStaff = staffPool.filter((staffId) =>
     isStaffWorkingSlot(context, staffId, appointmentDate, startTime, endTime),
   )
@@ -253,25 +317,9 @@ function resolveSlotStatus(
 }
 
 function rankStaffForServices(context: SalonBookingContext, serviceIds: string[]) {
-  const { staffIds, staffServiceMap } = context
-  const required = uniqueServiceIds(serviceIds)
-
-  const coversAll = staffIds.filter((staffId) => {
-    const assigned = new Set(staffServiceMap[staffId] ?? [])
-    return required.every((serviceId) => assigned.has(serviceId))
-  })
-
-  const coversAny = staffIds.filter((staffId) => {
-    const assigned = new Set(staffServiceMap[staffId] ?? [])
-    return required.some((serviceId) => assigned.has(serviceId))
-  })
-
-  const unassigned = staffIds.filter((staffId) => !(staffServiceMap[staffId]?.length ?? 0))
-
-  const ordered = [...coversAll, ...coversAny, ...unassigned]
-  const unique = [...new Set(ordered)]
-
-  return unique.sort((left, right) => {
+  return context.staffIds
+    .filter((staffId) => isStaffEligibleForServices(context, staffId, serviceIds))
+    .sort((left, right) => {
     const leftLoad = context.booked.filter((booking) => booking.staffId === left).length
     const rightLoad = context.booked.filter((booking) => booking.staffId === right).length
     return leftLoad - rightLoad
@@ -305,11 +353,14 @@ export function getTimeSlotOptionsForDate(
     }
   }
 
-  if (preferredStaffId && !isStaffEligibleForServices(context, preferredStaffId, serviceIds)) {
+  if (
+    preferredStaffId &&
+    !isStaffEligibleForServices(context, preferredStaffId, serviceIds)
+  ) {
     return {
       slots: [],
       closed: true,
-      closedMessage: "This team member cannot perform all selected services.",
+      closedMessage: "This team member is not available for online booking.",
     }
   }
 
@@ -347,6 +398,8 @@ export function getTimeSlotOptionsForDate(
       : roundUpToInterval(tomorrowMinStart)
   }
 
+  // Generate slots for the remaining day. Past starts are omitted from generation;
+  // booked starts later in the day stay visible (disabled) so customers can see them.
   const rawSlots = generateTimeSlotOptions({
     open: schedule.open,
     close: schedule.close,
@@ -373,10 +426,6 @@ export function getTimeSlotOptionsForDate(
   )
 
   const slots = rawSlots.map((slot) => {
-    if (minStartTime && timeToMinutes(`${slot}:00`) < timeToMinutes(minStartTime)) {
-      return { slot, status: "past" as const }
-    }
-
     const startTime = `${slot}:00`
     const endTime = addMinutesToEnd(slot, durationMinutes)
 

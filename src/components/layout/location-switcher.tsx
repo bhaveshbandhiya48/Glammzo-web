@@ -20,7 +20,7 @@ import {
   DEFAULT_CITY_NAME,
   type GlamzzoLocation,
   type StoredLocation,
-  formatStoredLocationLabel,
+  formatBrowseSalonsCityLabel,
   getLocationById,
 } from "@/lib/location"
 import {
@@ -92,7 +92,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
   }
 
   const displayLabel = stored
-    ? formatStoredLocationLabel(current, stored)
+    ? formatBrowseSalonsCityLabel(current, stored)
     : "Detecting…"
   const isNearMe = hasActiveNearMe(stored)
   const nearMeCityLabel = stored?.city ?? current.label
@@ -116,10 +116,9 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
       <Button
         type="button"
         variant="outline"
-        size={size === "xs" ? "xs" : "sm"}
+        size="sm"
         className={cn(
-          "justify-start rounded-full border-border/70 bg-background/70 text-foreground/80",
-          size === "xs" ? "h-7 px-2.5 text-[11px]" : "h-8 px-3 text-xs",
+          "justify-start border-border/70 bg-background/70 text-foreground/80",
           isNearMe && "border-primary/25 bg-primary/5",
           className
         )}
@@ -195,7 +194,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               <Button
                 type="button"
                 variant="default"
-                className="h-11 shrink-0 rounded-2xl px-5"
+                className="shrink-0 px-5"
                 onClick={handleUseNearMe}
                 disabled={geoBusy}
               >
@@ -214,7 +213,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
             ) : null}
 
             {isNearMe ? (
-              <Button asChild variant="outline" className="h-10 w-full rounded-2xl">
+              <Button asChild variant="outline" className="w-full">
                 <Link href={exploreNearHref}>View nearby salons</Link>
               </Button>
             ) : null}

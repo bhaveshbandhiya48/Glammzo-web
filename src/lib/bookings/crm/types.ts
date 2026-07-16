@@ -20,6 +20,7 @@ export type BusinessHoursSettings = {
 }
 
 export type BookedAppointment = {
+  /** Empty when the booking has no assigned staff yet (still blocks the slot). */
   staffId: string
   date: string
   startTime: string
@@ -42,6 +43,9 @@ export type SalonBookingContext = {
   staffIds: string[]
   staffMembers: BookableStaffMember[]
   staffServiceMap: Record<string, string[]>
+  staffCategoryMap: Record<string, string[]>
+  serviceCategoryMap: Record<string, string>
+  categoryAssignmentsEnabled: boolean
   staffSchedules: Record<string, Partial<Record<Weekday, DaySchedule>>>
   webBooking: {
     responseSlaMinutes: number

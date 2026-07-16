@@ -21,15 +21,15 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Your account"
-        title="Your appointments"
-        subtitle="Track pending requests, confirmed visits, and past bookings."
-        className="[&_h1]:mb-3 [&_p]:mt-0"
+        eyebrow="Your bookings"
+        title="Your Appointments"
+        subtitle="Track your upcoming, pending, completed and cancelled bookings in one place."
+        className="max-w-2xl [&_h1]:mb-2 [&_p]:mt-0"
       />
 
       {rescheduled ? (
         <Card className="rounded-2xl border-primary/30 bg-primary/5">
-          <CardContent className="px-6 py-4">
+          <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-foreground/80">
               Your appointment was rescheduled. The salon will see your new time.
             </p>
@@ -39,7 +39,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
 
       {error === "cancel" ? (
         <Card className="rounded-2xl">
-          <CardContent className="px-6 py-4">
+          <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
               We couldn&apos;t cancel this booking. Please try again or contact the salon.
             </p>
@@ -49,7 +49,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
 
       {error === "reschedule" ? (
         <Card className="rounded-2xl">
-          <CardContent className="px-6 py-4">
+          <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
               We couldn&apos;t reschedule this booking. Please try again or contact the salon.
             </p>
@@ -59,7 +59,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Sea
 
       {error === "review" ? (
         <Card className="rounded-2xl">
-          <CardContent className="px-6 py-4">
+          <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
               We couldn&apos;t save your review. Please try again.
             </p>

@@ -4,18 +4,20 @@ import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 
 import { HeroSalonSlider } from "@/components/hero/hero-salon-slider"
+import { useCitySalonCatalog } from "@/hooks/use-city-salon-catalog"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
-import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { useUserLocation } from "@/hooks/use-user-location"
 import { buildExploreNearMeHref } from "@/lib/location-storage"
 
 export function HeroVisual() {
   const { browseCity, coords, nearMe } = useUserLocation()
   const origin = useExploreDistanceOrigin({})
-  const { salons, loaded } = useSalonCatalog()
+  const { salons, loaded } = useCitySalonCatalog()
   const exploreHref = coords
     ? buildExploreNearMeHref(coords.latitude, coords.longitude)
-    : "/explore"
+    : browseCity
+      ? `/explore?city=${encodeURIComponent(browseCity)}`
+      : "/explore"
 
   return (
     <div className="relative mx-auto w-full max-w-[520px]" aria-label="Booking preview">

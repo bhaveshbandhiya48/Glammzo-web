@@ -17,10 +17,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <Container className="flex h-16 items-center justify-between">
           <Logo />
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" className="rounded-full text-sm">
+            <Button asChild variant="ghost">
               <Link href="/explore">Explore</Link>
             </Button>
-            <LogoutFormButton variant="outline" size="sm" className="rounded-full" pendingLabel="Logging out…">
+            <LogoutFormButton variant="outline" size="sm" pendingLabel="Logging out…">
               Log out
             </LogoutFormButton>
           </div>

@@ -36,18 +36,8 @@ export function CategoryStackCard({ category, index, total }: CategoryStackCardP
             <p className="mt-4 max-w-md text-[15px] leading-relaxed text-foreground/65">
               {category.description}
             </p>
-            <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-1.5">
-              {category.services.map((service) => (
-                <li
-                  key={service}
-                  className="text-sm text-foreground/55 before:mr-1.5 before:content-['·']"
-                >
-                  {service}
-                </li>
-              ))}
-            </ul>
           </div>
-          <Button asChild className="mt-8 w-fit rounded-full px-6">
+          <Button asChild className="mt-8 w-fit px-6">
             <Link href={`/explore?category=${category.id}`}>Browse {category.eyebrow}</Link>
           </Button>
         </div>

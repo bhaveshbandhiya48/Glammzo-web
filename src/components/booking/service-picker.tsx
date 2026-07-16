@@ -124,8 +124,8 @@ function CompactCartServiceRow({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
-        className="size-8 shrink-0 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        size="icon-sm"
+        className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         onClick={onRemove}
         aria-label={`Remove ${service.name}`}
       >
@@ -232,9 +232,9 @@ function ServicePickerItem({
           {!selected ? (
             <Button
               type="button"
-              size="xs"
+              size="sm"
               variant="default"
-              className="min-w-[4rem] rounded-full"
+              className="min-w-[4rem]"
               onClick={onToggle}
             >
               Add

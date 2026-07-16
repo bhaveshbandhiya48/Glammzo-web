@@ -31,8 +31,8 @@ export function LoginSection() {
                 </p>
               </div>
               <div className="grid gap-2">
-                <Button className="rounded-xl">Continue</Button>
-                <Button variant="outline" className="rounded-xl">
+                <Button size="lg">Continue</Button>
+                <Button variant="outline" size="lg">
                   Create account
                 </Button>
               </div>

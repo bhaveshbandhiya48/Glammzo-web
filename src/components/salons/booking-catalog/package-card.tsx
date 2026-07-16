@@ -48,7 +48,7 @@ export function PackageCard({
     <article
       className={cn(
         "group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-sm shadow-black/[0.04] transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl hover:shadow-black/[0.08]",
-        selected && "border-primary/35 ring-2 ring-primary/15",
+        selected && "border-primary",
       )}
       onClick={onViewDetails}
       onKeyDown={(event) => {
@@ -61,27 +61,23 @@ export function PackageCard({
       tabIndex={0}
       aria-label={`View details for ${pkg.name}`}
     >
-      <PackageCover
-        pkg={pkg}
-        salonName={salonName}
-        salonCoverImageUrl={salonCoverImageUrl}
-        className="h-[210px]"
-      />
+      <div className="relative">
+        <PackageCover
+          pkg={pkg}
+          salonName={salonName}
+          salonCoverImageUrl={salonCoverImageUrl}
+          className="h-[210px]"
+        />
+        {badge ? (
+          <Badge className="absolute top-3 left-3 z-10 rounded-full border-0 bg-background/95 px-2.5 py-0.5 text-[11px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
+            <span aria-hidden>{badge.emoji}</span> {badge.label}
+          </Badge>
+        ) : null}
+      </div>
 
       <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
         <div className="min-h-0 flex-1">
-          {badge ? (
-            <Badge className="w-fit rounded-full bg-primary/10 px-2.5 text-primary hover:bg-primary/10">
-              <span aria-hidden>{badge.emoji}</span> {badge.label}
-            </Badge>
-          ) : null}
-
-          <h3
-            className={cn(
-              "font-heading text-lg font-semibold leading-snug text-foreground",
-              badge && "mt-2.5",
-            )}
-          >
+          <h3 className="font-heading text-lg font-semibold leading-snug text-foreground">
             {pkg.name}
           </h3>
 
@@ -137,7 +133,8 @@ export function PackageCard({
           <div className="mt-4 flex items-center gap-2">
             <Button
               type="button"
-              className="relative z-10 h-11 flex-1 rounded-full"
+              size="md"
+              className="relative z-10 flex-1"
               onClick={(event) => {
                 event.stopPropagation()
                 onViewDetails()
@@ -150,7 +147,7 @@ export function PackageCard({
               size="icon"
               variant={selected ? "secondary" : "outline"}
               className={cn(
-                "relative z-10 size-11 shrink-0 rounded-full border-border/80 bg-background transition-transform duration-200 active:scale-95",
+                "relative z-10 shrink-0 border-border/80 bg-background transition-transform duration-200 active:scale-95",
                 selected && "border-primary/30 bg-primary/10 text-primary",
               )}
               disabled={!pkg.allowOnlineBooking}

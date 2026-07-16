@@ -40,7 +40,12 @@ export function ExploreSalonGrid({
 
     const filtered =
       radius != null
-        ? withDistance.filter((salon) => salon.distanceKm > 0 && salon.distanceKm <= radius)
+        ? withDistance.filter((salon) => {
+            // Keep salons without a known distance (no coords / no user origin).
+            // Radius only hides salons that are known to be farther away.
+            if (!(salon.distanceKm > 0)) return true
+            return salon.distanceKm <= radius
+          })
         : withDistance
 
     if (shouldSortByDistance) {

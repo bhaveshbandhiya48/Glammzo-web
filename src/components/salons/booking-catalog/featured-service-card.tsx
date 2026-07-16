@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { ClockIcon, PlusIcon, XIcon } from "lucide-react"
+import { ClockIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,7 @@ export function FeaturedServiceCard({
     <article
       className={cn(
         "group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border/70 bg-card/90 shadow-sm shadow-black/[0.03] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md hover:shadow-black/[0.05]",
-        selected && "border-primary/35 ring-2 ring-primary/15",
+        selected && "border-primary",
         className,
       )}
       onClick={onOpenDetails}
@@ -55,52 +55,47 @@ export function FeaturedServiceCard({
           sizes="(max-width: 640px) 40vw, 22vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-      </div>
-
-      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
         {badge ? (
-          <Badge className="mb-1.5 w-fit rounded-full bg-primary/10 px-2 py-0 text-[10px] text-primary hover:bg-primary/10">
+          <Badge className="absolute top-2 left-2 z-10 rounded-full border-0 bg-background/95 px-2 py-0.5 text-[10px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
             <span aria-hidden>{badge.emoji}</span> {badge.label}
           </Badge>
         ) : null}
+      </div>
 
+      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
         <h3 className="line-clamp-2 font-heading text-[15px] font-semibold leading-snug text-foreground">
           {service.name}
         </h3>
 
         <p className="mt-1 truncate text-xs text-foreground/55">{service.category}</p>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-2.5">
-          <p className="inline-flex items-center gap-1 text-xs text-foreground/55">
-            <ClockIcon className="size-3 shrink-0" />
-            {service.durationMin} min
-          </p>
-          <div className="flex items-center gap-2">
+        <div className="mt-auto space-y-2.5 pt-2.5">
+          <div className="flex items-end justify-between gap-2">
+            <p className="inline-flex items-center gap-1 text-xs text-foreground/55">
+              <ClockIcon className="size-3 shrink-0" />
+              {service.durationMin} min
+            </p>
             <p className="font-heading text-base font-semibold tabular-nums text-foreground">
               {formatInr(service.price)}
             </p>
-            <Button
-              type="button"
-              size="icon"
-              variant={selected ? "secondary" : "outline"}
-              className={cn(
-                "relative z-10 size-8 shrink-0 rounded-full border-border/80 bg-background transition-transform duration-200 active:scale-95",
-                selected &&
-                  "border-foreground/20 bg-foreground/5 text-foreground/70 hover:bg-destructive/10 hover:text-destructive",
-              )}
-              onClick={(event) => {
-                event.stopPropagation()
-                onToggle()
-              }}
-              aria-label={
-                selected
-                  ? `Remove ${service.name} from booking`
-                  : `Add ${service.name} to booking`
-              }
-            >
-              {selected ? <XIcon className="size-3.5" /> : <PlusIcon className="size-3.5" />}
-            </Button>
           </div>
+
+          <Button
+            type="button"
+            variant={selected ? "outline" : "default"}
+            size="md"
+            className={cn(
+              "relative z-10 w-full",
+              selected &&
+                "border-border/80 bg-background text-foreground/75 hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive",
+            )}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggle()
+            }}
+          >
+            {selected ? "Remove" : "Add"}
+          </Button>
         </div>
       </div>
     </article>

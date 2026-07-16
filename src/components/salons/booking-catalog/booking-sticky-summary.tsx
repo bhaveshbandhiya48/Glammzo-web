@@ -134,7 +134,7 @@ export function BookingStickySummary({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="flex-1 rounded-full"
+                    className="flex-1"
                     onClick={() => onViewRecommendedPackage?.(recommendedPackage)}
                   >
                     View Details
@@ -142,7 +142,7 @@ export function BookingStickySummary({
                   <Button
                     type="button"
                     size="sm"
-                    className="flex-1 rounded-full"
+                    className="flex-1"
                     onClick={() => onAddRecommendedPackage?.(recommendedPackage)}
                   >
                     Quick Add
@@ -151,7 +151,7 @@ export function BookingStickySummary({
               </div>
             ) : null}
 
-            <Button className="w-full rounded-full" disabled>
+            <Button size="lg" className="w-full" disabled>
               Continue
             </Button>
           </motion.div>
@@ -296,7 +296,7 @@ export function BookingStickySummary({
               </div>
             </div>
 
-            <Button asChild className="w-full rounded-full" size="lg">
+            <Button asChild size="lg" className="w-full">
               <Link href={bookHref}>Continue</Link>
             </Button>
           </motion.div>
@@ -348,7 +348,7 @@ export function MobileBookingBar({
             {summaryLabel}
           </p>
         </div>
-        <Button asChild className="h-12 w-full rounded-full text-base font-semibold shadow-sm" size="lg">
+        <Button asChild size="lg" className="w-full">
           <Link href={bookHref}>Continue</Link>
         </Button>
       </div>

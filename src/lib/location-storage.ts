@@ -9,6 +9,7 @@ import {
   type GlamzzoLocation,
   type StoredLocation,
 } from "@/lib/location"
+import { resolveBrowseCityFromStored, syncBrowseCityCookie } from "@/lib/location-city-cookie"
 
 export const LOCATION_UPDATED_EVENT = "glamzzo-location-updated"
 
@@ -111,6 +112,7 @@ export function writeStoredLocation(stored: StoredLocation): void {
   } catch {
     // ignore storage errors
   }
+  syncBrowseCityCookie(resolveBrowseCityFromStored(stored))
   window.dispatchEvent(new CustomEvent(LOCATION_UPDATED_EVENT))
 }
 

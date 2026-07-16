@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 
-import { categories } from "@/data/landing"
 import { siteCopy } from "@/data/site-copy"
+import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { Navbar } from "@/components/layout/navbar"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
@@ -19,7 +19,9 @@ export const metadata: Metadata = {
   description: categoriesCopy.subtitle,
 }
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const categories = await getBrowseDefaultCategories()
+
   return (
     <>
       <Navbar />
@@ -39,16 +41,25 @@ export default function ServicesPage() {
             subtitle="Each category includes popular treatments with upfront pricing on salon pages."
             className="mb-8 sm:mb-10"
           />
-          <ul
-            className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-            aria-label="Service categories"
-          >
-            {categories.map((category, index) => (
-              <li key={category.id} className="min-h-0">
-                <ServiceCategoryGridCard category={category} priority={index < 3} />
-              </li>
-            ))}
-          </ul>
+          {categories.length > 0 ? (
+            <ul
+              className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+              aria-label="Service categories"
+            >
+              {categories.map((category, index) => (
+                <li key={category.id} className="min-h-0">
+                  <ServiceCategoryGridCard category={category} priority={index < 3} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-3xl border border-border/70 bg-card px-6 py-12 text-center">
+              <p className="font-heading text-lg font-semibold">Categories are coming soon</p>
+              <p className="mt-2 text-sm text-foreground/60">
+                Published salons have not added services under the default categories yet.
+              </p>
+            </div>
+          )}
         </PageSection>
 
         <PageSection tone="featured" separated>
@@ -60,13 +71,13 @@ export default function ServicesPage() {
             className="mb-8"
           />
           <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="h-12 rounded-full px-8">
+            <Button asChild size="lg" className="px-8">
               <Link href="/explore">
                 Explore salons
                 <ArrowRightIcon className="size-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-full px-8">
+            <Button asChild size="lg" variant="outline" className="px-8">
               <Link href="/#how">How it works</Link>
             </Button>
           </div>

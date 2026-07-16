@@ -195,10 +195,6 @@ export function BookingForm({
 
   const bookableStaff = useMemo(() => {
     if (bookingContext) {
-      if (selectedIds.length === 0) {
-        return bookingContext.staffMembers
-      }
-
       return bookingContext.staffMembers.filter((member) =>
         isStaffEligibleForServices(bookingContext, member.id, selectedIds),
       )
@@ -212,6 +208,10 @@ export function BookingForm({
     }))
   }, [bookingContext, salon.team, selectedIds])
 
+  const multiServiceNoSingleStaff = useMemo(() => {
+    if (!bookingContext || packageMode || selectedIds.length < 2) return false
+    return !hasEligibleStaffForServices(bookingContext, selectedIds)
+  }, [bookingContext, packageMode, selectedIds])
 
   useEffect(() => {
     if (staffId && !bookableStaff.some((member) => member.id === staffId)) {
@@ -319,11 +319,6 @@ export function BookingForm({
       availabilityOptions,
     )
   }, [availabilityOptions, bookingContext, date, preferredStaffId, selectedIds, totalDuration])
-
-  const noEligibleStaff = useMemo(() => {
-    if (!bookingContext || selectedIds.length === 0) return false
-    return !hasEligibleStaffForServices(bookingContext, selectedIds)
-  }, [bookingContext, selectedIds])
 
   const demoSlotTaken = (slot: string) =>
     unavailableSlots.some((s) => s.date === date && s.time === slot)
@@ -438,7 +433,7 @@ export function BookingForm({
             <Button
               type="button"
               size="sm"
-              className="mt-4 rounded-full px-6"
+              className="mt-4 px-6"
               onClick={() => setBrowseOpen(true)}
             >
               {packageMode ? "Browse packages" : "Browse services"}
@@ -476,7 +471,7 @@ export function BookingForm({
             type="button"
             variant="outline"
             size="sm"
-            className="h-9 w-full rounded-full sm:w-auto"
+            className="w-full sm:w-auto"
             onClick={() => setBrowseOpen(true)}
           >
             <PlusIcon className="size-4" />
@@ -506,7 +501,7 @@ export function BookingForm({
                   ? `${selectedServices.length} in cart`
                   : "None selected yet"}
               </p>
-              <Button type="button" size="sm" className="rounded-full px-5" onClick={() => setBrowseOpen(false)}>
+              <Button type="button" size="sm" className="px-5" onClick={() => setBrowseOpen(false)}>
                 Done
               </Button>
             </DialogFooter>
@@ -579,7 +574,8 @@ export function BookingForm({
         {bookableStaff.length > 0 && !packageMode ? (
           <div className="space-y-1.5">
             <Label htmlFor="staff" className="text-xs text-muted-foreground">
-              Preferred team member
+              Preferred team member{" "}
+              <span className="font-normal text-foreground/45">(optional)</span>
             </Label>
             <StaffPicker
               id="staff"
@@ -596,6 +592,12 @@ export function BookingForm({
                   : "Any available professional"
               }
             />
+            {multiServiceNoSingleStaff && !staffId ? (
+              <p className="text-xs leading-relaxed text-foreground/55">
+                No team member is assigned to every selected service category. Adjust your service
+                selection to continue.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -623,11 +625,6 @@ export function BookingForm({
             <Label htmlFor="time" className="text-xs text-muted-foreground">
               Time
             </Label>
-            {noEligibleStaff && !packageMode ? (
-              <p className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-                No team member can perform all selected services together.
-              </p>
-            ) : null}
             <TimeSlotPicker
               id="time"
               value={time}

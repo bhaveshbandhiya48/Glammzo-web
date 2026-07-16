@@ -32,10 +32,10 @@ export default function PartnerDashboardPage() {
                 and bookings here. Connect your account system to enable partner sign in.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button asChild className="rounded-full">
-                  <Link href="/partner-signup">Submit application</Link>
+                <Button asChild>
+                  <Link href="/for-salons/start">Start free</Link>
                 </Button>
-                <Button asChild variant="outline" className="rounded-full">
+                <Button asChild variant="outline">
                   <Link href="/">Back to home</Link>
                 </Button>
               </div>

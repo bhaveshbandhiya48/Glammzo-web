@@ -257,6 +257,15 @@ export async function createCrmWebBooking(
   )
 
   if (!staffId) {
+    if (input.preferredStaffId) {
+      return {
+        success: false,
+        error:
+          "That professional isn’t free at this time. Choose another time, or leave staff as “Any available”.",
+        code: "slot_taken",
+      }
+    }
+
     return {
       success: false,
       error: "That time slot was just taken. Please choose another.",

@@ -23,7 +23,7 @@ export default async function FavoritesPage() {
         <Card className="rounded-2xl">
           <CardContent className="px-6 py-10 text-center">
             <p className="text-foreground/65">You haven&apos;t saved any salons yet.</p>
-            <Button asChild className="mt-4 rounded-full">
+            <Button asChild className="mt-4">
               <Link href="/explore">Explore salons</Link>
             </Button>
           </CardContent>

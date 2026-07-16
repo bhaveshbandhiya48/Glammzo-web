@@ -4,6 +4,7 @@ export type SalonService = {
   durationMin: number
   price: number
   category: string
+  categorySortOrder?: number
   imageUrl: string
   /** Full service description from CRM, used in detail drawer */
   description?: string

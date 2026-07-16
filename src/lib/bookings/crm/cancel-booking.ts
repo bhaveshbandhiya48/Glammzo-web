@@ -7,11 +7,14 @@ import { createAdminClient } from "@/lib/supabase/admin"
 export async function cancelCrmWebBooking(
   appointmentId: string,
   phone: string,
+  cancellationReason?: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const phoneDigits = normalizeCustomerPhoneDigits(phone)
   if (!phoneDigits) {
     return { success: false, error: "Invalid phone number." }
   }
+
+  const reason = cancellationReason?.trim() || CUSTOMER_CANCELLED_REASON
 
   const supabase = createAdminClient()
 
@@ -40,7 +43,13 @@ export async function cancelCrmWebBooking(
     return { success: false, error: "You cannot cancel this booking." }
   }
 
-  if (row.status === "cancelled" || row.status === "completed" || row.status === "rejected" || row.status === "expired") {
+  if (
+    row.status === "cancelled" ||
+    row.status === "completed" ||
+    row.status === "rejected" ||
+    row.status === "expired" ||
+    row.status === "cancelled_by_customer"
+  ) {
     return { success: false, error: "This booking can no longer be cancelled." }
   }
 
@@ -50,7 +59,7 @@ export async function cancelCrmWebBooking(
       status: "cancelled_by_customer",
       slot_reserved: false,
       cancelled_at: new Date().toISOString(),
-      cancellation_reason: CUSTOMER_CANCELLED_REASON,
+      cancellation_reason: reason,
     })
     .eq("id", appointmentId)
 

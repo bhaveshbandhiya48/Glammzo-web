@@ -29,7 +29,7 @@ export function StatementSection() {
           <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-foreground/60 sm:text-base">
             {statement.subtitle}
           </p>
-          <Button asChild size="lg" className="mt-6 h-11 rounded-full px-7 shadow-md shadow-primary/15">
+          <Button asChild size="lg" className="mt-6 px-7 shadow-md shadow-primary/15">
             <Link href="/explore">
               {statement.cta}
               <ArrowRightIcon className="size-4" />

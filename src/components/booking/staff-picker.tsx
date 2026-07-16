@@ -76,7 +76,10 @@ export function StaffPicker({
           </span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[min(100vw-2rem,20rem)] p-2" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-2"
+        align="start"
+      >
         <div className="max-h-64 space-y-1 overflow-y-auto">
           <button
             type="button"
@@ -94,7 +97,7 @@ export function StaffPicker({
             <span>
               <span className="block font-medium">Any available professional</span>
               <span className="mt-0.5 block text-xs text-foreground/55">
-                We&apos;ll match you with someone free
+                Recommended · salon assigns the right person
               </span>
             </span>
           </button>

@@ -44,7 +44,7 @@ export function LogoutMenuButton({
         variant="ghost"
         pendingLabel={pendingLabel}
         className={cn(
-          "h-auto w-full justify-start rounded-xl px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-accent",
+          "h-auto w-full justify-start px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-accent",
           className,
         )}
       >

@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="mt-7 max-w-md">
-        <Button asChild className="h-11 w-full rounded-xl">
+        <Button asChild size="lg" className="w-full">
           <Link href="/login">Back to sign in</Link>
         </Button>
       </div>

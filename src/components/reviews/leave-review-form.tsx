@@ -116,7 +116,8 @@ export function LeaveReviewForm({
 
       <section className="space-y-4 border-t border-border/60 pt-6">
         <FormSubmitButton
-          className="h-11 w-full rounded-full"
+          size="lg"
+          className="w-full"
           disabled={!canSubmit}
           pendingLabel="Posting…"
         >

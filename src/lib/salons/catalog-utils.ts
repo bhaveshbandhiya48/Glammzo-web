@@ -9,14 +9,7 @@ import type { SalonPackage, SalonService } from "@/types/salon"
 export type CatalogFilterId =
   | "all"
   | "packages"
-  | "hair"
-  | "skin"
-  | "spa"
-  | "bridal"
-  | "beard"
-  | "kids"
-  | "women"
-  | "men"
+  | (string & {})
 
 export type CatalogFilterChip = {
   id: CatalogFilterId
@@ -129,21 +122,48 @@ export function mergePackageWithExtras(
 }
 
 export function groupServicesByCategory(services: SalonService[]) {
-  const groups = new Map<string, SalonService[]>()
+  const groups = new Map<string, { items: SalonService[]; sortOrder: number }>()
 
   for (const service of services) {
     const category = service.category.trim() || "Services"
-    const list = groups.get(category) ?? []
-    list.push(service)
-    groups.set(category, list)
+    const existing = groups.get(category)
+    const sortOrder = service.categorySortOrder ?? existing?.sortOrder ?? 0
+
+    if (existing) {
+      existing.items.push(service)
+      existing.sortOrder = Math.min(existing.sortOrder, sortOrder)
+    } else {
+      groups.set(category, { items: [service], sortOrder })
+    }
   }
 
   return Array.from(groups.entries())
-    .map(([category, items]) => ({
+    .map(([category, group]) => ({
       category,
-      items: items.sort((a, b) => a.name.localeCompare(b.name)),
+      items: group.items.sort((a, b) => a.name.localeCompare(b.name)),
+      sortOrder: group.sortOrder,
     }))
-    .sort((a, b) => a.category.localeCompare(b.category))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.category.localeCompare(b.category))
+}
+
+export function buildCatalogFilterChips(services: SalonService[]): CatalogFilterChip[] {
+  const grouped = groupServicesByCategory(services)
+  const chips: CatalogFilterChip[] = [{ id: "all", label: "All", keywords: [] }]
+
+  if (services.some((service) => normalizeText(service.category).includes("package"))) {
+    chips.push({ id: "packages", label: "Packages", keywords: ["package"] })
+  }
+
+  for (const group of grouped) {
+    const id = normalizeText(group.category).replace(/[^a-z0-9]+/g, "-")
+    chips.push({
+      id,
+      label: group.category,
+      keywords: [normalizeText(group.category)],
+    })
+  }
+
+  return chips
 }
 
 function normalizeText(value: string) {
@@ -163,9 +183,10 @@ function haystackForPackage(pkg: SalonPackage, services: SalonService[]) {
 export function matchesCatalogFilter(
   haystack: string,
   filterId: CatalogFilterId,
+  chips: CatalogFilterChip[] = CATALOG_FILTER_CHIPS,
 ): boolean {
   if (filterId === "all" || filterId === "packages") return true
-  const chip = CATALOG_FILTER_CHIPS.find((item) => item.id === filterId)
+  const chip = chips.find((item) => item.id === filterId)
   if (!chip) return true
   return chip.keywords.some((keyword) => haystack.includes(keyword))
 }
@@ -174,6 +195,7 @@ export function filterServicesForCatalog(
   services: SalonService[],
   searchQuery: string,
   filterId: CatalogFilterId,
+  chips: CatalogFilterChip[] = CATALOG_FILTER_CHIPS,
 ) {
   if (filterId === "packages") return []
 
@@ -184,7 +206,7 @@ export function filterServicesForCatalog(
     if (query && !haystack.includes(query) && !normalizeText(service.category).includes(query)) {
       return false
     }
-    return matchesCatalogFilter(haystack, filterId)
+    return matchesCatalogFilter(haystack, filterId, chips)
   })
 }
 
@@ -193,6 +215,7 @@ export function filterPackagesForCatalog(
   services: SalonService[],
   searchQuery: string,
   filterId: CatalogFilterId,
+  chips: CatalogFilterChip[] = CATALOG_FILTER_CHIPS,
 ) {
   const query = normalizeText(searchQuery)
 
@@ -202,7 +225,7 @@ export function filterPackagesForCatalog(
       return false
     }
     if (filterId === "packages") return true
-    return matchesCatalogFilter(haystack, filterId)
+    return matchesCatalogFilter(haystack, filterId, chips)
   })
 }
 
@@ -503,9 +526,13 @@ export function inferServiceBadges(
   return badges
 }
 
-export function categoryMatchesFilter(category: string, filterId: CatalogFilterId) {
+export function categoryMatchesFilter(
+  category: string,
+  filterId: CatalogFilterId,
+  chips: CatalogFilterChip[] = CATALOG_FILTER_CHIPS,
+) {
   if (filterId === "all" || filterId === "packages") return true
-  const chip = CATALOG_FILTER_CHIPS.find((item) => item.id === filterId)
+  const chip = chips.find((item) => item.id === filterId)
   if (!chip) return true
   const haystack = category.trim().toLowerCase()
   return chip.keywords.some((keyword) => haystack.includes(keyword))

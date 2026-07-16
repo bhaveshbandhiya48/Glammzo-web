@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { cookies } from "next/headers"
 
 import { siteCopy } from "@/data/site-copy"
 import { getSalonsByCategory } from "@/lib/salons"
+import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { getConsumerFavoriteSalonIds } from "@/lib/favorites/server"
 import { getSession } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -33,6 +35,7 @@ import {
   resolveExploreRadiusKm,
   sortExploreSalons,
 } from "@/lib/explore-filters"
+import { GLAMZZO_CITY_COOKIE } from "@/lib/location-city-cookie"
 
 export const metadata: Metadata = {
   title: "Explore salons",
@@ -45,6 +48,7 @@ type ExploreSearchParams = {
   category?: string | string[]
   q?: string | string[]
   area?: string | string[]
+  city?: string | string[]
   near?: string | string[]
   lat?: string | string[]
   lng?: string | string[]
@@ -61,11 +65,21 @@ export default async function ExplorePage({
   searchParams: Promise<ExploreSearchParams>
 }) {
   const params = await searchParams
-  const searchState = parseExploreSearchParams(params)
+  const cookieStore = await cookies()
+  const cityCookie = cookieStore.get(GLAMZZO_CITY_COOKIE)?.value
+  const parsed = parseExploreSearchParams(params)
+  const searchState =
+    !parsed.city && !parsed.area && cityCookie
+      ? {
+          ...parsed,
+          city: decodeURIComponent(cityCookie),
+        }
+      : parsed
   const {
     category: active,
     query,
     area,
+    city,
     nearMode,
     urlLatitude,
     urlLongitude,
@@ -78,13 +92,25 @@ export default async function ExplorePage({
 
   const radiusKm = resolveExploreRadiusKm(radius)
 
-  const byCategory = await getSalonsByCategory(active)
+  const [byCategory, browseCategories] = await Promise.all([
+    getSalonsByCategory(active),
+    getBrowseDefaultCategories(),
+  ])
+  const categoryFilters = [
+    { id: "all", label: "All" },
+    ...browseCategories.map((category) => ({
+      id: category.id,
+      label: category.eyebrow,
+    })),
+  ]
   const filtered = filterExploreSalons(byCategory, searchState)
   const list = sortExploreSalons(filtered, sort)
   const crmConnected = isSupabaseConfigured()
   const awaitingPublish =
     crmConnected && list.length === 0 && !hasAnyExploreFilters(searchState)
-  const activeFilterLabel = getExploreCategoryLabel(active)
+  const activeFilterLabel =
+    categoryFilters.find((filter) => filter.id === active)?.label ??
+    getExploreCategoryLabel(active)
   const activeSortLabel = EXPLORE_SORT_FILTERS.find((f) => f.id === sort)?.label
   const activePriceLabel = EXPLORE_PRICE_FILTERS.find((f) => f.id === price)?.label
   const activeRatingLabel = EXPLORE_RATING_FILTERS.find((f) => f.id === rating)?.label
@@ -108,7 +134,7 @@ export default async function ExplorePage({
             subtitle="Filter by service, compare ratings and prices, and book when you're ready, with no calls required."
             className="[&_h1]:mt-2 [&_p]:mt-2"
           />
-          {(query || area || nearMode || sort !== "recommended" || price !== "any" || rating !== "any" || openOnly) && (
+          {(query || area || city || nearMode || sort !== "recommended" || price !== "any" || rating !== "any" || openOnly) && (
             <p className="mt-3 text-sm text-foreground/55">
               Showing results
               {nearMode ? (
@@ -129,10 +155,10 @@ export default async function ExplorePage({
                   for <span className="font-medium text-foreground">&ldquo;{query}&rdquo;</span>
                 </>
               ) : null}
-              {!nearMode && area ? (
+              {!nearMode && (city || area) ? (
                 <>
                   {" "}
-                  in <span className="font-medium text-foreground">{area}</span>
+                  in <span className="font-medium text-foreground">{city || area}</span>
                 </>
               ) : null}
               {sort !== "recommended" ? (
@@ -183,7 +209,7 @@ export default async function ExplorePage({
                 className="mb-5 sm:mb-6"
               />
 
-              <ExploreFilters state={searchState} />
+              <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
 
               <div className="mx-auto mt-6 max-w-md rounded-3xl border border-border/80 bg-card px-8 py-12 text-center shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
                 <p className="font-heading text-lg font-semibold">No salons match yet</p>
@@ -199,7 +225,7 @@ export default async function ExplorePage({
                     <ExploreEmptyCityMessage />
                   )}
                 </p>
-                <Button asChild className="mt-6 rounded-full">
+                <Button asChild className="mt-6">
                   <Link href="/explore">View all salons</Link>
                 </Button>
               </div>
@@ -215,6 +241,7 @@ export default async function ExplorePage({
                 />
               }
               searchState={searchState}
+              categoryFilters={categoryFilters}
               salons={list}
               sort={sort}
               nearFromUrl={nearMode}
@@ -253,8 +280,8 @@ export default async function ExplorePage({
             className="mb-8"
           />
           <div className="flex justify-center">
-            <Button asChild size="lg" className="h-12 rounded-full px-8">
-              <Link href="/partner">Partner with us</Link>
+            <Button asChild size="lg" className="px-8">
+              <Link href="/for-salons">Partner with us</Link>
             </Button>
           </div>
         </PageSection>

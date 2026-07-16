@@ -71,6 +71,8 @@ export function ExploreScatterMap({
 
     return salons.filter((salon) => {
       const d = distanceToSalonKm(salon, coords.latitude, coords.longitude)
+      // Keep salons we can't measure (no coords); only drop those known farther than radius.
+      if (!(d > 0) || !Number.isFinite(d)) return true
       return d <= radiusKm
     })
   }, [salons, coords, radiusKm])

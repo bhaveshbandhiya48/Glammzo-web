@@ -14,10 +14,10 @@ export default function NotFound() {
             The page you&apos;re looking for doesn&apos;t exist (or moved).
           </p>
           <div className="mt-6 flex gap-2">
-            <Button asChild className="rounded-xl">
+            <Button asChild size="lg">
               <Link href="/">Back home</Link>
             </Button>
-            <Button asChild variant="outline" className="rounded-xl">
+            <Button asChild variant="outline" size="lg">
               <Link href="/login">Sign in</Link>
             </Button>
           </div>

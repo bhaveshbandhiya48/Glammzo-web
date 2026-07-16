@@ -33,12 +33,16 @@ export async function getSalonsByCategory(category: string): Promise<Salon[]> {
   const salons = await getSalons()
   if (category === "all") return salons
 
-  const needle = category.toLowerCase()
+  const normalizeCategory = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+
+  const needle = normalizeCategory(category)
   return salons.filter((s) =>
-    s.services.some(
-      (svc) =>
-        svc.category.toLowerCase().includes(needle) ||
-        svc.name.toLowerCase().includes(needle)
-    )
+    s.services.some((svc) => normalizeCategory(svc.category) === needle)
   )
 }

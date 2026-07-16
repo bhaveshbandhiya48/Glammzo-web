@@ -59,8 +59,8 @@ export function PackageCartItem({ pkg, services, onRemove, className }: PackageC
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="size-8 shrink-0 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          size="icon-sm"
+          className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={onRemove}
           aria-label={`Remove ${pkg.name}`}
         >

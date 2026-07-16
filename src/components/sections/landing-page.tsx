@@ -12,8 +12,11 @@ import { NearbySalonsSection } from "@/components/sections/parts/nearby-salons-s
 import { PartnerSection } from "@/components/sections/parts/partner-section"
 import { StatementSection } from "@/components/sections/parts/statement-section"
 import { TestimonialsSection } from "@/components/sections/parts/testimonials-section"
+import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 
-export function LandingPage() {
+export async function LandingPage() {
+  const categories = await getBrowseDefaultCategories()
+
   return (
     <MotionProvider>
       <Navbar />
@@ -22,7 +25,7 @@ export function LandingPage() {
         <MarqueeBand />
         <NearbySalonsMarqueeSection />
         <HowItWorksSection />
-        <CategoriesSection />
+        <CategoriesSection categories={categories} />
         <NearbySalonsSection />
         <StatementSection />
         <FeaturedExperienceSection />

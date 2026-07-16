@@ -84,7 +84,7 @@ export async function GET(req: Request) {
   const data = (await res.json()) as NominatimItem[]
 
   const items = (data ?? [])
-    .filter((item) => item.address?.country_code?.toLowerCase() === "in" || true)
+    .filter((item) => item.address?.country_code?.toLowerCase() === "in")
     .map((item) => {
       const label = buildLabel(item)
       return {

@@ -36,6 +36,12 @@ export function Navbar() {
     }
   }
 
+  const isActiveNav = (href: string) => {
+    const path = href.split("#")[0] || href
+    if (path === "/") return pathname === "/"
+    return pathname === path || pathname.startsWith(`${path}/`)
+  }
+
   useEffect(() => {
     let cancelled = false
     fetch("/api/session")
@@ -70,19 +76,26 @@ export function Navbar() {
         </div>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => scrollToTopIfCurrentPage(item.href)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium text-foreground/65 transition-colors hover:bg-foreground hover:text-background",
-                "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = isActiveNav(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                onClick={() => scrollToTopIfCurrentPage(item.href)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
+                  active
+                    ? "font-bold text-primary"
+                    : "font-medium text-foreground/65 hover:bg-foreground hover:text-background",
+                )}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -91,11 +104,11 @@ export function Navbar() {
             <>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
+                  <Button variant="ghost" size="icon" aria-label="Account">
                     <UserIcon className="size-5" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-52 p-2">
+                <PopoverContent align="end" className="w-52 rounded-lg p-2">
                   <div className="px-2 py-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground/45">
                       Welcome
@@ -130,7 +143,7 @@ export function Navbar() {
               </Popover>
             </>
           ) : (
-            <Button asChild variant="ghost" className="rounded-full">
+            <Button asChild variant="ghost">
               <Link href="/login">Login</Link>
             </Button>
           )}
@@ -140,7 +153,7 @@ export function Navbar() {
           <CartNavButton />
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="rounded-full" aria-label="Open menu">
+              <Button variant="outline" size="icon" aria-label="Open menu">
                 <MenuIcon />
               </Button>
             </SheetTrigger>
@@ -150,21 +163,30 @@ export function Navbar() {
                 <SheetDescription className="sr-only">Main navigation links</SheetDescription>
               </SheetHeader>
               <div className="flex flex-col gap-1 p-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => scrollToTopIfCurrentPage(item.href)}
-                    className="rounded-xl px-4 py-3 text-base font-medium transition-colors hover:bg-accent"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {navItems.map((item) => {
+                  const active = isActiveNav(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      onClick={() => scrollToTopIfCurrentPage(item.href)}
+                      className={cn(
+                        "rounded-xl px-4 py-3 text-base transition-colors hover:bg-accent",
+                        active
+                          ? "font-bold text-primary"
+                          : "font-medium text-foreground/80",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
               </div>
               <div className="mt-auto grid gap-2 p-4">
                 {authenticated ? (
                   <>
-                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                    <Button asChild variant="outline" className="w-full">
                       <Link href="/dashboard/bookings">
                         <span className="inline-flex items-center gap-2">
                           <UserIcon className="size-4" />
@@ -172,7 +194,7 @@ export function Navbar() {
                         </span>
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                    <Button asChild variant="outline" className="w-full">
                       <Link href="/dashboard/favorites">
                         <span className="inline-flex items-center gap-2">
                           <UserIcon className="size-4" />
@@ -180,7 +202,7 @@ export function Navbar() {
                         </span>
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                    <Button asChild variant="outline" className="w-full">
                       <Link href="/dashboard/settings">
                         <span className="inline-flex items-center gap-2">
                           <UserIcon className="size-4" />
@@ -190,11 +212,11 @@ export function Navbar() {
                     </Button>
                     <LogoutFormButton
                       variant="outline"
-                      className="h-11 w-full rounded-full"
+                      className="w-full"
                     />
                   </>
                 ) : (
-                  <Button asChild variant="outline" className="h-11 w-full rounded-full">
+                  <Button asChild variant="outline" className="w-full">
                     <Link href="/login">Login</Link>
                   </Button>
                 )}

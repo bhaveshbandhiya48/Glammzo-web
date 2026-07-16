@@ -214,7 +214,8 @@ export function PackageDetailSheet({
             <Button
               type="button"
               variant="outline"
-              className="w-full rounded-full"
+              size="md"
+              className="w-full"
               onClick={() => {
                 onAddPackage(pkg)
                 onOpenChange(false)
@@ -222,7 +223,7 @@ export function PackageDetailSheet({
             >
               Add to booking
             </Button>
-            <Button asChild className="w-full rounded-full" size="lg">
+            <Button asChild size="lg" className="w-full">
               <Link href={bookHref}>Book Package</Link>
             </Button>
           </SheetFooter>

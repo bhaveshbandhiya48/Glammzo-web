@@ -89,9 +89,9 @@ export function PartnerSection() {
 
                 {/* Mobile / tablet CTAs */}
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:hidden">
-                  <Button asChild size="lg" className="h-12 flex-1 rounded-full shadow-md shadow-primary/20">
-                    <Link href="/partner-signup">
-                      Apply to partner
+                  <Button asChild size="lg" className="flex-1 shadow-md shadow-primary/20">
+                    <Link href="/for-salons/start">
+                      Start Free
                       <ArrowRightIcon className="size-4" />
                     </Link>
                   </Button>
@@ -99,11 +99,14 @@ export function PartnerSection() {
                     asChild
                     variant="outline"
                     size="lg"
-                    className="h-12 flex-1 rounded-full border-border/80 bg-background/80"
+                    className="flex-1 border-border/80 bg-background/80"
                   >
-                    <Link href="/partner">How partnering works</Link>
+                    <Link href="/for-salons#how-it-works">How partnering works</Link>
                   </Button>
                 </div>
+                <p className="mt-4 text-center text-[11px] leading-relaxed text-foreground/45 lg:hidden">
+                  No credit card required · Setup in under 5 minutes · Instant CRM access
+                </p>
               </div>
 
               {/* Desktop CTA rail, centered stack (avoids large empty gap from justify-between) */}
@@ -118,9 +121,9 @@ export function PartnerSection() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button asChild size="lg" className="h-12 w-full rounded-full shadow-md shadow-primary/20">
-                    <Link href="/partner-signup">
-                      Apply to partner
+                  <Button asChild size="lg" className="w-full shadow-md shadow-primary/20">
+                    <Link href="/for-salons/start">
+                      Start Free
                       <ArrowRightIcon className="size-4" />
                     </Link>
                   </Button>
@@ -128,14 +131,14 @@ export function PartnerSection() {
                     asChild
                     variant="ghost"
                     size="lg"
-                    className="h-11 w-full rounded-full text-foreground/75 hover:bg-background/80 hover:text-foreground"
+                    className="w-full text-foreground/75 hover:bg-background/80 hover:text-foreground"
                   >
-                    <Link href="/partner">How partnering works</Link>
+                    <Link href="/for-salons#how-it-works">How partnering works</Link>
                   </Button>
                 </div>
 
                 <p className="text-center text-[11px] leading-relaxed text-foreground/45">
-                  Free to apply · No commitment until you&apos;re approved
+                  No credit card required · Setup in under 5 minutes · Instant CRM access
                 </p>
               </aside>
             </div>

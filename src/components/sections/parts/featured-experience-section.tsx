@@ -46,14 +46,14 @@ export function FeaturedExperienceSection() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="h-12 rounded-full px-8">
+              <Button asChild size="lg" className="px-8">
                 <Link href="/explore">
                   Start exploring
                   <ArrowRightIcon className="size-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 rounded-full px-8">
-                <Link href="/partner-signup">Partner with us</Link>
+              <Button asChild variant="outline" size="lg" className="px-8">
+                <Link href="/for-salons/start">Partner with us</Link>
               </Button>
             </div>
           </MotionDiv>

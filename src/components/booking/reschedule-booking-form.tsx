@@ -73,7 +73,7 @@ export function RescheduleBookingForm({
     >
       <input type="hidden" name="appointmentId" value={appointmentId} />
 
-      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground/75">
+      <div className="rounded-xl border border-border/60 bg-muted/25 px-4 py-3.5 text-sm leading-relaxed text-foreground/70">
         Rescheduling your visit at <span className="font-medium text-foreground">{salonName}</span>.
         Your services stay the same. Pick a new date and time.
       </div>
@@ -109,7 +109,12 @@ export function RescheduleBookingForm({
         <input type="hidden" name="time" value={time} required />
       </div>
 
-      <Button type="submit" className="w-full rounded-full" disabled={!date || !time || submitting}>
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full rounded-full"
+        disabled={!date || !time || submitting}
+      >
         {submitting ? "Saving..." : "Confirm new time"}
       </Button>
     </form>

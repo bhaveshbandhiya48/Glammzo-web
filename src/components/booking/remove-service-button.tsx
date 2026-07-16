@@ -19,10 +19,10 @@ export function RemoveServiceButton({
   return (
     <Button
       type="button"
-      size="icon-xs"
+      size="icon-sm"
       variant="outline"
       className={cn(
-        "rounded-full border-destructive/40 bg-background text-destructive shadow-sm",
+        "border-destructive/40 bg-background text-destructive shadow-sm",
         "hover:border-destructive/55 hover:bg-red-50 hover:text-destructive",
         position === "corner" &&
           "absolute top-0 right-0 z-10 -translate-y-1/2 translate-x-1/2",

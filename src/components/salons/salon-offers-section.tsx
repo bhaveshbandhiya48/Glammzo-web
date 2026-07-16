@@ -41,7 +41,7 @@ export function SalonOffersSection({
             Apply these codes at checkout when you book online.
           </p>
         </div>
-        <Button asChild variant="outline" className="rounded-full">
+        <Button asChild variant="outline">
           <a href={buildOfferBookHref(salonId, offers[0]!.code, authenticated)}>
             Book to redeem
           </a>

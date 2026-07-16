@@ -5,7 +5,6 @@ import { useState } from "react"
 import { CheckIcon, ChevronDownIcon } from "lucide-react"
 
 import {
-  EXPLORE_CATEGORY_FILTERS,
   EXPLORE_PRICE_FILTERS,
   EXPLORE_RATING_FILTERS,
   EXPLORE_RADIUS_FILTERS,
@@ -19,6 +18,7 @@ import { cn } from "@/lib/utils"
 
 type ExploreFiltersProps = {
   state: ExploreSearchState
+  categoryFilters: Array<{ id: string; label: string }>
 }
 
 type FilterDropdownProps = {
@@ -84,8 +84,10 @@ function FilterOption({ href, active, onSelect, children }: FilterOptionProps) {
   )
 }
 
-export function ExploreFilters({ state }: ExploreFiltersProps) {
-  const categoryLabel = getExploreCategoryLabel(state.category)
+export function ExploreFilters({ state, categoryFilters }: ExploreFiltersProps) {
+  const categoryLabel =
+    categoryFilters.find((filter) => filter.id === state.category)?.label ??
+    getExploreCategoryLabel(state.category)
   const sortLabel =
     EXPLORE_SORT_FILTERS.find((filter) => filter.id === state.sort)?.label ?? "Recommended"
   const priceLabel =
@@ -105,7 +107,7 @@ export function ExploreFilters({ state }: ExploreFiltersProps) {
         active={state.category !== "all"}
       >
         {(close) =>
-          EXPLORE_CATEGORY_FILTERS.map((filter) => (
+          categoryFilters.map((filter) => (
             <FilterOption
               key={filter.id}
               href={buildExploreHref(state, { category: filter.id })}

@@ -14,7 +14,7 @@ type FavoriteSalonButtonProps = {
   initialFavorited?: boolean
   authenticated: boolean
   className?: string
-  size?: "sm" | "default"
+  size?: "sm" | "md" | "icon-sm" | "icon"
 }
 
 export function FavoriteSalonButton({
@@ -37,7 +37,7 @@ export function FavoriteSalonButton({
         type="button"
         size={size}
         variant="outline"
-        className={cn("rounded-full", className)}
+        className={className}
         onClick={(event) => {
           event.preventDefault()
           event.stopPropagation()
@@ -59,7 +59,6 @@ export function FavoriteSalonButton({
       aria-pressed={favorited}
       aria-label={favorited ? "Remove from favorites" : "Save to favorites"}
       className={cn(
-        "rounded-full",
         favorited && "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15",
         className,
       )}

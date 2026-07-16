@@ -145,7 +145,7 @@ export function ProfileSettingsForm({
         <p className="text-sm text-emerald-700 dark:text-emerald-400">Profile saved.</p>
       ) : null}
 
-      <Button type="submit" className="rounded-full" disabled={isPending}>
+      <Button type="submit" size="lg" disabled={isPending}>
         {isPending ? "Saving…" : "Save profile"}
       </Button>
     </form>

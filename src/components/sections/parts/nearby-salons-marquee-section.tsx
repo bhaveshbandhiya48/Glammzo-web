@@ -7,8 +7,8 @@ import { useMemo } from "react"
 import { SalonMarqueeBand } from "@/components/sections/parts/salon-marquee-band"
 import { Container } from "@/components/layout/container"
 import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/motion"
+import { useCitySalonCatalog } from "@/hooks/use-city-salon-catalog"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
-import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { siteCopy } from "@/data/site-copy"
 import { pickNearbySalons } from "@/lib/salons/nearby-salons"
 
@@ -36,7 +36,7 @@ function NearbySalonsMarqueeSkeleton() {
 }
 
 export function NearbySalonsMarqueeSection() {
-  const { salons, loaded } = useSalonCatalog()
+  const { salons, loaded, browseCity } = useCitySalonCatalog()
   const origin = useExploreDistanceOrigin({})
 
   const nearbySalons = useMemo(
@@ -47,6 +47,9 @@ export function NearbySalonsMarqueeSection() {
       }),
     [salons, origin.latitude, origin.longitude],
   )
+  const exploreHref = browseCity
+    ? `/explore?city=${encodeURIComponent(browseCity)}`
+    : "/explore"
 
   return (
     <MotionSection
@@ -70,7 +73,7 @@ export function NearbySalonsMarqueeSection() {
             </p>
           </div>
           <Link
-            href="/explore"
+            href={exploreHref}
             className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >
             {nearbySalonsMarquee.viewAllCta}

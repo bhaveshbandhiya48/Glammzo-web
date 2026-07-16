@@ -12,12 +12,17 @@ import {
   formatBrowseSalonsCityLabel,
   formatStoredLocationLabel,
 } from "@/lib/location"
+import { syncBrowseCityCookie } from "@/lib/location-city-cookie"
 
 export function useUserLocation() {
   const [data, setData] = useState<ParsedStoredLocation | null>(null)
 
   const refresh = useCallback(() => {
-    setData(readStoredLocation())
+    const next = readStoredLocation()
+    setData(next)
+    if (next?.stored) {
+      syncBrowseCityCookie(formatBrowseSalonsCityLabel(next.location, next.stored))
+    }
   }, [])
 
   useEffect(() => {

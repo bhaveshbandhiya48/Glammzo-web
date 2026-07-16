@@ -85,10 +85,10 @@ export function SalonMapCard({ salon, onClose }: SalonMapCardProps) {
         ) : null}
 
         <div className="flex flex-col gap-2 pt-1">
-          <Button asChild className="h-11 rounded-full">
+          <Button asChild size="lg">
             <Link href={bookHref}>Book appointment</Link>
           </Button>
-          <Button asChild variant="outline" className="h-11 rounded-full">
+          <Button asChild variant="outline" size="lg">
             <Link href={`/salons/${salon.slug || salon.id}`}>View salon profile</Link>
           </Button>
         </div>

@@ -34,7 +34,7 @@ export function ServiceCard({
     <article
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 rounded-xl border border-border/70 bg-card/80 px-3 py-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg hover:shadow-black/[0.06]",
-        selected && "border-primary/30 bg-primary/[0.04] ring-1 ring-primary/10",
+        selected && "border-primary bg-primary/[0.04]",
         className,
       )}
       onClick={onOpenDetails}
@@ -92,9 +92,9 @@ export function ServiceCard({
         <div className="flex items-center gap-1.5">
           <Button
             type="button"
-            size="icon"
+            size="icon-sm"
             variant="outline"
-            className="relative z-10 size-9 rounded-full border-border/80 bg-background/90"
+            className="relative z-10 border-border/80 bg-background/90"
             onClick={(event) => {
               event.stopPropagation()
               onOpenDetails()
@@ -105,10 +105,10 @@ export function ServiceCard({
           </Button>
           <Button
             type="button"
-            size="icon"
+            size="icon-sm"
             variant={selected ? "secondary" : "outline"}
             className={cn(
-              "relative z-10 size-9 rounded-full border-border/80 bg-background/90 transition-transform duration-200 active:scale-95",
+              "relative z-10 border-border/80 bg-background/90 transition-transform duration-200 active:scale-95",
               selected && "border-primary/30 bg-primary/10 text-primary",
             )}
             onClick={(event) => {

@@ -42,11 +42,17 @@ export async function loadSalonBookingContext(
     const today = getSalonDateKey(new Date(), timezone)
     const horizon = shiftIsoDate(today, BOOKING_ENGINE_CONFIG.maxAdvanceBookingDays)
 
-    const [{ data: staffRows }, { data: assignmentRows }, { data: scheduleRows }, { data: closureRows }] =
-      await Promise.all([
+    const [
+      { data: staffRows },
+      { data: assignmentRows },
+      { data: categoryAssignmentRows, error: categoryAssignmentError },
+      { data: serviceRows, error: serviceRowsError },
+      { data: scheduleRows },
+      { data: closureRows },
+    ] = await Promise.all([
       supabase
         .from("staff")
-        .select("id, full_name, designation, avatar_url, staff_roles(name)")
+        .select("id, full_name, designation, avatar_url")
         .eq("salon_id", crmSalonId)
         .eq("is_active", true)
         .eq("is_bookable", true)
@@ -55,6 +61,15 @@ export async function loadSalonBookingContext(
         .from("staff_services")
         .select("staff_id, service_id")
         .eq("salon_id", crmSalonId),
+      supabase
+        .from("staff_service_categories")
+        .select("staff_id, category_id")
+        .eq("salon_id", crmSalonId),
+      supabase
+        .from("services")
+        .select("id, category_id")
+        .eq("salon_id", crmSalonId)
+        .is("deleted_at", null),
       supabase
         .from("staff_schedules")
         .select("staff_id, weekday, enabled, start_time, end_time")
@@ -68,36 +83,69 @@ export async function loadSalonBookingContext(
         .is("deleted_at", null),
     ])
 
+    const categoryTableMissing =
+      categoryAssignmentError?.message
+        .toLowerCase()
+        .includes("staff_service_categories") ?? false
+
+    if (serviceRowsError || (categoryAssignmentError && !categoryTableMissing)) {
+      return null
+    }
+
     const staffMembers: BookableStaffMember[] = (staffRows ?? []).map((row) => {
       const staff = row as {
         id: string
         full_name: string
         designation: string | null
         avatar_url: string | null
-        staff_roles: { name: string } | { name: string }[] | null
       }
-
-      const roleRelation = staff.staff_roles
-      const roleName = Array.isArray(roleRelation)
-        ? roleRelation[0]?.name
-        : roleRelation?.name
 
       return {
         id: staff.id,
         name: staff.full_name,
-        role: roleName ?? staff.designation ?? "Specialist",
+        role: staff.designation?.trim() || "Specialist",
         imageUrl: staff.avatar_url,
       }
     })
 
     const staffIds = staffMembers.map((member) => member.id)
     const staffServiceMap: Record<string, string[]> = {}
+    const staffCategoryMap: Record<string, string[]> = {}
+    const serviceCategoryMap: Record<string, string> = {}
 
     for (const row of assignmentRows ?? []) {
       const assignment = row as { staff_id: string; service_id: string }
       const list = staffServiceMap[assignment.staff_id] ?? []
       list.push(assignment.service_id)
       staffServiceMap[assignment.staff_id] = list
+    }
+
+    for (const row of serviceRows ?? []) {
+      const service = row as { id: string; category_id: string | null }
+      if (service.category_id) {
+        serviceCategoryMap[service.id] = service.category_id
+      }
+    }
+
+    if (!categoryAssignmentError) {
+      for (const row of categoryAssignmentRows ?? []) {
+        const assignment = row as { staff_id: string; category_id: string }
+        const list = staffCategoryMap[assignment.staff_id] ?? []
+        list.push(assignment.category_id)
+        staffCategoryMap[assignment.staff_id] = list
+      }
+    } else {
+      // Compatibility before migration 072: derive categories from service skills.
+      for (const [staffId, serviceIds] of Object.entries(staffServiceMap)) {
+        staffCategoryMap[staffId] = [
+          ...new Set(
+            serviceIds.flatMap((serviceId) => {
+              const categoryId = serviceCategoryMap[serviceId]
+              return categoryId ? [categoryId] : []
+            }),
+          ),
+        ]
+      }
     }
 
     const staffSchedules = buildStaffSchedulesFromRows(
@@ -141,13 +189,13 @@ export async function loadSalonBookingContext(
         }
 
         return {
+          // Keep unassigned bookings too — they still occupy calendar time.
           staffId: appointment.staff_id ?? "",
           date: appointment.appointment_date,
           startTime: appointment.start_time,
           endTime: appointment.end_time,
         }
       })
-      .filter((row) => Boolean(row.staffId))
 
     const businessClosures: BusinessClosure[] = (closureRows ?? []).map((row) => {
       const closure = row as {
@@ -178,6 +226,9 @@ export async function loadSalonBookingContext(
       staffIds,
       staffMembers,
       staffServiceMap,
+      staffCategoryMap,
+      serviceCategoryMap,
+      categoryAssignmentsEnabled: !categoryTableMissing,
       staffSchedules,
       webBooking: parseWebBookingSettings((salonData as { settings?: unknown }).settings),
       booked,

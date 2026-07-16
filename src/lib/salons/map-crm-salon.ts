@@ -130,8 +130,33 @@ function fallbackServiceImage(serviceId: string): string {
   return pool[hashString(serviceId) % pool.length] ?? media.categories.spa
 }
 
-function mapService(row: CrmServiceRow): SalonService {
-  const category = relationName(row.service_categories) ?? "General"
+function relationCategory(
+  relation:
+    | { name: string; is_active?: boolean; sort_order?: number }
+    | { name: string; is_active?: boolean; sort_order?: number }[]
+    | null
+    | undefined,
+) {
+  const row = resolveJoin(relation)
+  if (!row?.name?.trim()) {
+    return null
+  }
+
+  if (row.is_active === false) {
+    return null
+  }
+
+  return {
+    name: row.name.trim(),
+    sortOrder: row.sort_order ?? 0,
+  }
+}
+
+function mapService(row: CrmServiceRow): SalonService | null {
+  const category = relationCategory(row.service_categories)
+  if (!category) {
+    return null
+  }
   const imageUrl = row.image_url?.trim() || fallbackServiceImage(row.id)
   const addOnIds = [...(row.service_add_ons ?? [])]
     .sort((left, right) => left.sort_order - right.sort_order)
@@ -142,7 +167,8 @@ function mapService(row: CrmServiceRow): SalonService {
     name: row.name,
     durationMin: row.duration_minutes,
     price: Number.parseFloat(row.price) || 0,
-    category,
+    category: category.name,
+    categorySortOrder: category.sortOrder,
     imageUrl,
     description: row.description?.trim() || undefined,
     includes: parseServiceIncludes(row.description),
@@ -157,7 +183,7 @@ function mapStaff(row: CrmStaffRow): SalonTeamMember {
   return {
     id: row.id,
     name: row.full_name,
-    role: relationName(row.staff_roles) ?? row.designation ?? "Specialist",
+    role: row.designation?.trim() || relationName(row.staff_roles) || "Specialist",
     imageUrl: row.avatar_url ?? media.testimonials.t1,
     specialties: row.specialties ?? [],
   }
@@ -326,6 +352,7 @@ export function mapCrmSalonToWeb(
   const activeServices = services
     .filter((s) => s.is_active)
     .map(mapService)
+    .filter((service): service is SalonService => service !== null)
     .sort((a, b) => a.price - b.price)
 
   const activeStaff = staff
@@ -383,13 +410,7 @@ export function mapCrmSalonToWeb(
     const staff = resolveJoin(r.staff)
     const service = resolveJoin(r.service)
 
-    const staffRole =
-      (staff?.staff_roles &&
-        (Array.isArray(staff.staff_roles)
-          ? staff.staff_roles[0]?.name
-          : staff.staff_roles.name)) ||
-      staff?.designation ||
-      null
+    const staffRole = staff?.designation?.trim() || null
 
     return {
       id: r.id,

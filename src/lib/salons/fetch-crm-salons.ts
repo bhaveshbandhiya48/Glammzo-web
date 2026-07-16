@@ -51,6 +51,17 @@ async function fetchSalonRowByIdentifier(
 
 async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
   const supabase = createAdminClient()
+  if (process.env.NODE_ENV === "production") {
+    const host = (() => {
+      try {
+        return new URL(process.env.SUPABASE_URL ?? "").host
+      } catch {
+        return "invalid-SUPABASE_URL"
+      }
+    })()
+    console.info(`[salons] Reading published listings from ${host}`)
+  }
+
   const { data, error } = await supabase
     .from("salons")
     .select(SALON_SELECT)
@@ -70,13 +81,13 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, recommended_for, before_care, after_care, service_categories(name), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, recommended_for, before_care, after_care, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
 
 const SERVICE_SELECT_WITH_IMAGE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, service_categories(name)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, service_categories(name, is_active, sort_order)"
 
 const SERVICE_SELECT_WITHOUT_IMAGE =
-  "id, salon_id, name, description, duration_minutes, price, is_active, service_categories(name)"
+  "id, salon_id, name, description, duration_minutes, price, is_active, service_categories(name, is_active, sort_order)"
 
 function isMissingServiceImageColumn(message: string) {
   return message.toLowerCase().includes("image_url")

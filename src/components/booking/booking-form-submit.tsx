@@ -23,7 +23,8 @@ export function BookingFormSubmitButtons({
     <>
       <Button
         type="submit"
-        className="mt-4 hidden h-12 w-full rounded-full text-base font-semibold md:inline-flex"
+        size="lg"
+        className="mt-4 hidden w-full font-semibold md:inline-flex"
         disabled={disabled}
         aria-busy={pending}
       >
@@ -34,7 +35,8 @@ export function BookingFormSubmitButtons({
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 p-3 backdrop-blur-md md:hidden">
         <Button
           type="submit"
-          className="h-12 w-full rounded-full text-base font-semibold shadow-lg shadow-primary/15"
+          size="lg"
+          className="w-full font-semibold shadow-lg shadow-primary/15"
           disabled={disabled}
           aria-busy={pending}
         >

@@ -146,7 +146,7 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
                       ({salon.reviews.toLocaleString()})
                     </span>
                   </span>
-                  <Button asChild className="rounded-full px-8">
+                  <Button asChild size="lg" className="px-8">
                     <Link href={bookHref}>Book appointment</Link>
                   </Button>
                 </div>

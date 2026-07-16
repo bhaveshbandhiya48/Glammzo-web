@@ -56,7 +56,7 @@ export function HeroSection() {
             <p className="mt-6 max-w-md text-lg leading-relaxed text-foreground/65">{hero.subhead}</p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="h-12 rounded-full px-7 text-base shadow-md shadow-primary/20">
+              <Button asChild size="lg" className="px-7 shadow-md shadow-primary/20">
                 <Link href="/explore">
                   {hero.primaryCta}
                   <ArrowRightIcon className="size-4" />
@@ -66,7 +66,7 @@ export function HeroSection() {
                 asChild
                 variant="outline"
                 size="lg"
-                className="h-12 rounded-full border-border/80 bg-card/60 px-7 text-base"
+                className="border-border/80 bg-card/60 px-7"
               >
                 <Link href="/#how">{hero.secondaryCta}</Link>
               </Button>

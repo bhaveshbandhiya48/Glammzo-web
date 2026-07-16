@@ -51,7 +51,7 @@ export function TimeSlotPicker({
   const [open, setOpen] = useState(false)
 
   const selectedLabel = useMemo(
-    () => slots.find((slot) => slot.value === value)?.label ?? "",
+    () => slots.find((slot) => slot.value === value && !slot.disabled)?.label ?? "",
     [slots, value],
   )
 
@@ -105,56 +105,42 @@ export function TimeSlotPicker({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[min(100vw-2rem,16rem)] p-0"
+        className="w-[min(100vw-2rem,18rem)] p-0"
         align="start"
       >
         <div className="border-b border-border/70 px-3 py-2.5">
           <p className="font-heading text-sm font-semibold text-foreground">Time slots</p>
-          <p className="mt-0.5 text-xs text-foreground/55">
-            Booked slots are shown but cannot be selected.
-          </p>
         </div>
-        <div className="max-h-56 overflow-y-auto p-3">
+        <div className="max-h-64 overflow-y-auto p-3">
           {slots.length === 0 ? (
             <p className="px-1 py-2 text-center text-xs text-foreground/55">{emptyMessage}</p>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {slots.map((slot) => {
-                const active = value === slot.value
+                const active = value === slot.value && !slot.disabled
 
                 return (
                   <button
                     key={slot.value}
                     type="button"
                     disabled={slot.disabled}
-                    title={slot.hint}
+                    aria-disabled={slot.disabled || undefined}
+                    title={slot.label}
                     onClick={() => selectSlot(slot)}
                     className={cn(
-                      "cursor-pointer rounded-full border px-2 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors sm:text-sm",
+                      "rounded-xl border px-2 py-2 text-center transition-colors",
                       "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
                       slot.disabled &&
-                        "cursor-not-allowed border-border/50 bg-muted/30 text-foreground/40",
+                        "cursor-not-allowed border-dashed border-border/60 bg-muted/40 text-foreground/40 line-through decoration-foreground/30",
                       !slot.disabled &&
                         (active
-                          ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                          : "border-border/80 bg-background hover:border-primary/30 hover:bg-accent/40"),
+                          ? "cursor-pointer border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                          : "cursor-pointer border-border/80 bg-background hover:border-primary/30 hover:bg-accent/40"),
                     )}
                   >
-                    <span className={cn(slot.disabled && slot.hint === "Already booked" && "line-through")}>
+                    <span className="block text-xs font-medium whitespace-nowrap sm:text-sm">
                       {slot.label}
                     </span>
-                    {slot.disabled && slot.hint ? (
-                      <span
-                        className={cn(
-                          "mt-0.5 block text-[10px] font-normal uppercase tracking-wide",
-                          slot.hint === "Already booked"
-                            ? "text-foreground/45"
-                            : "text-foreground/40",
-                        )}
-                      >
-                        {slot.hint}
-                      </span>
-                    ) : null}
                   </button>
                 )
               })}

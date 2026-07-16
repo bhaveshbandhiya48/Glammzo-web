@@ -5,6 +5,37 @@ export const WEB_BOOKING_SOURCE_TAG = "source:glamzzo_web" as const
 export const SALON_DECLINED_REASON_PREFIX = "Salon declined" as const
 export const CUSTOMER_CANCELLED_REASON = "Cancelled by customer on Glammzo web" as const
 
+export const CUSTOMER_CANCEL_REASON_OPTIONS = [
+  { id: "change_of_plans", label: "Change of plans" },
+  { id: "different_time", label: "Need a different time" },
+  { id: "found_another", label: "Found another option" },
+  { id: "personal", label: "Personal reasons" },
+  { id: "other", label: "Other" },
+] as const
+
+export type CustomerCancelReasonId =
+  (typeof CUSTOMER_CANCEL_REASON_OPTIONS)[number]["id"]
+
+export function formatCustomerCancellationReason(input: {
+  reasonId: string
+  details?: string
+}): string | null {
+  const option = CUSTOMER_CANCEL_REASON_OPTIONS.find((item) => item.id === input.reasonId)
+  if (!option) return null
+
+  const details = input.details?.trim() ?? ""
+  if (option.id === "other") {
+    if (!details) return null
+    return `${CUSTOMER_CANCELLED_REASON}: ${details}`
+  }
+
+  if (details) {
+    return `${CUSTOMER_CANCELLED_REASON}: ${option.label} — ${details}`
+  }
+
+  return `${CUSTOMER_CANCELLED_REASON}: ${option.label}`
+}
+
 export function isWebBookingAppointment(input: {
   bookingSource?: string | null
   internalNotes?: string | null

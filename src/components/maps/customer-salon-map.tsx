@@ -172,7 +172,7 @@ export function CustomerSalonMap() {
               className="h-11 rounded-full pl-10"
             />
           </div>
-          <Button type="submit" className="h-11 rounded-full px-5">
+          <Button type="submit" className="px-5">
             Search
           </Button>
         </form>

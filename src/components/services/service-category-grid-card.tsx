@@ -40,17 +40,7 @@ export function ServiceCategoryGridCard({ category, priority }: ServiceCategoryG
         <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/65">
           {category.description}
         </p>
-        <ul className="mt-4 flex flex-wrap gap-2">
-          {category.services.map((service) => (
-            <li
-              key={service}
-              className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-foreground/65"
-            >
-              {service}
-            </li>
-          ))}
-        </ul>
-        <Button asChild className="mt-6 w-full rounded-full">
+        <Button asChild className="mt-6 w-full">
           <Link href={`/explore?category=${category.id}`}>Browse {category.eyebrow}</Link>
         </Button>
       </div>

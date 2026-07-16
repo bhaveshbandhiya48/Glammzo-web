@@ -28,7 +28,7 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <LogoutFormButton variant="outline" className="rounded-full" pendingLabel="Signing out…">
+      <LogoutFormButton variant="outline" pendingLabel="Signing out…">
         Sign out
       </LogoutFormButton>
     </div>

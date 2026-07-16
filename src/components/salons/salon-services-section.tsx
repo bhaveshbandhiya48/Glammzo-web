@@ -76,7 +76,7 @@ export function SalonServicesSection({
           </>
         )}
         {selectedServices.length > 0 ? (
-          <Button asChild className="mt-6 w-full rounded-full">
+          <Button asChild size="lg" className="mt-6 w-full">
             <Link href={bookHref}>
               {selectedServices.length > 1
                 ? `Continue with ${selectedServices.length} services`
@@ -84,7 +84,7 @@ export function SalonServicesSection({
             </Link>
           </Button>
         ) : (
-          <Button className="mt-6 w-full rounded-full" disabled>
+          <Button size="lg" className="mt-6 w-full" disabled>
             Select a service to continue
           </Button>
         )}

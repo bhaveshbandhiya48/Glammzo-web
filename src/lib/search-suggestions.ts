@@ -146,10 +146,37 @@ export function clearRecentSearches() {
   }
 }
 
-export function buildExploreHref(q?: string, area?: string, category?: string) {
+export type HeroSearchLocation = {
+  area?: string
+  city?: string
+  latitude?: number
+  longitude?: number
+}
+
+export function buildExploreHref(
+  q?: string,
+  location?: string | HeroSearchLocation,
+  category?: string
+) {
   const sp = new URLSearchParams()
   if (q?.trim()) sp.set("q", q.trim())
-  if (area?.trim()) sp.set("area", area.trim())
+
+  if (typeof location === "string") {
+    if (location.trim()) sp.set("area", location.trim())
+  } else if (
+    location &&
+    Number.isFinite(location.latitude) &&
+    Number.isFinite(location.longitude)
+  ) {
+    sp.set("near", "1")
+    sp.set("lat", String(location.latitude))
+    sp.set("lng", String(location.longitude))
+  } else if (location?.area?.trim()) {
+    sp.set("area", location.area.trim())
+  } else if (location?.city?.trim()) {
+    sp.set("city", location.city.trim())
+  }
+
   if (category) sp.set("category", category)
   const qs = sp.toString()
   return qs ? `/explore?${qs}` : "/explore"

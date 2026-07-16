@@ -145,7 +145,7 @@ export function PromoCodeField({
             type="button"
             variant={isApplied ? "secondary" : "outline"}
             className={cn(
-              "h-10 min-w-[6.5rem] rounded-lg px-3 text-sm",
+              "min-w-[6.5rem]",
               isApplied && "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50",
             )}
             onClick={applyPromo}
@@ -168,7 +168,6 @@ export function PromoCodeField({
               type="button"
               variant="ghost"
               size="icon"
-              className="size-10 rounded-lg"
               onClick={clearPromo}
               aria-label="Remove promo code"
             >

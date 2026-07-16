@@ -1,9 +1,8 @@
 "use client"
 
-import type { ReactNode } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { CheckIcon, ClockIcon, StarIcon } from "lucide-react"
+import { ClockIcon, StarIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -34,136 +33,6 @@ type ServiceDetailSheetProps = {
   onToggle: () => void
   onAddOnToggle: (id: string) => void
   selectedIds: string[]
-}
-
-function DetailSection({
-  title,
-  children,
-  className,
-}: {
-  title: string
-  children: ReactNode
-  className?: string
-}) {
-  return (
-    <section className={cn("border-t border-border/60 pt-5 first:border-t-0 first:pt-0", className)}>
-      <h3 className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
-        {title}
-      </h3>
-      <div className="mt-3">{children}</div>
-    </section>
-  )
-}
-
-function ServiceDetailInfoPanel({ content }: { content: ServiceDetailContent }) {
-  const hasInfo =
-    content.about ||
-    content.benefits.length > 0 ||
-    content.includedSteps.length > 0 ||
-    content.recommendedFor.length > 0 ||
-    content.thingsToKnow.length > 0 ||
-    content.reviews.length > 0
-
-  if (!hasInfo) {
-    return (
-      <p className="text-sm leading-relaxed text-foreground/60">
-        More details for this service will appear here when the salon adds them.
-      </p>
-    )
-  }
-
-  return (
-    <>
-      {content.about ? (
-        <DetailSection title="About this service">
-          <p className="text-[15px] leading-relaxed text-foreground/70">{content.about}</p>
-        </DetailSection>
-      ) : null}
-
-      {content.benefits.length > 0 ? (
-        <DetailSection title="Benefits">
-          <ul className="space-y-2.5">
-            {content.benefits.map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/75">
-                <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </DetailSection>
-      ) : null}
-
-      {content.includedSteps.length > 0 ? (
-        <DetailSection title="What's included">
-          <ol className="space-y-2">
-            {content.includedSteps.map((step, index) => (
-              <li
-                key={`${step}-${index}`}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/60 px-3.5 py-2.5 text-sm text-foreground/75"
-              >
-                <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                  {index + 1}
-                </span>
-                {step}
-              </li>
-            ))}
-          </ol>
-        </DetailSection>
-      ) : null}
-
-      {content.recommendedFor.length > 0 ? (
-        <DetailSection title="Recommended for">
-          <div className="flex flex-wrap gap-2">
-            {content.recommendedFor.map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-foreground/70"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </DetailSection>
-      ) : null}
-
-      {content.thingsToKnow.length > 0 ? (
-        <DetailSection title="Before / after care">
-          <dl className="space-y-3">
-            {content.thingsToKnow.map((item) => (
-              <div key={item.label}>
-                <dt className="text-xs font-semibold tracking-wide text-foreground/45 uppercase">
-                  {item.label}
-                </dt>
-                <dd className="mt-1 text-sm leading-relaxed text-foreground/70">{item.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </DetailSection>
-      ) : null}
-
-      {content.reviews.length > 0 ? (
-        <DetailSection title="Customer reviews">
-          <ul className="space-y-3">
-            {content.reviews.map((review) => (
-              <li
-                key={review.id}
-                className="rounded-xl border border-border/60 bg-background/60 p-3.5"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-foreground">{review.userId}</p>
-                  <span className="inline-flex items-center gap-1 text-sm font-medium">
-                    <StarIcon className="size-3.5 fill-primary text-primary" />
-                    {review.rating.toFixed(1)}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/70">{review.comment}</p>
-              </li>
-            ))}
-          </ul>
-        </DetailSection>
-      ) : null}
-    </>
-  )
 }
 
 function ServiceDetailSummaryPanel({
@@ -200,13 +69,13 @@ function ServiceDetailSummaryPanel({
           alt={service.name}
           fill
           className="object-cover"
-          sizes="(max-width: 1024px) 100vw, 360px"
+          sizes="(max-width: 1024px) 100vw, 420px"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-5 py-5 sm:px-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-5 py-5 sm:px-6">
         <SheetHeader className="space-y-3 p-0 text-left">
           <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
             Service summary
@@ -274,7 +143,7 @@ function ServiceDetailSummaryPanel({
                       type="button"
                       size="sm"
                       variant={addOnSelected ? "secondary" : "outline"}
-                      className="shrink-0 rounded-full"
+                      className="shrink-0"
                       onClick={() => onAddOnToggle(addOn.id)}
                     >
                       {addOnSelected ? "Added" : "Add"}
@@ -290,12 +159,13 @@ function ServiceDetailSummaryPanel({
           <Button
             type="button"
             variant="outline"
-            className="w-full rounded-full"
+            size="md"
+            className="w-full"
             onClick={onToggle}
           >
             {selected ? "Remove from booking" : "Add to booking"}
           </Button>
-          <Button asChild className="w-full rounded-full" size="lg">
+          <Button asChild size="lg" className="w-full">
             <Link href={bookHref}>Book Service</Link>
           </Button>
         </div>
@@ -331,40 +201,21 @@ export function ServiceDetailSheet({
         side={isDesktop ? "right" : "bottom"}
         className={
           isDesktop
-            ? "h-full w-[min(94vw,920px)] max-w-none gap-0 p-0 sm:max-w-none"
+            ? "h-full w-[min(92vw,420px)] gap-0 p-0"
             : "max-h-[92vh] gap-0 rounded-t-3xl p-0"
         }
       >
-        <div className="flex h-full min-h-0 flex-col lg:flex-row">
-          <aside className="order-1 shrink-0 border-b border-border/60 bg-muted/15 lg:order-2 lg:flex lg:h-full lg:min-h-0 lg:w-[min(100%,360px)] lg:shrink-0 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-l">
-            <ServiceDetailSummaryPanel
-              service={service}
-              content={content}
-              thumbnail={thumbnail}
-              bookHref={bookHref}
-              selected={selected}
-              selectedIds={selectedIds}
-              onToggle={onToggle}
-              onAddOnToggle={onAddOnToggle}
-              compactImage={!isDesktop}
-            />
-          </aside>
-
-          <div className="order-2 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:order-1">
-            <div className="border-b border-border/60 px-5 py-4 lg:px-6">
-              <h2 className="font-heading text-base font-semibold text-foreground">
-                Service information
-              </h2>
-              <p className="mt-1 text-sm text-foreground/55">
-                What&apos;s included, care tips, and guest reviews.
-              </p>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-5 lg:px-6 lg:py-6">
-              <ServiceDetailInfoPanel content={content} />
-            </div>
-          </div>
-        </div>
+        <ServiceDetailSummaryPanel
+          service={service}
+          content={content}
+          thumbnail={thumbnail}
+          bookHref={bookHref}
+          selected={selected}
+          selectedIds={selectedIds}
+          onToggle={onToggle}
+          onAddOnToggle={onAddOnToggle}
+          compactImage={!isDesktop}
+        />
       </SheetContent>
     </Sheet>
   )

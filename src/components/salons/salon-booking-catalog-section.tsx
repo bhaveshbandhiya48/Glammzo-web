@@ -20,6 +20,7 @@ import { PackageDetailSheet } from "@/components/salons/booking-catalog/package-
 import { ServiceDetailSheet } from "@/components/salons/booking-catalog/service-detail-sheet"
 import { useSalonCartSelection } from "@/hooks/use-salon-cart-selection"
 import {
+  buildCatalogFilterChips,
   buildPackageServiceIds,
   buildServicePackageFrequency,
   categoryMatchesFilter,
@@ -98,14 +99,17 @@ export function SalonBookingCatalogSection({
     setHydrated(true)
   }, [])
 
+  const catalogFilterChips = useMemo(() => buildCatalogFilterChips(services), [services])
+
   const filteredServices = useMemo(
-    () => filterServicesForCatalog(services, searchQuery, activeFilter),
-    [services, searchQuery, activeFilter],
+    () => filterServicesForCatalog(services, searchQuery, activeFilter, catalogFilterChips),
+    [services, searchQuery, activeFilter, catalogFilterChips],
   )
 
   const filteredPackages = useMemo(
-    () => filterPackagesForCatalog(packages, services, searchQuery, activeFilter),
-    [packages, services, searchQuery, activeFilter],
+    () =>
+      filterPackagesForCatalog(packages, services, searchQuery, activeFilter, catalogFilterChips),
+    [packages, services, searchQuery, activeFilter, catalogFilterChips],
   )
 
   const packageFrequency = useMemo(
@@ -301,7 +305,11 @@ export function SalonBookingCatalogSection({
         <div className="min-w-0 space-y-8">
           <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
 
-          <CategoryFilterChips value={activeFilter} onChange={handleFilterChange} />
+          <CategoryFilterChips
+            value={activeFilter}
+            onChange={handleFilterChange}
+            chips={catalogFilterChips}
+          />
 
           {showPackages ? (
             <section className="space-y-4">

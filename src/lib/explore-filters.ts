@@ -1,4 +1,5 @@
 import { getSearchParam } from "@/lib/search-params"
+import { isSalonInCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 export const EXPLORE_CATEGORY_FILTERS = [
@@ -40,7 +41,7 @@ export const EXPLORE_RADIUS_FILTERS = [
   { id: "25", label: "Within 25 km", radiusKm: 25 },
 ] as const
 
-export type ExploreCategoryId = (typeof EXPLORE_CATEGORY_FILTERS)[number]["id"]
+export type ExploreCategoryId = string
 export type ExploreSortId = (typeof EXPLORE_SORT_FILTERS)[number]["id"]
 export type ExplorePriceId = (typeof EXPLORE_PRICE_FILTERS)[number]["id"]
 export type ExploreRatingId = (typeof EXPLORE_RATING_FILTERS)[number]["id"]
@@ -83,6 +84,15 @@ function isValidId<T extends string>(
   return options.some((option) => option.id === value)
 }
 
+function normalizeCategoryId(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
 export function parseExploreSearchParams(params: ExploreSearchParamsInput): ExploreSearchState {
   const categoryParam = getSearchParam(params.category, "all").toLowerCase()
   const sortParam = getSearchParam(params.sort, "recommended").toLowerCase()
@@ -93,7 +103,7 @@ export function parseExploreSearchParams(params: ExploreSearchParamsInput): Expl
   const lngParam = parseFloat(getSearchParam(params.lng))
 
   return {
-    category: isValidId(categoryParam, EXPLORE_CATEGORY_FILTERS) ? categoryParam : "all",
+    category: normalizeCategoryId(categoryParam) || "all",
     query: getSearchParam(params.q).trim(),
     area: getSearchParam(params.area).trim(),
     city: getSearchParam(params.city).trim(),
@@ -197,16 +207,8 @@ export function filterExploreSalons(
     )
   }
 
-  if (!state.nearMode && state.city) {
-    const city = state.city.toLowerCase()
-    result = result.filter((salon) => {
-      const salonCity = salon.city?.trim().toLowerCase()
-      if (salonCity) {
-        return salonCity.includes(city)
-      }
-
-      return salon.area.toLowerCase().includes(city)
-    })
+  if (state.city) {
+    result = result.filter((salon) => isSalonInCity(salon, state.city))
   } else if (!state.nearMode && state.area) {
     const area = state.area.toLowerCase()
     result = result.filter((salon) => salon.area.toLowerCase().includes(area))
@@ -281,5 +283,13 @@ export function getFeaturedSalons(salons: Salon[]): Salon[] {
 }
 
 export function getExploreCategoryLabel(category: ExploreCategoryId): string {
-  return EXPLORE_CATEGORY_FILTERS.find((filter) => filter.id === category)?.label ?? "All"
+  const known = EXPLORE_CATEGORY_FILTERS.find((filter) => filter.id === category)?.label
+  if (known) return known
+  if (category === "all") return "All"
+
+  return category
+    .split("-")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }

@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { ArrowRightIcon } from "lucide-react"
 
-import { categories } from "@/data/landing"
 import { siteCopy } from "@/data/site-copy"
+import type { Category } from "@/types/landing"
 import { Container } from "@/components/layout/container"
 import { SectionHeader } from "@/components/shared/section-header"
 import { CategoryStackCard } from "@/components/services/category-stack-card"
@@ -15,7 +15,15 @@ import { MotionDiv, MotionSection, fadeUpSubtle } from "@/components/shared/moti
 const STACK_TOP_BASE = "5.25rem"
 const STACK_TOP_STEP = "0.4rem"
 
-export function CategoriesSection() {
+type CategoriesSectionProps = {
+  categories: Category[]
+}
+
+export function CategoriesSection({ categories }: CategoriesSectionProps) {
+  if (categories.length === 0) {
+    return null
+  }
+
   return (
     <MotionSection
       id="explore"
@@ -59,7 +67,7 @@ export function CategoriesSection() {
         </div>
 
         <div className="mt-6 flex justify-center sm:mt-8">
-          <Button asChild variant="outline" className="rounded-full px-8">
+          <Button asChild variant="outline" className="px-8">
             <Link href="/services">
               View all services
               <ArrowRightIcon className="size-4" />

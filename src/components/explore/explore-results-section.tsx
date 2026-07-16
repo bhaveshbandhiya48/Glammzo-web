@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 
 import { ExploreAvailabilityNotice } from "@/components/explore/explore-availability-notice"
 import { ExploreFilters } from "@/components/explore/explore-filters"
@@ -8,13 +8,16 @@ import { ExploreGoogleMap } from "@/components/explore/explore-google-map"
 import { ExploreSalonGrid } from "@/components/explore/explore-salon-grid"
 import { ExploreViewToggle, type ExploreViewMode } from "@/components/explore/explore-view-toggle"
 import { SectionHeader } from "@/components/shared/section-header"
+import { useUserLocation } from "@/hooks/use-user-location"
 import type { ExploreSearchState, ExploreSortId } from "@/lib/explore-filters"
+import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 type ExploreResultsSectionProps = {
   title: string
   subtitle: ReactNode
   searchState: ExploreSearchState
+  categoryFilters: Array<{ id: string; label: string }>
   salons: Salon[]
   sort: ExploreSortId
   nearFromUrl: boolean
@@ -30,6 +33,7 @@ export function ExploreResultsSection({
   title,
   subtitle,
   searchState,
+  categoryFilters,
   salons,
   sort,
   nearFromUrl,
@@ -41,12 +45,21 @@ export function ExploreResultsSection({
   featured,
 }: ExploreResultsSectionProps) {
   const [view, setView] = useState<ExploreViewMode>("list")
+  const { browseCity } = useUserLocation()
+  const useStoredCity = !searchState.area && !searchState.city
+  const visibleSalons = useMemo(
+    () => (useStoredCity ? filterSalonsByCity(salons, browseCity) : salons),
+    [browseCity, salons, useStoredCity],
+  )
+  const visibleTitle = useStoredCity
+    ? `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} in ${browseCity}`
+    : title
 
   return (
     <>
       <SectionHeader
         eyebrow="Results"
-        title={title}
+        title={visibleTitle}
         subtitle={subtitle}
         action={
           <div className="sm:mt-8">
@@ -56,16 +69,25 @@ export function ExploreResultsSection({
         className="mb-5 sm:mb-6 sm:items-start"
       />
 
-      <ExploreFilters state={searchState} />
+      <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
 
-      <ExploreAvailabilityNotice salons={salons} />
+      <ExploreAvailabilityNotice salons={visibleSalons} />
 
-      {featured ? <div className="mb-8 mt-6">{featured}</div> : null}
+      {!useStoredCity && featured ? <div className="mb-8 mt-6">{featured}</div> : null}
 
-      <div className={featured ? undefined : "mt-6"}>
-        {view === "map" ? (
+      <div className={!useStoredCity && featured ? undefined : "mt-6"}>
+        {visibleSalons.length === 0 ? (
+          <div className="rounded-3xl border border-border/80 bg-card px-6 py-12 text-center">
+            <p className="font-heading text-lg font-semibold">
+              No salons available in {browseCity} yet
+            </p>
+            <p className="mt-2 text-sm text-foreground/60">
+              Change your location from the header to browse another city.
+            </p>
+          </div>
+        ) : view === "map" ? (
           <ExploreGoogleMap
-            salons={salons}
+            salons={visibleSalons}
             nearFromUrl={nearFromUrl}
             urlLatitude={urlLatitude}
             urlLongitude={urlLongitude}
@@ -74,7 +96,7 @@ export function ExploreResultsSection({
           />
         ) : (
           <ExploreSalonGrid
-            salons={salons}
+            salons={visibleSalons}
             sort={sort}
             nearFromUrl={nearFromUrl}
             urlLatitude={urlLatitude}

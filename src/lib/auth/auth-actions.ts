@@ -208,7 +208,7 @@ function resolveSafeNextPath(value: string) {
     pathname = next.split("?")[0] ?? next
   }
 
-  const blocked = ["/login", "/signup", "/forgot-password", "/partner-signup"]
+  const blocked = ["/login", "/signup", "/forgot-password", "/partner-signup", "/for-salons/start"]
   if (blocked.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return "/"
   }

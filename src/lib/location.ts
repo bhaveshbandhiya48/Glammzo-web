@@ -77,13 +77,16 @@ export function formatHeroAreaLabel(
     | "nearMe"
     | "resolvedArea"
     | "displayLabel"
+    | "city"
     | "inServiceArea"
     | "defaultFallback"
   > | null
 ): string {
   if (stored?.nearMe) {
-    if (stored.inServiceArea && stored.resolvedArea) return stored.resolvedArea
-    if (stored.displayLabel) return stored.displayLabel
+    if (stored.city) return stored.city
+    if (stored.displayLabel) {
+      return stored.displayLabel.split(",")[0]?.trim() || stored.displayLabel
+    }
   }
   if (stored?.defaultFallback) return DEFAULT_FALLBACK_HERO_AREA
   if (stored?.areaLabelOverride) return stored.areaLabelOverride

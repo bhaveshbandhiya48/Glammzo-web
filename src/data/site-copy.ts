@@ -77,7 +77,7 @@ export const siteCopy = {
     eyebrow: "For salon owners",
     title: "Grow with Glammzo",
     subtitle:
-      "Fill empty slots, reach new clients, and manage bookings from one calm dashboard built for independent studios and growing chains.",
+      "Fill empty slots, reach new clients, and run your salon from a calm CRM — with marketplace discovery when you publish.",
   },
   mobile: {
     eyebrow: "Mobile app",
@@ -92,7 +92,7 @@ export const siteCopy = {
 export const navItems: NavItem[] = [
   { label: "Services", href: "/services" },
   { label: "Explore", href: "/explore" },
-  { label: "For salons", href: "/partner" },
+  { label: "For salons", href: "/for-salons" },
 ]
 
 export const stats: Stat[] = [

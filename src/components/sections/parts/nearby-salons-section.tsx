@@ -6,7 +6,7 @@ import { ArrowRightIcon, MapPinIcon, StarIcon } from "lucide-react"
 import { useMemo } from "react"
 
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
-import { useSalonCatalog } from "@/hooks/use-salon-catalog"
+import { useCitySalonCatalog } from "@/hooks/use-city-salon-catalog"
 import { applySalonDistances } from "@/lib/explore-distance"
 import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
@@ -34,12 +34,15 @@ function toNearbyPreview(salon: Salon) {
 }
 
 export function NearbySalonsSection() {
-  const { salons: catalog } = useSalonCatalog()
+  const { salons: catalog, browseCity } = useCitySalonCatalog()
   const origin = useExploreDistanceOrigin({})
   const nearbySalons = useMemo(
     () => applySalonDistances(catalog, origin).slice(0, 4).map(toNearbyPreview),
     [catalog, origin],
   )
+  const exploreHref = browseCity
+    ? `/explore?city=${encodeURIComponent(browseCity)}`
+    : "/explore"
   return (
     <MotionSection
       id="nearby"
@@ -58,7 +61,7 @@ export function NearbySalonsSection() {
             subtitle={salonsCopy.subtitle}
             action={
               <Link
-                href="/partner-signup"
+                href="/for-salons/start"
                 className="inline-flex items-center gap-2 text-sm font-medium text-background/70 transition-colors hover:text-primary"
               >
                 {salonsCopy.partnerCta}
@@ -125,9 +128,9 @@ export function NearbySalonsSection() {
           <Button
             asChild
             size="lg"
-            className="h-12 rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90"
+            className="bg-primary px-8 text-primary-foreground hover:bg-primary/90"
           >
-            <Link href="/explore">
+            <Link href={exploreHref}>
               See all salons
               <ArrowRightIcon className="size-4" />
             </Link>

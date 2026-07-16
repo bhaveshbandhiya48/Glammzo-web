@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeftIcon } from "lucide-react"
 
 import { RescheduleBookingForm } from "@/components/booking/reschedule-booking-form"
-import { SitePageShell } from "@/components/layout/site-page-shell"
 import { fetchSalonBookingContextForReschedule } from "@/lib/bookings/crm/salon-context"
 import { getSession } from "@/lib/auth/session"
 import { getSalonById } from "@/lib/salons"
@@ -11,13 +12,25 @@ import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 
 type PageProps = {
   params: Promise<{ appointmentId: string }>
+  searchParams: Promise<{ error?: string }>
 }
 
-export default async function RescheduleBookingPage({ params }: PageProps) {
+function rescheduleErrorMessage(error: string | undefined) {
+  if (error === "reschedule_slot") {
+    return "That time was just taken. Please pick another slot."
+  }
+  if (error === "reschedule") {
+    return "We couldn't reschedule this booking. Please try again or contact the salon."
+  }
+  return null
+}
+
+export default async function RescheduleBookingPage({ params, searchParams }: PageProps) {
   const session = await getSession()
   if (!session?.phone) redirect("/login?next=/dashboard/bookings")
 
   const { appointmentId } = await params
+  const { error } = await searchParams
   if (!isSupabaseConfigured()) notFound()
 
   const phoneDigits = normalizeCustomerPhoneDigits(session.phone)
@@ -81,28 +94,44 @@ export default async function RescheduleBookingPage({ params }: PageProps) {
   )
   if (!bookingContext) notFound()
 
-  return (
-    <SitePageShell>
-      <div className="mx-auto max-w-lg space-y-6">
-        <div>
-          <p className="section-eyebrow">Reschedule</p>
-          <h1 className="display-section mt-3">Pick a new time</h1>
-          <p className="mt-2 text-sm text-foreground/65">
-            Choose another slot for your appointment at {salon.name}.
-          </p>
-        </div>
+  const errorMessage = rescheduleErrorMessage(error)
 
-        <div className="rounded-3xl border border-border/70 bg-white/50 p-6 sm:p-8">
-          <RescheduleBookingForm
-            appointmentId={row.id}
-            salonName={salon.name}
-            serviceIds={serviceIds}
-            durationMin={row.duration_minutes}
-            bookingContext={bookingContext}
-            currentDate={row.appointment_date}
-          />
-        </div>
+  return (
+    <div className="mx-auto max-w-lg space-y-6">
+      <div>
+        <Link
+          href="/dashboard/bookings"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/60 transition-colors hover:text-foreground focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <ArrowLeftIcon className="size-4" aria-hidden />
+          Back to Your Appointments
+        </Link>
+        <p className="section-eyebrow mt-5">Reschedule</p>
+        <h1 className="display-section mt-3">Pick a new time</h1>
+        <p className="mt-2 text-sm text-foreground/65">
+          Choose another slot for your appointment at {salon.name}.
+        </p>
       </div>
-    </SitePageShell>
+
+      {errorMessage ? (
+        <div
+          role="alert"
+          className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3.5 text-sm text-destructive/90"
+        >
+          {errorMessage}
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-border/65 bg-card p-5 shadow-sm shadow-black/[0.03] sm:p-6">
+        <RescheduleBookingForm
+          appointmentId={row.id}
+          salonName={salon.name}
+          serviceIds={serviceIds}
+          durationMin={row.duration_minutes}
+          bookingContext={bookingContext}
+          currentDate={row.appointment_date}
+        />
+      </div>
+    </div>
   )
 }
