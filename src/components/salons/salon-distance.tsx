@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { MapPinIcon } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { MapPinIcon, NavigationIcon } from "lucide-react"
 
+import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import {
   computeSalonDistanceKm,
   resolveDistanceOriginFromStored,
@@ -10,12 +11,30 @@ import {
 import { formatDistanceKm } from "@/lib/maps/haversine"
 import { LOCATION_UPDATED_EVENT, readStoredLocation } from "@/lib/location-storage"
 import type { Salon } from "@/types/salon"
+import { cn } from "@/lib/utils"
 
+type SalonDistanceFields = Pick<
+  Salon,
+  "id" | "area" | "address" | "latitude" | "longitude" | "distanceKm"
+>
+
+export function useSalonDistanceKm(salon: SalonDistanceFields): number | null {
+  const origin = useExploreDistanceOrigin({})
+
+  return useMemo(() => {
+    if (salon.distanceKm > 0) {
+      return salon.distanceKm
+    }
+    return computeSalonDistanceKm(salon, origin)
+  }, [origin, salon])
+}
+
+/** Area label with distance from the user’s saved / detected location (booking summary). */
 export function SalonDistance({
   salon,
   className,
 }: {
-  salon: Pick<Salon, "id" | "area" | "address" | "latitude" | "longitude" | "distanceKm">
+  salon: SalonDistanceFields
   className?: string
 }) {
   const [distanceKm, setDistanceKm] = useState<number | null>(null)
@@ -44,5 +63,31 @@ export function SalonDistance({
       {salon.area}
       {distanceLabel ? ` · ${distanceLabel}` : null}
     </p>
+  )
+}
+
+/** Compact “2.4 km away” for salon profile hero and rails. */
+export function SalonDistanceFromYou({
+  salon,
+  className,
+}: {
+  salon: SalonDistanceFields
+  className?: string
+}) {
+  const distanceKm = useSalonDistanceKm(salon)
+  const distanceLabel = distanceKm != null && distanceKm > 0 ? formatDistanceKm(distanceKm) : null
+
+  if (!distanceLabel) return null
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-[15px] font-medium text-foreground/65",
+        className,
+      )}
+    >
+      <NavigationIcon className="size-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+      <span>{distanceLabel}</span>
+    </span>
   )
 }

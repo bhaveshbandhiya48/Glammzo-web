@@ -1,7 +1,6 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
+import { SalonGalleryMasonry } from "@/components/salons/salon-gallery-masonry"
 import { BadgeCheckIcon, StarIcon } from "lucide-react"
 
 import type { SalonReview, SalonTeamMember } from "@/types/salon"
@@ -94,18 +93,7 @@ function ReviewCard({ review }: { review: SalonReview }) {
 }
 
 function GalleryGrid({ gallery, salonName }: { gallery: string[]; salonName: string }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {gallery.map((src) => (
-        <div
-          key={src}
-          className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border/70 shadow-sm shadow-black/[0.03]"
-        >
-          <Image src={src} alt={`${salonName} gallery`} fill className="object-cover" sizes="50vw" />
-        </div>
-      ))}
-    </div>
-  )
+  return <SalonGalleryMasonry gallery={gallery} salonName={salonName} />
 }
 
 function ReviewsPanel({

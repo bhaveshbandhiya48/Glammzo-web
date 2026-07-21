@@ -14,6 +14,7 @@ import type {
   CrmStaffRow,
 } from "@/lib/salons/crm-types"
 import { mapCrmSalonToWeb } from "@/lib/salons/map-crm-salon"
+import { fetchCompletedServiceBookingCounts } from "@/lib/salons/service-booking-counts"
 import type { Salon } from "@/types/salon"
 
 const UUID_RE =
@@ -179,7 +180,7 @@ async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {
     supabase
       .from("staff")
       .select(
-        "id, salon_id, full_name, designation, avatar_url, specialties, is_active, is_bookable, staff_roles(name)"
+        "id, salon_id, full_name, designation, avatar_url, bio, specialties, is_active, is_bookable, staff_roles(name)"
       )
       .in("salon_id", salonIds)
       .eq("is_active", true)
@@ -412,7 +413,7 @@ async function fetchOffersForSalons(salonIds: string[]): Promise<CrmOfferRow[]> 
 }
 
 async function mapSalonRow(row: CrmSalonRow): Promise<Salon> {
-  const [services, staff, reviews, packages, offers, profiles, gallery] =
+  const [services, staff, reviews, packages, offers, profiles, gallery, bookingCountsBySalon] =
     await Promise.all([
     fetchServicesForSalons([row.id]),
     fetchStaffForSalons([row.id]),
@@ -421,6 +422,7 @@ async function mapSalonRow(row: CrmSalonRow): Promise<Salon> {
     fetchOffersForSalons([row.id]),
     fetchMarketplaceProfilesForSalons([row.id]),
     fetchGalleryForSalons([row.id]),
+    fetchCompletedServiceBookingCounts([row.id]),
   ])
 
   return mapCrmSalonToWeb(
@@ -432,6 +434,7 @@ async function mapSalonRow(row: CrmSalonRow): Promise<Salon> {
     offers,
     profiles[0] ?? null,
     gallery,
+    bookingCountsBySalon.get(row.id) ?? new Map(),
   )
 }
 
@@ -451,6 +454,7 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
       offerRows,
       profileRows,
       galleryRows,
+      bookingCountsBySalon,
     ] = await Promise.all([
       fetchServicesForSalons(salonIds),
       fetchStaffForSalons(salonIds),
@@ -459,6 +463,7 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
       fetchOffersForSalons(salonIds),
       fetchMarketplaceProfilesForSalons(salonIds),
       fetchGalleryForSalons(salonIds),
+      fetchCompletedServiceBookingCounts(salonIds),
     ])
 
     const servicesBySalon = new Map<string, CrmServiceRow[]>()
@@ -516,6 +521,7 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
         offersBySalon.get(row.id) ?? [],
         profilesBySalon.get(row.id) ?? null,
         galleryBySalon.get(row.id) ?? [],
+        bookingCountsBySalon.get(row.id) ?? new Map(),
       )
     )
   } catch (err) {

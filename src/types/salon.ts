@@ -18,6 +18,8 @@ export type SalonService = {
   afterCare?: string
   /** Linked add-on service IDs from CRM. Empty = auto-suggested from same category. */
   addOnIds?: string[]
+  /** Completed visits on Glammzo (CRM appointments), used for “Most booked” ranking. */
+  completedBookingCount?: number
 }
 
 export type SalonPackageItem = {
@@ -75,7 +77,11 @@ export type SalonTeamMember = {
   name: string
   role: string
   imageUrl: string
+  /** Customer-facing bio from CRM (Marketplace / staff profile). */
+  bio?: string
   specialties: string[]
+  /** Verified salon reviews linked to this staff member (`staff_id`). */
+  reviewCount: number
 }
 
 export type SalonAmenityCategory = {
@@ -114,6 +120,8 @@ export type SalonReviewType =
 
 export type SalonReview = {
   id: string
+  /** CRM staff UUID when the guest rated a specific team member. */
+  staffId?: string | null
   /** Public guest identifier shown on the card */
   userId: string
   /** Display name kept for accessibility / future account linking */

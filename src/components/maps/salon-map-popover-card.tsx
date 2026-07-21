@@ -7,6 +7,7 @@ import { StarIcon, XIcon } from "lucide-react"
 import { formatDistanceKm } from "@/lib/maps/haversine"
 import { formatMapPriceLabel } from "@/lib/maps/price-marker-icon"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
+import { salonServicesSectionHref } from "@/lib/salons/salon-detail-scroll"
 import { cn } from "@/lib/utils"
 
 type SalonMapPopoverCardProps = {
@@ -16,8 +17,9 @@ type SalonMapPopoverCardProps = {
 }
 
 export function SalonMapPopoverCard({ salon, onClose, className }: SalonMapPopoverCardProps) {
-  const salonHref = `/salons/${salon.slug || salon.id}`
-  const bookHref = `/book/${salon.slug || salon.id}`
+  const salonId = salon.slug || salon.id
+  const salonHref = `/salons/${salonId}`
+  const bookHref = salonServicesSectionHref(salonId)
   const imageSrc = salon.coverImageUrl || salon.imageUrl
   const priceLabel = formatMapPriceLabel(salon.priceFrom)
 

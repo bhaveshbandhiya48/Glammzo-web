@@ -544,6 +544,30 @@ export function formatCategoryHeading(category: string, count: number) {
   return `${label} (${count})`
 }
 
+export function buildServiceBookingFrequency(services: SalonService[]) {
+  const frequency = new Map<string, number>()
+  for (const service of services) {
+    const count = service.completedBookingCount ?? 0
+    if (count > 0) {
+      frequency.set(service.id, count)
+    }
+  }
+  return frequency
+}
+
+export function pickMostBookedServices(services: SalonService[], limit = 4) {
+  const withBookings = services.filter((service) => (service.completedBookingCount ?? 0) > 0)
+  if (withBookings.length === 0) return []
+
+  return [...withBookings]
+    .sort((a, b) => {
+      const diff = (b.completedBookingCount ?? 0) - (a.completedBookingCount ?? 0)
+      if (diff !== 0) return diff
+      return a.name.localeCompare(b.name)
+    })
+    .slice(0, limit)
+}
+
 export function pickPopularServices(
   services: SalonService[],
   packages: SalonPackage[],

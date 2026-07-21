@@ -74,6 +74,7 @@ export type CrmStaffRow = {
   full_name: string
   designation: string | null
   avatar_url: string | null
+  bio: string | null
   specialties: string[] | null
   is_active: boolean
   is_bookable: boolean

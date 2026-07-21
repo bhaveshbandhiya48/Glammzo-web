@@ -9,6 +9,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Senior Stylist",
       imageUrl: media.testimonials.t1,
       specialties: ["Signature Haircut", "Blowout & Styling", "Event styling"],
+      reviewCount: 0,
     },
     {
       id: "s1-t2",
@@ -16,6 +17,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Color Specialist",
       imageUrl: media.testimonials.t2,
       specialties: ["Root Touch-up", "Full colour", "Gloss treatments"],
+      reviewCount: 0,
     },
     {
       id: "s1-t3",
@@ -23,6 +25,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Styling Lead",
       imageUrl: media.testimonials.t3,
       specialties: ["Blowout & Styling", "Texture work", "Finishing"],
+      reviewCount: 0,
     },
     {
       id: "s1-t4",
@@ -30,6 +33,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Junior Stylist",
       imageUrl: media.categories.hair,
       specialties: ["Deep Conditioning", "Haircuts", "Wash & blow-dry"],
+      reviewCount: 0,
     },
   ],
   s2: [
@@ -39,6 +43,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Lead Esthetician",
       imageUrl: media.testimonials.t1,
       specialties: ["Express Facial", "Skin assessment", "Sensitive skin care"],
+      reviewCount: 0,
     },
     {
       id: "s2-t2",
@@ -46,6 +51,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Massage Therapist",
       imageUrl: media.testimonials.t2,
       specialties: ["Swedish Massage", "Deep tissue", "Pressure-focused work"],
+      reviewCount: 0,
     },
     {
       id: "s2-t3",
@@ -53,6 +59,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Spa Therapist",
       imageUrl: media.testimonials.t3,
       specialties: ["Aromatherapy Ritual", "Body rituals", "Relaxation therapies"],
+      reviewCount: 0,
     },
     {
       id: "s2-t4",
@@ -60,6 +67,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Guest Relations",
       imageUrl: media.categories.spa,
       specialties: ["Visit coordination", "Therapist matching", "Spa consultations"],
+      reviewCount: 0,
     },
   ],
   s3: [
@@ -69,6 +77,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Lead Nail Artist",
       imageUrl: media.testimonials.t1,
       specialties: ["Gel Extensions", "Classic Manicure", "Shape & structure"],
+      reviewCount: 0,
     },
     {
       id: "s3-t2",
@@ -76,6 +85,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Nail Artist",
       imageUrl: media.testimonials.t2,
       specialties: ["Nail Art Add-on", "Custom designs", "Accent detailing"],
+      reviewCount: 0,
     },
     {
       id: "s3-t3",
@@ -83,6 +93,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Nail Technician",
       imageUrl: media.testimonials.t3,
       specialties: ["Classic Manicure", "Cuticle care", "Polish application"],
+      reviewCount: 0,
     },
   ],
   s4: [
@@ -92,6 +103,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Makeup Artist",
       imageUrl: media.testimonials.t1,
       specialties: ["Party Makeup", "Editorial looks", "Long-wear base"],
+      reviewCount: 0,
     },
     {
       id: "s4-t2",
@@ -99,6 +111,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Bridal Specialist",
       imageUrl: media.testimonials.t2,
       specialties: ["Bridal Trial", "Wedding day makeup", "Touch-up planning"],
+      reviewCount: 0,
     },
     {
       id: "s4-t3",
@@ -106,6 +119,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Hair Stylist",
       imageUrl: media.testimonials.t3,
       specialties: ["Hair Styling", "Volume & texture", "Evening looks"],
+      reviewCount: 0,
     },
     {
       id: "s4-t4",
@@ -113,6 +127,7 @@ export const salonTeamBySalonId: Record<string, SalonTeamMember[]> = {
       role: "Grooming Expert",
       imageUrl: media.categories.grooming,
       specialties: ["Beard Grooming", "Line-ups", "Men's finishing"],
+      reviewCount: 0,
     },
   ],
 }

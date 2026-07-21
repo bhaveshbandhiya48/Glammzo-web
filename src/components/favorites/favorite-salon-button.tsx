@@ -15,6 +15,7 @@ type FavoriteSalonButtonProps = {
   authenticated: boolean
   className?: string
   size?: "sm" | "md" | "icon-sm" | "icon"
+  variant?: "default" | "outline" | "secondary" | "ghost" | "destructive" | "link"
 }
 
 export function FavoriteSalonButton({
@@ -24,6 +25,7 @@ export function FavoriteSalonButton({
   authenticated,
   className,
   size = "sm",
+  variant = "outline",
 }: FavoriteSalonButtonProps) {
   const router = useRouter()
   const [favorited, setFavorited] = useState(initialFavorited)
@@ -36,7 +38,7 @@ export function FavoriteSalonButton({
       <Button
         type="button"
         size={size}
-        variant="outline"
+        variant={variant}
         className={className}
         onClick={(event) => {
           event.preventDefault()
@@ -54,7 +56,7 @@ export function FavoriteSalonButton({
     <Button
       type="button"
       size={size}
-      variant="outline"
+      variant={variant}
       disabled={isPending}
       aria-pressed={favorited}
       aria-label={favorited ? "Remove from favorites" : "Save to favorites"}

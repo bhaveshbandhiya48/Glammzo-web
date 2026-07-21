@@ -22,7 +22,7 @@ import { useSalonCartSelection } from "@/hooks/use-salon-cart-selection"
 import {
   buildCatalogFilterChips,
   buildPackageServiceIds,
-  buildServicePackageFrequency,
+  buildServiceBookingFrequency,
   categoryMatchesFilter,
   filterPackagesForCatalog,
   filterServicesForCatalog,
@@ -32,7 +32,7 @@ import {
   inferServiceBadges,
   mergePackageWithExtras,
   packageServiceIdsIncluded,
-  pickPopularServices,
+  pickMostBookedServices,
   pickRecommendedPackage,
   removePackageServiceIds,
   serviceIdsMatchPackage,
@@ -112,21 +112,21 @@ export function SalonBookingCatalogSection({
     [packages, services, searchQuery, activeFilter, catalogFilterChips],
   )
 
-  const packageFrequency = useMemo(
-    () => buildServicePackageFrequency(packages),
-    [packages],
-  )
-
   const packageBadges = useMemo(() => inferPackageBadges(packages), [packages])
 
+  const bookingFrequency = useMemo(
+    () => buildServiceBookingFrequency(services),
+    [services],
+  )
+
   const featuredServices = useMemo(() => {
-    const top = pickPopularServices(services, packages, 4)
+    const top = pickMostBookedServices(services, 4)
     return top.filter((service) => filteredServices.some((entry) => entry.id === service.id))
-  }, [services, packages, filteredServices])
+  }, [services, filteredServices])
 
   const featuredBadges = useMemo(
-    () => inferServiceBadges(featuredServices, packageFrequency),
-    [featuredServices, packageFrequency],
+    () => inferServiceBadges(featuredServices, bookingFrequency),
+    [featuredServices, bookingFrequency],
   )
 
   const recommendedPackage = useMemo(
@@ -301,8 +301,8 @@ export function SalonBookingCatalogSection({
 
   return (
     <>
-      <div className="grid items-start gap-8 pb-24 lg:grid-cols-[minmax(0,1fr)_min(100%,360px)] lg:gap-10 lg:pb-0">
-        <div className="min-w-0 space-y-8">
+      <div className="grid items-start gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_min(100%,360px)] lg:gap-8 lg:pb-0">
+        <div className="min-w-0 space-y-6">
           <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
 
           <CategoryFilterChips

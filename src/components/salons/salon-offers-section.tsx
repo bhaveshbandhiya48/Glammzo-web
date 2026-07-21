@@ -14,6 +14,8 @@ type SalonOffersSectionProps = {
   salonId: string
   authenticated: boolean
   className?: string
+  /** Hide section header when wrapped in SalonDetailSection */
+  embedded?: boolean
 }
 
 function buildOfferBookHref(salonId: string, code: string, authenticated: boolean) {
@@ -26,11 +28,13 @@ export function SalonOffersSection({
   salonId,
   authenticated,
   className,
+  embedded = false,
 }: SalonOffersSectionProps) {
   if (offers.length === 0) return null
 
   return (
     <section className={cn("space-y-5", className)}>
+      {embedded ? null : (
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="section-eyebrow">Offers</p>
@@ -47,6 +51,7 @@ export function SalonOffersSection({
           </a>
         </Button>
       </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {offers.map((offer) => {
@@ -55,7 +60,7 @@ export function SalonOffersSection({
           return (
             <article
               key={offer.id}
-              className="rounded-2xl border border-border/70 bg-card/90 p-5 shadow-sm shadow-black/[0.04]"
+              className="rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.06] via-card to-card p-6 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
@@ -88,9 +93,9 @@ export function SalonOffersSection({
                 {offer.appliesTo === "selected_services" ? (
                   <span className="text-xs text-foreground/55">Selected services only</span>
                 ) : null}
-                <Button asChild variant="link" className="h-auto px-0 text-primary">
+                <Button asChild size="sm" className="ml-auto shrink-0">
                   <a href={buildOfferBookHref(salonId, offer.code, authenticated)}>
-                    Use at checkout
+                    Book now
                   </a>
                 </Button>
               </div>

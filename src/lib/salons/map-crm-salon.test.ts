@@ -103,6 +103,8 @@ describe("mapCrmSalonToWeb", () => {
       ],
     )
 
+    expect(mapped.shortDescription).toBe(profile.short_description)
+    expect(mapped.longDescription).toBe(profile.long_description)
     expect(mapped.description).toBe(profile.long_description)
     expect(mapped.languages).toEqual(["English", "Hindi"])
     expect(mapped.amenities?.categories.map((item) => item.name)).toEqual([

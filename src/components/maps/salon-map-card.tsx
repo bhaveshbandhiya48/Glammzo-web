@@ -6,6 +6,7 @@ import { MapPinIcon, StarIcon, XIcon } from "lucide-react"
 
 import { formatDistanceKm } from "@/lib/maps/haversine"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
+import { salonServicesSectionHref } from "@/lib/salons/salon-detail-scroll"
 import { Button } from "@/components/ui/button"
 
 type SalonMapCardProps = {
@@ -14,7 +15,8 @@ type SalonMapCardProps = {
 }
 
 export function SalonMapCard({ salon, onClose }: SalonMapCardProps) {
-  const bookHref = `/book/${salon.slug || salon.id}`
+  const salonId = salon.slug || salon.id
+  const bookHref = salonServicesSectionHref(salonId)
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-border/80 bg-card shadow-xl shadow-black/10">
@@ -89,7 +91,7 @@ export function SalonMapCard({ salon, onClose }: SalonMapCardProps) {
             <Link href={bookHref}>Book appointment</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href={`/salons/${salon.slug || salon.id}`}>View salon profile</Link>
+            <Link href={`/salons/${salonId}`}>View salon profile</Link>
           </Button>
         </div>
       </div>

@@ -14,6 +14,7 @@ import type {
 } from "@/lib/salons/crm-types"
 import { filterBookableOffers } from "@/lib/salons/offer-utils"
 import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
+import { buildStaffReviewCounts } from "@/lib/salons/staff-review-counts"
 import type {
   Salon,
   SalonAmenities,
@@ -166,7 +167,7 @@ function relationCategory(
   }
 }
 
-function mapService(row: CrmServiceRow): SalonService | null {
+function mapService(row: CrmServiceRow, completedBookingCount = 0): SalonService | null {
   const category = relationCategory(row.service_categories)
   if (!category) {
     return null
@@ -190,6 +191,8 @@ function mapService(row: CrmServiceRow): SalonService | null {
     beforeCare: row.before_care?.trim() || undefined,
     afterCare: row.after_care?.trim() || undefined,
     addOnIds: addOnIds.length > 0 ? addOnIds : undefined,
+    completedBookingCount:
+      completedBookingCount > 0 ? completedBookingCount : undefined,
   }
 }
 
@@ -214,13 +217,18 @@ function isMarketplaceReadyStaff(row: CrmStaffRow) {
   )
 }
 
-function mapStaff(row: CrmStaffRow): SalonTeamMember {
+function mapStaff(row: CrmStaffRow, reviewCount: number): SalonTeamMember {
+  const bio = row.bio?.trim() || undefined
+  const specialties = (row.specialties ?? []).map((item) => item.trim()).filter(Boolean)
+
   return {
     id: row.id,
     name: row.full_name,
     role: row.designation?.trim() || relationName(row.staff_roles) || "Specialist",
     imageUrl: row.avatar_url ?? media.testimonials.t1,
-    specialties: row.specialties ?? [],
+    bio,
+    specialties,
+    reviewCount,
   }
 }
 
@@ -385,16 +393,19 @@ export function mapCrmSalonToWeb(
   offers: CrmOfferRow[] = [],
   marketplaceProfile: CrmMarketplaceProfileRow | null = null,
   canonicalGallery: CrmSalonGalleryImageRow[] = [],
+  serviceBookingCounts: Map<string, number> = new Map(),
 ): Salon {
   const activeServices = services
     .filter(isMarketplaceReadyService)
-    .map(mapService)
+    .map((row) => mapService(row, serviceBookingCounts.get(row.id) ?? 0))
     .filter((service): service is SalonService => service !== null)
     .sort((a, b) => a.price - b.price)
 
+  const staffReviewCounts = buildStaffReviewCounts(reviews)
+
   const activeStaff = staff
     .filter(isMarketplaceReadyStaff)
-    .map(mapStaff)
+    .map((row) => mapStaff(row, staffReviewCounts.get(row.id) ?? 0))
 
   const area = resolveSalonArea(row)
   const city = row.city?.trim() || ""
@@ -423,9 +434,12 @@ export function mapCrmSalonToWeb(
     offers.filter((offer) => offer.is_active).map(mapOffer),
   ).sort((a, b) => a.title.localeCompare(b.title))
 
+  const shortDescription = marketplaceProfile?.short_description?.trim() || ""
+  const longDescription = marketplaceProfile?.long_description?.trim() || ""
+
   const description =
-    marketplaceProfile?.long_description?.trim() ||
-    marketplaceProfile?.short_description?.trim() ||
+    longDescription ||
+    shortDescription ||
     activeServices[0]?.includes[0] ||
     `Book trusted services at ${row.name} in ${area}. Transparent pricing and easy online booking.`
 
@@ -453,6 +467,7 @@ export function mapCrmSalonToWeb(
 
     return {
       id: r.id,
+      staffId: r.staff_id?.trim() || null,
       userId: guestIdFromCustomerId(r.customer_id),
       authorName: resolveCustomerReviewName(customer),
       reviewType,
@@ -522,6 +537,8 @@ export function mapCrmSalonToWeb(
     isFeatured,
     isOpenNow: isSalonOpenNow(row.settings, row.timezone || "Asia/Kolkata"),
     priceFrom,
+    shortDescription: shortDescription || undefined,
+    longDescription: longDescription || undefined,
     description,
     address: formatAddress(row) || area,
     phone: row.phone?.trim() || "Contact salon for details",
