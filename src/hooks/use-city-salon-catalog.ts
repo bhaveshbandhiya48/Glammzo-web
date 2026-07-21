@@ -4,14 +4,14 @@ import { useMemo } from "react"
 
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { useUserLocation } from "@/hooks/use-user-location"
-import { filterSalonsByCity } from "@/lib/salons/city-filter"
+import { filterSalonsByCityPreferExact } from "@/lib/salons/city-filter"
 
 export function useCitySalonCatalog() {
   const catalog = useSalonCatalog()
   const { browseCity } = useUserLocation()
 
-  const salons = useMemo(
-    () => filterSalonsByCity(catalog.salons, browseCity),
+  const { salons, usedFallback } = useMemo(
+    () => filterSalonsByCityPreferExact(catalog.salons, browseCity),
     [catalog.salons, browseCity],
   )
 
@@ -19,5 +19,6 @@ export function useCitySalonCatalog() {
     ...catalog,
     salons,
     browseCity,
+    cityFallback: usedFallback,
   }
 }

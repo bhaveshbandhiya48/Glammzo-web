@@ -244,6 +244,39 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
           </PageSection>
         ) : null}
 
+        {(salon.languages?.length || salon.socialLinks) ? (
+          <PageSection>
+            <SectionHeader
+              eyebrow="Connect"
+              title="Languages & links"
+            />
+            {salon.languages?.length ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {salon.languages.map((language) => (
+                  <Badge key={language} variant="secondary">
+                    {language}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+            {salon.socialLinks ? (
+              <div className="mt-5 flex flex-wrap gap-3">
+                {Object.entries(salon.socialLinks).map(([label, url]) =>
+                  url ? (
+                    <Button key={label} variant="outline" size="sm" asChild>
+                      <a href={url} target="_blank" rel="noreferrer">
+                        {label === "website"
+                          ? "Website"
+                          : label.charAt(0).toUpperCase() + label.slice(1)}
+                      </a>
+                    </Button>
+                  ) : null,
+                )}
+              </div>
+            ) : null}
+          </PageSection>
+        ) : null}
+
         {(salon.gallery.length > 0 ||
           salon.customerReviews.length > 0 ||
           salon.team.length > 0) && (

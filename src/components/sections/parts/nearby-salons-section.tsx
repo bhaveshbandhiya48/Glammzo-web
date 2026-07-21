@@ -34,15 +34,17 @@ function toNearbyPreview(salon: Salon) {
 }
 
 export function NearbySalonsSection() {
-  const { salons: catalog, browseCity } = useCitySalonCatalog()
+  const { salons: catalog, browseCity, cityFallback } = useCitySalonCatalog()
   const origin = useExploreDistanceOrigin({})
   const nearbySalons = useMemo(
     () => applySalonDistances(catalog, origin).slice(0, 4).map(toNearbyPreview),
     [catalog, origin],
   )
-  const exploreHref = browseCity
-    ? `/explore?city=${encodeURIComponent(browseCity)}`
-    : "/explore"
+  const exploreHref = cityFallback
+    ? "/explore"
+    : browseCity
+      ? `/explore?city=${encodeURIComponent(browseCity)}`
+      : "/explore"
   return (
     <MotionSection
       id="nearby"

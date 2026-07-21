@@ -26,6 +26,24 @@ export type CrmSalonRow = {
   featured_until?: string | null
 }
 
+export type CrmMarketplaceProfileRow = {
+  salon_id: string
+  short_description: string | null
+  long_description: string | null
+  languages: string[] | null
+  amenities: unknown
+  policies: unknown
+  metadata: unknown
+}
+
+export type CrmSalonGalleryImageRow = {
+  id: string
+  salon_id: string
+  url: string
+  sort_order: number
+  alt: string | null
+}
+
 export type CrmServiceAddOnRow = {
   add_on_service_id: string
   sort_order: number
@@ -59,6 +77,7 @@ export type CrmStaffRow = {
   specialties: string[] | null
   is_active: boolean
   is_bookable: boolean
+  category_ids: string[]
   staff_roles: { name: string } | { name: string }[] | null
 }
 

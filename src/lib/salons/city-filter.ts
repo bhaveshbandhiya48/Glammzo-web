@@ -25,3 +25,23 @@ export function isSalonInCity(salon: Salon, city: string): boolean {
 export function filterSalonsByCity(salons: Salon[], city: string): Salon[] {
   return salons.filter((salon) => isSalonInCity(salon, city))
 }
+
+/**
+ * Prefer exact city matches. When none exist yet, keep showing other published
+ * partners so launch cities outside the default browse city are not invisible.
+ */
+export function filterSalonsByCityPreferExact(
+  salons: Salon[],
+  city: string,
+): { salons: Salon[]; usedFallback: boolean } {
+  if (!city.trim()) {
+    return { salons, usedFallback: false }
+  }
+
+  const matched = filterSalonsByCity(salons, city)
+  if (matched.length > 0) {
+    return { salons: matched, usedFallback: false }
+  }
+
+  return { salons, usedFallback: salons.length > 0 }
+}

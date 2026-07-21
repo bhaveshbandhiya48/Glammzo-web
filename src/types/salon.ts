@@ -95,6 +95,13 @@ export type SalonCancellationPolicy = {
   cancellationFeePercent?: number
   depositRequired?: boolean
   depositPercent?: number
+  summary?: string
+}
+
+export type SalonSocialLinks = {
+  instagram?: string
+  facebook?: string
+  website?: string
 }
 
 /** What aspect of the staff member's work the guest is rating */
@@ -143,7 +150,14 @@ export type Salon = {
   isFeatured?: boolean
   isOpenNow: boolean
   priceFrom: number
+  /** Concise marketplace copy used on listing cards. */
+  shortDescription?: string
+  /** Full marketplace copy used on the salon detail page. */
+  longDescription?: string
   description: string
+  languages?: string[]
+  socialLinks?: SalonSocialLinks
+  marketplaceMetadata?: Record<string, unknown>
   address: string
   phone: string
   hours: string

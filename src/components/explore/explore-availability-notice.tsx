@@ -5,17 +5,33 @@ import { useMemo } from "react"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import { applySalonDistances } from "@/lib/explore-distance"
 import { DEFAULT_CITY_NAME } from "@/lib/location"
+import { isSalonInCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 type ExploreAvailabilityNoticeProps = {
   salons: Salon[]
+  browseCity?: string
+  cityFallback?: boolean
 }
 
-export function ExploreAvailabilityNotice({ salons }: ExploreAvailabilityNoticeProps) {
+export function ExploreAvailabilityNotice({
+  salons,
+  browseCity,
+  cityFallback = false,
+}: ExploreAvailabilityNoticeProps) {
   const origin = useExploreDistanceOrigin({})
+  const cityLabel = browseCity?.trim() || DEFAULT_CITY_NAME
 
   const notice = useMemo(() => {
-    if (!origin.isDefaultCity || salons.length === 0) {
+    if (salons.length === 0) {
+      return null
+    }
+
+    if (cityFallback) {
+      return `No salons in ${cityLabel} yet — showing live partners from other cities.`
+    }
+
+    if (!origin.isDefaultCity) {
       return null
     }
 
@@ -28,13 +44,18 @@ export function ExploreAvailabilityNotice({ salons }: ExploreAvailabilityNoticeP
       return null
     }
 
+    const hasLocalPartner = salons.some((salon) => isSalonInCity(salon, cityLabel))
+    if (hasLocalPartner) {
+      return null
+    }
+
     const nearestKm = Math.min(...distances)
     if (nearestKm <= 25) {
       return null
     }
 
-    return `No salons in ${DEFAULT_CITY_NAME} yet, showing available partners with distances from ${DEFAULT_CITY_NAME}.`
-  }, [origin, salons])
+    return `No salons in ${cityLabel} yet, showing available partners with distances from ${cityLabel}.`
+  }, [cityFallback, cityLabel, origin, salons])
 
   if (!notice) {
     return null

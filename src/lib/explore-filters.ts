@@ -1,5 +1,5 @@
 import { getSearchParam } from "@/lib/search-params"
-import { isSalonInCity } from "@/lib/salons/city-filter"
+import { filterSalonsByCityPreferExact } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 export const EXPLORE_CATEGORY_FILTERS = [
@@ -208,7 +208,7 @@ export function filterExploreSalons(
   }
 
   if (state.city) {
-    result = result.filter((salon) => isSalonInCity(salon, state.city))
+    result = filterSalonsByCityPreferExact(result, state.city).salons
   } else if (!state.nearMode && state.area) {
     const area = state.area.toLowerCase()
     result = result.filter((salon) => salon.area.toLowerCase().includes(area))

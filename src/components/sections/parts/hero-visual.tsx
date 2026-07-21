@@ -12,12 +12,14 @@ import { buildExploreNearMeHref } from "@/lib/location-storage"
 export function HeroVisual() {
   const { browseCity, coords, nearMe } = useUserLocation()
   const origin = useExploreDistanceOrigin({})
-  const { salons, loaded } = useCitySalonCatalog()
+  const { salons, loaded, cityFallback } = useCitySalonCatalog()
   const exploreHref = coords
     ? buildExploreNearMeHref(coords.latitude, coords.longitude)
-    : browseCity
-      ? `/explore?city=${encodeURIComponent(browseCity)}`
-      : "/explore"
+    : cityFallback
+      ? "/explore"
+      : browseCity
+        ? `/explore?city=${encodeURIComponent(browseCity)}`
+        : "/explore"
 
   return (
     <div className="relative mx-auto w-full max-w-[520px]" aria-label="Booking preview">
@@ -42,7 +44,7 @@ export function HeroVisual() {
           href={exploreHref}
           className="flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-medium text-foreground/60 transition-colors hover:text-primary"
         >
-          Browse salons in {browseCity}
+          {cityFallback ? "Browse live salons" : `Browse salons in ${browseCity}`}
           <ArrowRightIcon className="size-4" />
         </Link>
       </div>

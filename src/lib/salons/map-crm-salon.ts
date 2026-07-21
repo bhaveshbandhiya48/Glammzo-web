@@ -3,6 +3,8 @@ import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
 import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
 import type {
+  CrmMarketplaceProfileRow,
+  CrmSalonGalleryImageRow,
   CrmSalonReviewRow,
   CrmSalonRow,
   CrmOfferRow,
@@ -92,6 +94,18 @@ function fallbackImageForSalon(salonId: string): string {
   return FALLBACK_IMAGES[hashString(salonId) % FALLBACK_IMAGES.length] ?? media.salons.s1
 }
 
+function safeExternalUrl(value: string | null | undefined): string | undefined {
+  if (!value?.trim()) return undefined
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function formatAddress(row: CrmSalonRow): string {
   return [
     row.address_line1,
@@ -177,6 +191,27 @@ function mapService(row: CrmServiceRow): SalonService | null {
     afterCare: row.after_care?.trim() || undefined,
     addOnIds: addOnIds.length > 0 ? addOnIds : undefined,
   }
+}
+
+function isMarketplaceReadyService(row: CrmServiceRow) {
+  return (
+    row.is_active &&
+    Number(row.price) > 0 &&
+    Number(row.duration_minutes) > 0 &&
+    (row.description?.trim().length ?? 0) >= 20 &&
+    Boolean(row.image_url?.trim()) &&
+    Boolean(relationCategory(row.service_categories))
+  )
+}
+
+function isMarketplaceReadyStaff(row: CrmStaffRow) {
+  return (
+    row.is_active &&
+    row.is_bookable &&
+    Boolean(row.designation?.trim()) &&
+    Boolean(row.avatar_url?.trim()) &&
+    row.category_ids.length > 0
+  )
 }
 
 function mapStaff(row: CrmStaffRow): SalonTeamMember {
@@ -348,15 +383,17 @@ export function mapCrmSalonToWeb(
   reviews: CrmSalonReviewRow[] = [],
   packages: CrmPackageRow[] = [],
   offers: CrmOfferRow[] = [],
+  marketplaceProfile: CrmMarketplaceProfileRow | null = null,
+  canonicalGallery: CrmSalonGalleryImageRow[] = [],
 ): Salon {
   const activeServices = services
-    .filter((s) => s.is_active)
+    .filter(isMarketplaceReadyService)
     .map(mapService)
     .filter((service): service is SalonService => service !== null)
     .sort((a, b) => a.price - b.price)
 
   const activeStaff = staff
-    .filter((s) => s.is_active && s.is_bookable)
+    .filter(isMarketplaceReadyStaff)
     .map(mapStaff)
 
   const area = resolveSalonArea(row)
@@ -387,7 +424,9 @@ export function mapCrmSalonToWeb(
   ).sort((a, b) => a.title.localeCompare(b.title))
 
   const description =
-    activeServices[0]?.includes[0] ??
+    marketplaceProfile?.long_description?.trim() ||
+    marketplaceProfile?.short_description?.trim() ||
+    activeServices[0]?.includes[0] ||
     `Book trusted services at ${row.name} in ${area}. Transparent pricing and easy online booking.`
 
   const latitude = parseSalonCoordinate(row.latitude)
@@ -437,8 +476,30 @@ export function mapCrmSalonToWeb(
       ? customerReviews.reduce((sum, rr) => sum + (rr.rating ?? 0), 0) / ratingCount
       : 0
 
-  const amenities = parseAmenities(row.settings)
-  const cancellationPolicy = parseCancellationPolicy(row.settings)
+  const amenities = marketplaceProfile
+    ? parseAmenities({ amenities: marketplaceProfile.amenities })
+    : parseAmenities(row.settings)
+  const cancellationPolicy = marketplaceProfile
+    ? parseCancellationPolicy({ policies: marketplaceProfile.policies })
+    : parseCancellationPolicy(row.settings)
+  const metadata =
+    marketplaceProfile?.metadata &&
+    typeof marketplaceProfile.metadata === "object"
+      ? (marketplaceProfile.metadata as {
+          socialLinks?: {
+            instagram?: string
+            facebook?: string
+            website?: string
+          }
+        })
+      : null
+  const socialLinks = metadata?.socialLinks
+    ? {
+        instagram: safeExternalUrl(metadata.socialLinks.instagram),
+        facebook: safeExternalUrl(metadata.socialLinks.facebook),
+        website: safeExternalUrl(metadata.socialLinks.website),
+      }
+    : undefined
   const featuredUntil = row.featured_until ? new Date(row.featured_until).getTime() : null
   const isFeatured =
     row.is_featured === true && (featuredUntil == null || featuredUntil > Date.now())
@@ -472,12 +533,27 @@ export function mapCrmSalonToWeb(
       imageUrl,
       coverImageUrl: coverUrl,
       listImageUrl: listUrl,
-      settings: row.settings,
-      serviceImageUrls: activeServices.map((service) => service.imageUrl),
+      settings: marketplaceProfile ? null : row.settings,
+      gallery: canonicalGallery
+        .slice()
+        .sort((left, right) => left.sort_order - right.sort_order)
+        .map((image) => image.url),
+      serviceImageUrls:
+        marketplaceProfile
+          ? []
+          : activeServices.map((service) => service.imageUrl),
     }),
     customerReviews,
     team: activeStaff,
     amenities,
     cancellationPolicy,
+    languages:
+      marketplaceProfile?.languages?.filter((language) => language.trim()) ??
+      undefined,
+    socialLinks:
+      socialLinks &&
+      (socialLinks.instagram || socialLinks.facebook || socialLinks.website)
+        ? socialLinks
+        : undefined,
   }
 }

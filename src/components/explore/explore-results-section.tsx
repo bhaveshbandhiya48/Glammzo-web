@@ -10,7 +10,7 @@ import { ExploreViewToggle, type ExploreViewMode } from "@/components/explore/ex
 import { SectionHeader } from "@/components/shared/section-header"
 import { useUserLocation } from "@/hooks/use-user-location"
 import type { ExploreSearchState, ExploreSortId } from "@/lib/explore-filters"
-import { filterSalonsByCity } from "@/lib/salons/city-filter"
+import { filterSalonsByCityPreferExact, isSalonInCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 type ExploreResultsSectionProps = {
@@ -47,12 +47,24 @@ export function ExploreResultsSection({
   const [view, setView] = useState<ExploreViewMode>("list")
   const { browseCity } = useUserLocation()
   const useStoredCity = !searchState.area && !searchState.city
-  const visibleSalons = useMemo(
-    () => (useStoredCity ? filterSalonsByCity(salons, browseCity) : salons),
+  const { salons: visibleSalons, usedFallback } = useMemo(
+    () =>
+      useStoredCity
+        ? filterSalonsByCityPreferExact(salons, browseCity)
+        : { salons, usedFallback: false },
     [browseCity, salons, useStoredCity],
   )
+  const cityFallback =
+    usedFallback ||
+    Boolean(
+      searchState.city &&
+        visibleSalons.length > 0 &&
+        !visibleSalons.some((salon) => isSalonInCity(salon, searchState.city)),
+    )
   const visibleTitle = useStoredCity
-    ? `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} in ${browseCity}`
+    ? cityFallback
+      ? `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} available`
+      : `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} in ${browseCity}`
     : title
 
   return (
@@ -71,7 +83,11 @@ export function ExploreResultsSection({
 
       <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
 
-      <ExploreAvailabilityNotice salons={visibleSalons} />
+      <ExploreAvailabilityNotice
+        salons={visibleSalons}
+        browseCity={searchState.city || browseCity}
+        cityFallback={cityFallback}
+      />
 
       {!useStoredCity && featured ? <div className="mb-8 mt-6">{featured}</div> : null}
 

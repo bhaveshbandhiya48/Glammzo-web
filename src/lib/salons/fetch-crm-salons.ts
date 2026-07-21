@@ -3,7 +3,16 @@ import "server-only"
 import { cache } from "react"
 
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
-import type { CrmSalonReviewRow, CrmSalonRow, CrmOfferRow, CrmPackageRow, CrmServiceRow, CrmStaffRow } from "@/lib/salons/crm-types"
+import type {
+  CrmMarketplaceProfileRow,
+  CrmSalonGalleryImageRow,
+  CrmSalonReviewRow,
+  CrmSalonRow,
+  CrmOfferRow,
+  CrmPackageRow,
+  CrmServiceRow,
+  CrmStaffRow,
+} from "@/lib/salons/crm-types"
 import { mapCrmSalonToWeb } from "@/lib/salons/map-crm-salon"
 import type { Salon } from "@/types/salon"
 
@@ -166,22 +175,88 @@ async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {
   if (salonIds.length === 0) return []
 
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from("staff")
-    .select(
-      "id, salon_id, full_name, designation, avatar_url, specialties, is_active, is_bookable, staff_roles(name)"
-    )
-    .in("salon_id", salonIds)
-    .eq("is_active", true)
-    .eq("is_bookable", true)
-    .is("deleted_at", null)
+  const [staffResult, categoryResult] = await Promise.all([
+    supabase
+      .from("staff")
+      .select(
+        "id, salon_id, full_name, designation, avatar_url, specialties, is_active, is_bookable, staff_roles(name)"
+      )
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .eq("is_bookable", true)
+      .is("deleted_at", null),
+    supabase
+      .from("staff_service_categories")
+      .select("staff_id, category_id")
+      .in("salon_id", salonIds),
+  ])
 
-  if (error) {
-    console.error("[salons] Failed to fetch CRM staff:", error.message)
+  if (staffResult.error) {
+    console.error("[salons] Failed to fetch CRM staff:", staffResult.error.message)
     return []
   }
 
-  return (data ?? []) as unknown as CrmStaffRow[]
+  if (categoryResult.error) {
+    console.error(
+      "[salons] Failed to fetch staff categories:",
+      categoryResult.error.message,
+    )
+  }
+
+  const categoriesByStaff = new Map<string, string[]>()
+  for (const row of categoryResult.data ?? []) {
+    const assignment = row as { staff_id: string; category_id: string }
+    categoriesByStaff.set(assignment.staff_id, [
+      ...(categoriesByStaff.get(assignment.staff_id) ?? []),
+      assignment.category_id,
+    ])
+  }
+
+  return (staffResult.data ?? []).map((row) => ({
+    ...(row as unknown as Omit<CrmStaffRow, "category_ids">),
+    category_ids: categoriesByStaff.get((row as { id: string }).id) ?? [],
+  }))
+}
+
+async function fetchMarketplaceProfilesForSalons(
+  salonIds: string[],
+): Promise<CrmMarketplaceProfileRow[]> {
+  if (salonIds.length === 0) return []
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("salon_marketplace_profiles")
+    .select(
+      "salon_id, short_description, long_description, languages, amenities, policies, metadata",
+    )
+    .in("salon_id", salonIds)
+
+  if (error) {
+    console.error("[salons] Failed to fetch Marketplace profiles:", error.message)
+    return []
+  }
+
+  return (data ?? []) as CrmMarketplaceProfileRow[]
+}
+
+async function fetchGalleryForSalons(
+  salonIds: string[],
+): Promise<CrmSalonGalleryImageRow[]> {
+  if (salonIds.length === 0) return []
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("salon_gallery_images")
+    .select("id, salon_id, url, sort_order, alt")
+    .in("salon_id", salonIds)
+    .order("sort_order", { ascending: true })
+
+  if (error) {
+    console.error("[salons] Failed to fetch canonical gallery:", error.message)
+    return []
+  }
+
+  return (data ?? []) as CrmSalonGalleryImageRow[]
 }
 
 const REVIEW_SELECT =
@@ -337,15 +412,27 @@ async function fetchOffersForSalons(salonIds: string[]): Promise<CrmOfferRow[]> 
 }
 
 async function mapSalonRow(row: CrmSalonRow): Promise<Salon> {
-  const [services, staff, reviews, packages, offers] = await Promise.all([
+  const [services, staff, reviews, packages, offers, profiles, gallery] =
+    await Promise.all([
     fetchServicesForSalons([row.id]),
     fetchStaffForSalons([row.id]),
     fetchReviewsForSalons([row.id]),
     fetchPackagesForSalons([row.id]),
     fetchOffersForSalons([row.id]),
+    fetchMarketplaceProfilesForSalons([row.id]),
+    fetchGalleryForSalons([row.id]),
   ])
 
-  return mapCrmSalonToWeb(row, services, staff, reviews, packages, offers)
+  return mapCrmSalonToWeb(
+    row,
+    services,
+    staff,
+    reviews,
+    packages,
+    offers,
+    profiles[0] ?? null,
+    gallery,
+  )
 }
 
 export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
@@ -356,12 +443,22 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
     if (salonRows.length === 0) return []
 
     const salonIds = salonRows.map((s) => s.id)
-    const [serviceRows, staffRows, reviewRows, packageRows, offerRows] = await Promise.all([
+    const [
+      serviceRows,
+      staffRows,
+      reviewRows,
+      packageRows,
+      offerRows,
+      profileRows,
+      galleryRows,
+    ] = await Promise.all([
       fetchServicesForSalons(salonIds),
       fetchStaffForSalons(salonIds),
       fetchReviewsForSalons(salonIds),
       fetchPackagesForSalons(salonIds),
       fetchOffersForSalons(salonIds),
+      fetchMarketplaceProfilesForSalons(salonIds),
+      fetchGalleryForSalons(salonIds),
     ])
 
     const servicesBySalon = new Map<string, CrmServiceRow[]>()
@@ -399,6 +496,16 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
       offersBySalon.set(offer.salon_id, list)
     }
 
+    const profilesBySalon = new Map(
+      profileRows.map((profile) => [profile.salon_id, profile]),
+    )
+    const galleryBySalon = new Map<string, CrmSalonGalleryImageRow[]>()
+    for (const image of galleryRows) {
+      const list = galleryBySalon.get(image.salon_id) ?? []
+      list.push(image)
+      galleryBySalon.set(image.salon_id, list)
+    }
+
     return salonRows.map((row) =>
       mapCrmSalonToWeb(
         row,
@@ -407,6 +514,8 @@ export const fetchCrmSalons = cache(async (): Promise<Salon[]> => {
         reviewsBySalon.get(row.id) ?? [],
         packagesBySalon.get(row.id) ?? [],
         offersBySalon.get(row.id) ?? [],
+        profilesBySalon.get(row.id) ?? null,
+        galleryBySalon.get(row.id) ?? [],
       )
     )
   } catch (err) {

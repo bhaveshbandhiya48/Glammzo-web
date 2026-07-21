@@ -36,7 +36,7 @@ function NearbySalonsMarqueeSkeleton() {
 }
 
 export function NearbySalonsMarqueeSection() {
-  const { salons, loaded, browseCity } = useCitySalonCatalog()
+  const { salons, loaded, browseCity, cityFallback } = useCitySalonCatalog()
   const origin = useExploreDistanceOrigin({})
 
   const nearbySalons = useMemo(
@@ -47,9 +47,11 @@ export function NearbySalonsMarqueeSection() {
       }),
     [salons, origin.latitude, origin.longitude],
   )
-  const exploreHref = browseCity
-    ? `/explore?city=${encodeURIComponent(browseCity)}`
-    : "/explore"
+  const exploreHref = cityFallback
+    ? "/explore"
+    : browseCity
+      ? `/explore?city=${encodeURIComponent(browseCity)}`
+      : "/explore"
 
   return (
     <MotionSection
