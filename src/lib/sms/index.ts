@@ -18,7 +18,7 @@ function warnMockInProductionOnce() {
 
   warnedMockInProduction = true
   console.warn(
-    "[sms] Using mock SMS provider in production. OTPs are logged server-side until Twilio is configured.",
+    "[sms] Using mock SMS provider in production. Set SMS_FIXED_OTP=123456 for a staging login code, or configure Twilio (SMS_PROVIDER=twilio) for real SMS.",
   )
 }
 

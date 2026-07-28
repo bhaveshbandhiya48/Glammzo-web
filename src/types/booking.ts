@@ -40,6 +40,10 @@ export type Booking = {
   status: BookingStatus
   /** Shown when salon declined the booking request. */
   declineReason?: string
+  /** ISO deadline for Manual confirmation (when pending). */
+  confirmationDeadline?: string
+  /** Salon booking confirmation mode at create time. */
+  bookingMode?: "AUTO_CONFIRM" | "MANUAL_CONFIRM"
   createdAt: string
 }
 

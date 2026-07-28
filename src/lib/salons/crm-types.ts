@@ -57,6 +57,7 @@ export type CrmServiceRow = {
   image_url: string | null
   duration_minutes: number
   price: string
+  offer_price?: string | number | null
   is_active: boolean
   recommended_for?: string[] | null
   before_care?: string | null

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { CheckCircleIcon } from "lucide-react"
 
 import { formatDuration } from "@/lib/bookings/utils"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import { formatInr, formatPackageDuration } from "@/lib/salons/catalog-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
 import type { SalonCancellationPolicy, SalonPackage, SalonService } from "@/types/salon"
@@ -162,7 +163,9 @@ export function BookingSummary({
                   {formatServiceDuration(svc.durationMin)}
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold tabular-nums">{formatInr(svc.price)}</p>
+              <p className="shrink-0 text-sm font-semibold">
+                <ServicePriceText service={svc} />
+              </p>
             </div>
           ))
         )}

@@ -91,16 +91,20 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, recommended_for, before_care, after_care, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, recommended_for, before_care, after_care, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
 
 const SERVICE_SELECT_WITH_IMAGE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, is_active, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, service_categories(name, is_active, sort_order)"
 
 const SERVICE_SELECT_WITHOUT_IMAGE =
-  "id, salon_id, name, description, duration_minutes, price, is_active, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, duration_minutes, price, offer_price, is_active, service_categories(name, is_active, sort_order)"
 
 function isMissingServiceImageColumn(message: string) {
   return message.toLowerCase().includes("image_url")
+}
+
+function isMissingServiceOfferPriceColumn(message: string) {
+  return message.toLowerCase().includes("offer_price")
 }
 
 function isMissingServiceMarketplaceColumns(message: string) {
@@ -113,11 +117,19 @@ function isMissingServiceMarketplaceColumns(message: string) {
   )
 }
 
+function stripOfferPriceFromSelect(select: string) {
+  return select.replace(", offer_price", "").replace("offer_price, ", "")
+}
+
 function normalizeServiceRows(rows: unknown[]): CrmServiceRow[] {
-  return rows.map((row) => ({
-    ...(row as Omit<CrmServiceRow, "image_url">),
-    image_url: (row as CrmServiceRow).image_url ?? null,
-  }))
+  return rows.map((row) => {
+    const service = row as CrmServiceRow
+    return {
+      ...service,
+      image_url: service.image_url ?? null,
+      offer_price: service.offer_price ?? null,
+    }
+  })
 }
 
 async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow[]> {
@@ -133,8 +145,8 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
 
-  if (error && isMissingServiceMarketplaceColumns(error.message)) {
-    select = SERVICE_SELECT_WITH_IMAGE
+  if (error && isMissingServiceOfferPriceColumn(error.message)) {
+    select = stripOfferPriceFromSelect(select)
     ;({ data, error } = await supabase
       .from("services")
       .select(select)
@@ -144,24 +156,60 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
       .order("sort_order", { ascending: true }))
   }
 
-  if (error && isMissingServiceImageColumn(error.message)) {
-    const fallback = await supabase
+  if (error && isMissingServiceMarketplaceColumns(error.message)) {
+    select = SERVICE_SELECT_WITH_IMAGE
+    ;({ data, error } = await supabase
       .from("services")
-      .select(SERVICE_SELECT_WITHOUT_IMAGE)
+      .select(select)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }))
+
+    if (error && isMissingServiceOfferPriceColumn(error.message)) {
+      select = stripOfferPriceFromSelect(select)
+      ;({ data, error } = await supabase
+        .from("services")
+        .select(select)
+        .in("salon_id", salonIds)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true }))
+    }
+  }
+
+  if (error && isMissingServiceImageColumn(error.message)) {
+    let withoutImageSelect = SERVICE_SELECT_WITHOUT_IMAGE
+    let fallback = await supabase
+      .from("services")
+      .select(withoutImageSelect)
       .in("salon_id", salonIds)
       .eq("is_active", true)
       .is("deleted_at", null)
       .order("sort_order", { ascending: true })
+
+    if (fallback.error && isMissingServiceOfferPriceColumn(fallback.error.message)) {
+      withoutImageSelect = stripOfferPriceFromSelect(withoutImageSelect)
+      fallback = await supabase
+        .from("services")
+        .select(withoutImageSelect)
+        .in("salon_id", salonIds)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true })
+    }
 
     if (fallback.error) {
       console.error("[salons] Failed to fetch CRM services:", fallback.error.message)
       return []
     }
 
-    return (fallback.data ?? []).map((row) => ({
-      ...(row as Omit<CrmServiceRow, "image_url">),
-      image_url: null,
-    }))
+    return normalizeServiceRows(
+      (fallback.data ?? []).map((row) => ({
+        ...(row as unknown as Omit<CrmServiceRow, "image_url">),
+        image_url: null,
+      })),
+    )
   }
 
   if (error) {

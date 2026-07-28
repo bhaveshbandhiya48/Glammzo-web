@@ -10,7 +10,7 @@ import { authCookieOptions } from "@/lib/auth/cookie-options"
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session"
 import { normalizeCustomerPhoneDigits, normalizeCustomerPhone } from "@/lib/phone/normalize"
 import { getActiveSmsProvider } from "@/lib/sms"
-import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-types"
+import { resolveOtpCode } from "@/lib/sms/otp"
 
 const CHALLENGE_COOKIE = "glamzzo_phone_challenge"
 
@@ -88,7 +88,7 @@ export async function requestOtpAction(
     }
 
     const phoneE164 = normalizeCustomerPhone(phoneRaw)
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+    const otp = resolveOtpCode()
 
     await setChallengeCookie({ phoneDigits, phoneE164, otp })
 

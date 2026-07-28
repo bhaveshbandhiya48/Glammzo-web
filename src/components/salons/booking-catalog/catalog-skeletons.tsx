@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils"
-
 export function FeaturedServiceCardSkeleton() {
   return (
     <div className="animate-pulse overflow-hidden rounded-xl border border-border/60 bg-card/60">
@@ -27,7 +25,7 @@ export function ServiceCatalogRowSkeleton() {
   )
 }
 
-export function ServiceCardSkeleton({ className }: { className?: string }) {
+export function ServiceCardSkeleton() {
   return <ServiceCatalogRowSkeleton />
 }
 

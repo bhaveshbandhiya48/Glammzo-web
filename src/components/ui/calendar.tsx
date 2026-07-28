@@ -19,7 +19,7 @@ const navButtonClassName =
   "inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-card p-0 text-foreground shadow-xs transition-colors hover:border-foreground/20 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring/10 disabled:pointer-events-none disabled:opacity-40"
 
 function CalendarMonthCaption(props: MonthCaptionProps) {
-  const { calendarMonth, displayIndex: _displayIndex, className, ...divProps } = props
+  const { calendarMonth, className, ...divProps } = props
   const { goToMonth, previousMonth, nextMonth, dayPickerProps } = useDayPicker()
   const { startMonth, endMonth } = dayPickerProps
 

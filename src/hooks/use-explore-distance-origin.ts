@@ -34,11 +34,20 @@ function resolveOriginFromOptions(
   return storedOrigin
 }
 
-export function useExploreDistanceOrigin(options: UseExploreDistanceOriginOptions = {}) {
+export function useExploreDistanceOrigin({
+  nearFromUrl,
+  urlLatitude,
+  urlLongitude,
+}: UseExploreDistanceOriginOptions = {}) {
   const storedOrigin = useExploreDistanceOriginContext()
 
   return useMemo(
-    () => resolveOriginFromOptions(storedOrigin, options),
-    [storedOrigin, options.nearFromUrl, options.urlLatitude, options.urlLongitude],
+    () =>
+      resolveOriginFromOptions(storedOrigin, {
+        nearFromUrl,
+        urlLatitude,
+        urlLongitude,
+      }),
+    [storedOrigin, nearFromUrl, urlLatitude, urlLongitude],
   )
 }

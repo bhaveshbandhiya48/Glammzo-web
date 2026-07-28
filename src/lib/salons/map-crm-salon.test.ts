@@ -140,6 +140,25 @@ describe("mapCrmSalonToWeb", () => {
     )
   })
 
+  it("maps offer price as payable and original as compare-at", () => {
+    const mapped = mapCrmSalonToWeb(
+      salon,
+      [{ ...service, price: "800", offer_price: "650" }],
+      [],
+    )
+
+    expect(mapped.services[0]?.price).toBe(650)
+    expect(mapped.services[0]?.compareAtPrice).toBe(800)
+    expect(mapped.priceFrom).toBe(650)
+  })
+
+  it("keeps original price only when offer is missing", () => {
+    const mapped = mapCrmSalonToWeb(salon, [service], [])
+
+    expect(mapped.services[0]?.price).toBe(500)
+    expect(mapped.services[0]?.compareAtPrice).toBeUndefined()
+  })
+
   it("does not revive legacy content when a canonical profile exists", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
@@ -169,6 +188,7 @@ describe("mapCrmSalonToWeb", () => {
       salon_id: salon.id,
       full_name: "A Stylist",
       designation: "Stylist",
+      bio: null,
       avatar_url: "https://example.com/staff.jpg",
       specialties: [],
       is_active: true,

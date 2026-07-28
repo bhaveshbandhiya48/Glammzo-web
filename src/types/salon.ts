@@ -2,7 +2,10 @@ export type SalonService = {
   id: string
   name: string
   durationMin: number
+  /** Amount the guest pays (offer when set, otherwise original). */
   price: number
+  /** Original CRM price when an offer is active (shown struck through). */
+  compareAtPrice?: number
   category: string
   categorySortOrder?: number
   imageUrl: string

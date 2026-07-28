@@ -4,7 +4,8 @@ import Image from "next/image"
 import { ClockIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { formatInr, resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
+import { resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
 import { getServiceCardSummary } from "@/lib/salons/service-detail-utils"
 import type { SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
@@ -61,8 +62,8 @@ export function ServiceCatalogRow({
             <ClockIcon className="size-3 shrink-0" />
             {service.durationMin} min
           </p>
-          <p className="mt-0.5 font-heading text-sm font-semibold tabular-nums text-foreground">
-            {formatInr(service.price)}
+          <p className="mt-0.5 font-heading text-sm font-semibold text-foreground">
+            <ServicePriceText service={service} />
           </p>
         </div>
       </button>

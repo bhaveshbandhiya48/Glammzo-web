@@ -125,6 +125,19 @@ export function SalonOnboardingWizard({
               runAction(submitSalonDetailsAction, new FormData(e.currentTarget))
             }}
           >
+            {initialProgress?.intendedPlan ? (
+              <input type="hidden" name="intendedPlan" value={initialProgress.intendedPlan} />
+            ) : null}
+            {initialProgress?.intendedPlan ? (
+              <p className="rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-2.5 text-sm text-foreground/70">
+                Selected plan:{" "}
+                <span className="font-semibold capitalize text-foreground">
+                  {initialProgress.intendedPlan === "starter"
+                    ? "Free"
+                    : initialProgress.intendedPlan}
+                </span>
+              </p>
+            ) : null}
             <div className="grid gap-2">
               <Label htmlFor="businessName">Business name</Label>
               <Input

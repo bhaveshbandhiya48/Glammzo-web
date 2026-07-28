@@ -21,6 +21,11 @@ import { normalizeCustomerPhone } from "@/lib/phone/normalize"
 import { isValidEmail } from "@/lib/validations/email"
 import type { Booking } from "@/types/booking"
 
+function parseMarketingOptIn(formData: FormData) {
+  const raw = String(formData.get("marketingOptIn") ?? "true").trim().toLowerCase()
+  return raw === "true" || raw === "1" || raw === "on"
+}
+
 async function persistBookingProfile(customerName: string, customerEmail: string) {
   await updateSessionProfile({
     name: customerName,
@@ -45,6 +50,7 @@ export async function createBookingAction(formData: FormData) {
   const preferredStaffId = String(formData.get("preferredStaffId") ?? "").trim() || undefined
   const packageId = String(formData.get("packageId") ?? "").trim()
   const promoCode = String(formData.get("promoCode") ?? "").trim()
+  const marketingOptIn = parseMarketingOptIn(formData)
 
   const salon = await getSalonById(salonId)
   const serviceIds = parseServiceIds(serviceIdsRaw)
@@ -85,6 +91,7 @@ export async function createBookingAction(formData: FormData) {
       packageBooking: Boolean(packageId),
       packageId: packageId || undefined,
       promoCode: promoCode || undefined,
+      marketingOptIn,
     })
 
     if (!result.success) {
@@ -120,8 +127,10 @@ export async function createBookingAction(formData: FormData) {
       price: totalPrice,
       durationMin: totalDuration,
       notes: notes || undefined,
-      status: "pending",
+      status: result.appointmentStatus === "confirmed" ? "confirmed" : "pending",
       createdAt: new Date().toISOString(),
+      confirmationDeadline: result.confirmationDeadline ?? undefined,
+      bookingMode: result.bookingMode,
     }
 
     await addBooking(booking)

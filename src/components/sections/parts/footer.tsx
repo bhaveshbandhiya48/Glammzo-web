@@ -53,8 +53,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Partner with Glammzo", href: "/for-salons" },
       { label: "Free Salon CRM", href: "/for-salons/start" },
-      { label: "Pricing", href: "#" },
-      { label: "Success Stories", href: "/success-stories" },
+      { label: "Pricing", href: "/pricing" },
     ],
   },
   {

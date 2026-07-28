@@ -40,7 +40,7 @@ export function CustomerSalonMap() {
   const [viewState, setViewState] = useState<MapViewState>("locating")
   const [error, setError] = useState<string | null>(null)
   const [center, setCenter] = useState<MapCenter>(DEFAULT_MAP_CENTER)
-  const [radiusKm, setRadiusKm] = useState(DEFAULT_NEARBY_RADIUS_KM)
+  const [radiusKm] = useState(DEFAULT_NEARBY_RADIUS_KM)
   const [query, setQuery] = useState("")
   const [searchInput, setSearchInput] = useState("")
   const [salons, setSalons] = useState<NearbySalonRecord[]>([])

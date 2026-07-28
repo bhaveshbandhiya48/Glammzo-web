@@ -8,7 +8,7 @@ import { getCustomerBookingById } from "@/lib/bookings/customer-bookings"
 import { getSession } from "@/lib/auth/session"
 
 export const metadata: Metadata = {
-  title: "Booking request sent",
+  title: "Booking confirmation",
   robots: { index: false },
 }
 

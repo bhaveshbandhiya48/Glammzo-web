@@ -7,12 +7,103 @@ import {
 } from "@/lib/bookings/crm/time"
 import { shiftIsoDate } from "@/lib/date-utils"
 
-/** Fixed MVP booking engine settings (no configuration UI yet). */
+/** Marketplace booking confirmation timing (shared CRM + Glammzo-web). */
 export const BOOKING_ENGINE_CONFIG = {
-  confirmationRequired: true,
-  acceptanceWindowMinutes: 60,
   maxAdvanceBookingDays: 7,
+  farLeadHours: 4,
+  nearResponseMinutes: 15,
+  minManualLeadMinutes: 30,
+  farDeadlineBeforeAppointmentHours: 2,
+  ownerPendingReminderBeforeDeadlineMinutes: 60,
+  /** @deprecated Prefer per-salon booking_confirmation_mode + dynamic windows */
+  confirmationRequired: true,
+  /** @deprecated Prefer nearResponseMinutes / far deadline helpers */
+  acceptanceWindowMinutes: 15,
 } as const
+
+export type BookingConfirmationMode = "AUTO_CONFIRM" | "MANUAL_CONFIRM"
+
+export function resolveConfirmationMode(
+  value: string | null | undefined,
+): BookingConfirmationMode {
+  return value === "MANUAL_CONFIRM" ? "MANUAL_CONFIRM" : "AUTO_CONFIRM"
+}
+
+export function isAutoConfirmMode(mode: BookingConfirmationMode) {
+  return mode === "AUTO_CONFIRM"
+}
+
+/** Lead time from now until appointment start (salon-local date + HH:MM). */
+export function getAppointmentLeadMinutes(
+  appointmentDate: string,
+  startTime: string,
+  timezone: string,
+  now: Date = new Date(),
+): number {
+  const startUtc = salonLocalDateTimeToUtc(
+    appointmentDate,
+    startTime.slice(0, 5),
+    timezone,
+  )
+  return (startUtc.getTime() - now.getTime()) / 60_000
+}
+
+export function isManualNearSlotBlocked(leadMinutes: number): boolean {
+  return leadMinutes < BOOKING_ENGINE_CONFIG.minManualLeadMinutes
+}
+
+/**
+ * Manual confirmation deadline:
+ * - lead > 4h → appointmentStart − 2h
+ * - otherwise → now + 15m
+ * Caller must block lead < 30m before create.
+ */
+export function computeManualExpiresAt(input: {
+  appointmentDate: string
+  startTime: string
+  timezone: string
+  now?: Date
+}): string {
+  const now = input.now ?? new Date()
+  const appointmentStart = salonLocalDateTimeToUtc(
+    input.appointmentDate,
+    input.startTime.slice(0, 5),
+    input.timezone,
+  )
+  const leadMinutes =
+    (appointmentStart.getTime() - now.getTime()) / 60_000
+  const farLeadMinutes = BOOKING_ENGINE_CONFIG.farLeadHours * 60
+
+  if (leadMinutes > farLeadMinutes) {
+    const deadline = new Date(
+      appointmentStart.getTime() -
+        BOOKING_ENGINE_CONFIG.farDeadlineBeforeAppointmentHours * 60 * 60_000,
+    )
+    if (deadline.getTime() <= now.getTime()) {
+      return new Date(
+        now.getTime() + BOOKING_ENGINE_CONFIG.nearResponseMinutes * 60_000,
+      ).toISOString()
+    }
+    return deadline.toISOString()
+  }
+
+  return new Date(
+    now.getTime() + BOOKING_ENGINE_CONFIG.nearResponseMinutes * 60_000,
+  ).toISOString()
+}
+
+export function remainingConfirmationSeconds(
+  expiresAt: string | null | undefined,
+  now = new Date(),
+): number | null {
+  if (!expiresAt) {
+    return null
+  }
+  return Math.max(
+    0,
+    Math.floor((new Date(expiresAt).getTime() - now.getTime()) / 1000),
+  )
+}
 
 export const WEB_BOOKING_REJECT_REASONS = [
   "Staff unavailable",
@@ -180,15 +271,23 @@ export function isDateBeyondMaxAdvance(
 }
 
 /**
- * When salon is closed and customer books for tomorrow, hide slots during the
- * acceptance window after opening (e.g. open 10:00 → earliest bookable 11:00).
+ * When salon is closed and customer books for tomorrow (Manual mode), hide slots
+ * during the near-response window after opening.
  */
 export function getTomorrowAcceptanceMinStartTime(
   businessHours: BusinessHoursSettings,
   timezone: string,
   appointmentDate: string,
   now: Date = new Date(),
+  options?: { bufferMinutes?: number },
 ): string | undefined {
+  const bufferMinutes =
+    options?.bufferMinutes ?? BOOKING_ENGINE_CONFIG.nearResponseMinutes
+
+  if (bufferMinutes <= 0) {
+    return undefined
+  }
+
   const today = getSalonDateKey(now, timezone)
   const tomorrow = shiftIsoDate(today, 1)
 
@@ -208,7 +307,7 @@ export function getTomorrowAcceptanceMinStartTime(
   }
 
   const openMinutes = timeToMinutes(schedule.open)
-  const earliestMinutes = openMinutes + BOOKING_ENGINE_CONFIG.acceptanceWindowMinutes
+  const earliestMinutes = openMinutes + bufferMinutes
   const hours = Math.floor(earliestMinutes / 60)
   const mins = earliestMinutes % 60
 

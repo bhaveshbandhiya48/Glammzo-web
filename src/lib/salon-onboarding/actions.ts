@@ -6,9 +6,11 @@ import {
   BUSINESS_TYPES,
   maskIndianMobile,
   type BusinessType,
+  type IntendedSalonPlan,
   type OnboardingActionState,
   type SalonOnboardingProgress,
 } from "@/lib/salon-onboarding/constants"
+import { isSalonPlanCode } from "@/lib/subscriptions/plan-catalog"
 import {
   clearOnboardingOtp,
   clearOnboardingProgress,
@@ -23,6 +25,7 @@ import {
   provisionSalonWorkspace,
 } from "@/lib/salon-onboarding/provision-salon"
 import { getActiveSmsProvider } from "@/lib/sms"
+import { resolveOtpCode } from "@/lib/sms/otp"
 
 const CITY_OPTIONS = getSignupCityOptions()
 const CITY_SET = new Set(CITY_OPTIONS.map((c) => c.toLowerCase()))
@@ -41,6 +44,10 @@ export async function submitSalonDetailsAction(
     const mobile = String(formData.get("mobile") ?? "").trim()
     const city = String(formData.get("city") ?? "").trim()
     const businessType = String(formData.get("businessType") ?? "").trim() as BusinessType
+    const intendedPlanRaw = String(formData.get("intendedPlan") ?? "").trim()
+    const intendedPlan: IntendedSalonPlan | undefined = isSalonPlanCode(intendedPlanRaw)
+      ? intendedPlanRaw
+      : undefined
 
     const fieldErrors: Record<string, string> = {}
     if (!businessName || businessName.length < 2) {
@@ -75,6 +82,7 @@ export async function submitSalonDetailsAction(
       }
     }
 
+    const existing = await readOnboardingProgress()
     const mobileE164 = normalizeCustomerPhone(mobile)
     const timestamp = now()
     const progress: SalonOnboardingProgress = {
@@ -84,13 +92,14 @@ export async function submitSalonDetailsAction(
       mobile: mobileE164,
       city,
       businessType,
-      createdAt: timestamp,
+      createdAt: existing?.createdAt ?? timestamp,
       updatedAt: timestamp,
+      intendedPlan: intendedPlan ?? existing?.intendedPlan,
     }
 
     await writeOnboardingProgress(progress)
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+    const otp = resolveOtpCode()
     await writeOnboardingOtp({ phoneDigits, otp })
 
     const sms = getActiveSmsProvider()
@@ -192,7 +201,7 @@ export async function resendOnboardingOtpAction(): Promise<OnboardingActionState
     }
 
     const phoneDigits = normalizeCustomerPhoneDigits(progress.mobile)
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+    const otp = resolveOtpCode()
     await writeOnboardingOtp({ phoneDigits, otp })
 
     const sms = getActiveSmsProvider()

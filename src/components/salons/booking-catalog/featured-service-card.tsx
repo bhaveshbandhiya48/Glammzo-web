@@ -5,7 +5,8 @@ import { ClockIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { formatInr, resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
+import { resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
 import type { SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
@@ -75,8 +76,8 @@ export function FeaturedServiceCard({
               <ClockIcon className="size-3 shrink-0" />
               {service.durationMin} min
             </p>
-            <p className="font-heading text-base font-semibold tabular-nums text-foreground">
-              {formatInr(service.price)}
+            <p className="font-heading text-base font-semibold text-foreground">
+              <ServicePriceText service={service} />
             </p>
           </div>
 

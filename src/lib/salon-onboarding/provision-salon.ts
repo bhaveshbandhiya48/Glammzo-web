@@ -175,7 +175,10 @@ export async function provisionSalonWorkspace(
       console.error("[provision] onboarding_progress:", progressError.message)
     }
 
-    const redirectTo = buildCrmOnboardingDestination()
+    const redirectTo = buildCrmOnboardingDestination({
+      salonId,
+      nextPath: "/setup/profile",
+    })
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: "magiclink",
       email: authEmail,

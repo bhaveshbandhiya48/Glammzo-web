@@ -19,7 +19,7 @@ export function assertProductionSecretsConfigured() {
 
   if (!hasTwilio) {
     console.warn(
-      "[env] SMS is using the mock provider in production. Set SMS_PROVIDER=twilio and Twilio credentials before go-live SMS.",
+      "[env] SMS is using the mock provider in production. For staging, set SMS_FIXED_OTP=123456 (and optionally SMS_DEBUG_OTP=true). For go-live SMS, set SMS_PROVIDER=twilio and Twilio credentials; unset SMS_FIXED_OTP.",
     );
   }
 }

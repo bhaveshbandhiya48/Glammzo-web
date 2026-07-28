@@ -1,6 +1,5 @@
 import "server-only"
 
-import { formatSlotLabel } from "@/lib/bookings/crm/availability"
 import { buildAppointmentWhatsAppConfirmationMessage } from "@/lib/bookings/crm/customer-messages"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -14,6 +13,9 @@ type NotifyCustomerInput = {
   appointmentDate: string
   startTime: string
   salonName: string
+  pendingConfirmation?: boolean
+  nearResponseMinutes?: number
+  expiresAt?: string | null
 }
 
 export async function notifyCustomerWebBookingPending(input: NotifyCustomerInput) {
@@ -24,8 +26,8 @@ export async function notifyCustomerWebBookingPending(input: NotifyCustomerInput
     return
   }
 
-  const timeLabel = formatSlotLabel(input.startTime)
-  const messageContent = buildAppointmentWhatsAppConfirmationMessage({
+  const pendingConfirmation = input.pendingConfirmation !== false
+  let messageContent = buildAppointmentWhatsAppConfirmationMessage({
     customerName: input.customerName,
     customerPhone: phone,
     salonName: input.salonName,
@@ -33,8 +35,21 @@ export async function notifyCustomerWebBookingPending(input: NotifyCustomerInput
     appointmentDate: input.appointmentDate,
     startTime: input.startTime,
     endTime: input.startTime,
-    pendingConfirmation: true,
+    pendingConfirmation,
   })
+
+  if (
+    pendingConfirmation &&
+    input.nearResponseMinutes &&
+    input.expiresAt
+  ) {
+    const windowMs =
+      new Date(input.expiresAt).getTime() - Date.now()
+    // Near window (~15m): mention response expectation in the stub log body.
+    if (windowMs > 0 && windowMs <= (input.nearResponseMinutes + 5) * 60_000) {
+      messageContent = `${messageContent}\n\nThe salon usually responds within about ${input.nearResponseMinutes} minutes.`
+    }
+  }
 
   const { error } = await supabase.from("message_logs").insert({
     salon_id: input.salonId,

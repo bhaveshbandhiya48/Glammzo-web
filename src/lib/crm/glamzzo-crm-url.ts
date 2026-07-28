@@ -17,10 +17,16 @@ export function buildCrmSignupUrl(email?: string): string {
   return `${base}?${sp.toString()}`
 }
 
-/** Post-provision destination inside CRM — same as CRM phone signup (`/dashboard`). */
-export function buildCrmOnboardingDestination(_salonId?: string): string {
+/** Post-provision destination inside CRM — complete business profile first. */
+export function buildCrmOnboardingDestination(options?: {
+  salonId?: string
+  nextPath?: string
+}): string {
   const base = getGlamzzoCrmUrl()
-  return `${base}/auth/callback?next=${encodeURIComponent("/dashboard")}`
+  const nextPath = options?.nextPath?.startsWith("/")
+    ? options.nextPath
+    : "/setup/profile"
+  return `${base}/auth/callback?next=${encodeURIComponent(nextPath)}`
 }
 
 export function buildCrmDashboardUrl(): string {

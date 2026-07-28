@@ -48,6 +48,8 @@ export type SalonBookingContext = {
   categoryAssignmentsEnabled: boolean
   staffSchedules: Record<string, Partial<Record<Weekday, DaySchedule>>>
   webBooking: {
+    confirmationMode: import("@/lib/bookings/crm/booking-confirmation-engine").BookingConfirmationMode
+    confirmationRequired: boolean
     responseSlaMinutes: number
   }
   booked: BookedAppointment[]
@@ -66,6 +68,7 @@ export type CreateCrmBookingInput = {
   packageBooking?: boolean
   packageId?: string
   promoCode?: string
+  marketingOptIn?: boolean
 }
 
 export type CreateCrmBookingResult =
@@ -74,6 +77,11 @@ export type CreateCrmBookingResult =
       appointmentId: string
       staffId: string
       endTime: string
+      bookingMode: import("@/lib/bookings/crm/booking-confirmation-engine").BookingConfirmationMode
+      appointmentStatus: "confirmed" | "pending"
+      confirmationRequired: boolean
+      confirmationDeadline: string | null
+      remainingConfirmationTime: number | null
     }
   | {
       success: false

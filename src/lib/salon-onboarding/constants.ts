@@ -17,6 +17,8 @@ export type BusinessType = (typeof BUSINESS_TYPES)[number]
 
 export type OnboardingStep = "details" | "otp" | "done"
 
+export type IntendedSalonPlan = "starter" | "growth" | "pro"
+
 /** Mirrors glamzzo-crm PendingSalonSignup. */
 export type SalonOnboardingProgress = {
   step: OnboardingStep
@@ -28,6 +30,8 @@ export type SalonOnboardingProgress = {
   createdAt: number
   updatedAt: number
   salonId?: string
+  /** Plan selected from marketplace /pricing (optional). */
+  intendedPlan?: IntendedSalonPlan
 }
 
 export type OnboardingActionState = {

@@ -24,11 +24,16 @@ import {
 } from "@/lib/bookings/crm/validate-salon-offer"
 import {
   BOOKING_ENGINE_CONFIG,
-  computeBookingExpiresAt,
+  computeManualExpiresAt,
+  getAppointmentLeadMinutes,
   isAppointmentBlockedByClosures,
+  isAutoConfirmMode,
   isDateBeyondMaxAdvance,
+  isManualNearSlotBlocked,
   isSalonOpenAt,
+  remainingConfirmationSeconds,
 } from "@/lib/bookings/crm/booking-confirmation-engine"
+import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
 
 export async function createCrmWebBooking(
   input: CreateCrmBookingInput,
@@ -73,20 +78,61 @@ export async function createCrmWebBooking(
   const supabase = createAdminClient()
   const uniqueIds = uniqueServiceIds(input.serviceIds)
 
-  const { data: serviceRows } = await supabase
-    .from("services")
-    .select("id, name, duration_minutes, price, is_active")
-    .eq("salon_id", input.crmSalonId)
-    .in("id", uniqueIds)
-    .is("deleted_at", null)
-
-  const services = (serviceRows ?? []) as Array<{
+  type ServiceRow = {
     id: string
     name: string
     duration_minutes: number
     price: string | number
+    offer_price?: string | number | null
     is_active: boolean
-  }>
+  }
+
+  let serviceRows: ServiceRow[] | null = null
+  let serviceError: { message: string } | null = null
+
+  {
+    const primary = await supabase
+      .from("services")
+      .select("id, name, duration_minutes, price, offer_price, is_active")
+      .eq("salon_id", input.crmSalonId)
+      .in("id", uniqueIds)
+      .is("deleted_at", null)
+
+    if (primary.error?.message.toLowerCase().includes("offer_price")) {
+      const fallback = await supabase
+        .from("services")
+        .select("id, name, duration_minutes, price, is_active")
+        .eq("salon_id", input.crmSalonId)
+        .in("id", uniqueIds)
+        .is("deleted_at", null)
+
+      serviceRows = (fallback.data ?? []) as ServiceRow[]
+      serviceError = fallback.error
+    } else {
+      serviceRows = (primary.data ?? []) as ServiceRow[]
+      serviceError = primary.error
+    }
+  }
+
+  if (serviceError) {
+    console.error("[bookings] services fetch failed:", serviceError.message)
+    return {
+      success: false,
+      error: "Could not load selected services. Please try again.",
+      code: "invalid",
+    }
+  }
+
+  const services = (serviceRows ?? []).map((service) => {
+    const { price } = resolveServicePayablePrice(service.price, service.offer_price)
+    return {
+      id: service.id,
+      name: service.name,
+      duration_minutes: service.duration_minutes,
+      price,
+      is_active: service.is_active,
+    }
+  })
 
   if (services.length !== uniqueIds.length) {
     return {
@@ -128,7 +174,7 @@ export async function createCrmWebBooking(
     id: service.id,
     name: service.name,
     durationMin: service.duration_minutes,
-    price: Number.parseFloat(String(service.price)) || 0,
+    price: service.price,
     category: "",
     imageUrl: "",
     includes: [] as string[],
@@ -279,6 +325,7 @@ export async function createCrmWebBooking(
     customerName,
     customerPhone,
     input.customerEmail,
+    input.marketingOptIn ?? true,
   )
 
   if (!customerId) {
@@ -309,16 +356,40 @@ export async function createCrmWebBooking(
   }
 
   const bookedAt = new Date()
+  const confirmationMode = context.webBooking.confirmationMode
+  const autoConfirm = isAutoConfirmMode(confirmationMode)
   const createdDuringClosedHours = !isSalonOpenAt(
     context.businessHours,
     context.timezone,
     bookedAt,
   )
-  const expiresAt = computeBookingExpiresAt(
-    context.businessHours,
-    context.timezone,
-    bookedAt,
-  )
+
+  if (!autoConfirm) {
+    const leadMinutes = getAppointmentLeadMinutes(
+      input.appointmentDate,
+      startTime,
+      context.timezone,
+      bookedAt,
+    )
+    if (isManualNearSlotBlocked(leadMinutes)) {
+      return {
+        success: false,
+        error: "That time slot was just taken. Please choose another.",
+        code: "slot_taken",
+      }
+    }
+  }
+
+  const expiresAt = autoConfirm
+    ? null
+    : computeManualExpiresAt({
+        appointmentDate: input.appointmentDate,
+        startTime,
+        timezone: context.timezone,
+        now: bookedAt,
+      })
+
+  const appointmentStatus = autoConfirm ? "confirmed" : "pending"
 
   const { data: appointment, error: insertError } = await supabase
     .from("appointments")
@@ -330,14 +401,15 @@ export async function createCrmWebBooking(
       appointment_date: input.appointmentDate,
       start_time: startTime,
       end_time: endTime,
-      status: "pending",
+      status: appointmentStatus,
+      confirmed_at: autoConfirm ? bookedAt.toISOString() : null,
       notes: noteParts.join("\n"),
       internal_notes: internalNotes,
       booking_source: "glamzzo_web",
       duration_minutes: durationMinutes,
       expires_at: expiresAt,
       response_deadline: expiresAt,
-      slot_reserved: true,
+      slot_reserved: !autoConfirm,
       created_during_closed_hours: createdDuringClosedHours,
     })
     .select("id")
@@ -345,6 +417,19 @@ export async function createCrmWebBooking(
 
   if (insertError || !appointment) {
     console.error("[bookings] CRM insert failed:", insertError?.message)
+
+    const overlapViolation =
+      insertError?.code === "23P01" ||
+      insertError?.message?.toLowerCase().includes("appointments_staff_time_no_overlap")
+
+    if (overlapViolation) {
+      return {
+        success: false,
+        error: "That time slot was just taken. Please choose another.",
+        code: "slot_taken",
+      }
+    }
+
     return {
       success: false,
       error: "Could not create your booking. Please try again.",
@@ -360,7 +445,7 @@ export async function createCrmWebBooking(
       appointment_id: appointmentId,
       service_id: serviceId,
       sort_order: index,
-      price: Number.parseFloat(String(service?.price ?? 0)) || 0,
+      price: service?.price ?? 0,
       duration_minutes: service?.duration_minutes ?? 0,
     }
   })
@@ -386,6 +471,7 @@ export async function createCrmWebBooking(
       serviceNames,
       appointmentDate: input.appointmentDate,
       startTime,
+      variant: autoConfirm ? "confirmed" : "pending",
     })
     await notifyCustomerWebBookingPending({
       salonId: input.crmSalonId,
@@ -397,6 +483,11 @@ export async function createCrmWebBooking(
       appointmentDate: input.appointmentDate,
       startTime,
       salonName: context.salonName,
+      pendingConfirmation: !autoConfirm,
+      nearResponseMinutes: autoConfirm
+        ? undefined
+        : BOOKING_ENGINE_CONFIG.nearResponseMinutes,
+      expiresAt,
     })
   } catch (error) {
     console.error("[bookings] salon notify failed:", error)
@@ -407,6 +498,11 @@ export async function createCrmWebBooking(
     appointmentId,
     staffId,
     endTime,
+    bookingMode: confirmationMode,
+    appointmentStatus,
+    confirmationRequired: !autoConfirm,
+    confirmationDeadline: expiresAt,
+    remainingConfirmationTime: remainingConfirmationSeconds(expiresAt, bookedAt),
   }
 }
 
@@ -418,6 +514,7 @@ async function resolveCustomerId(
   fullName: string,
   phone: string,
   email?: string,
+  marketingOptIn = true,
 ) {
   const normalizedPhone = normalizeCustomerPhone(phone)
   const phoneDigits = normalizeCustomerPhoneDigits(phone)
@@ -431,6 +528,7 @@ async function resolveCustomerId(
     gender: profile?.gender ?? null,
     date_of_birth: profile?.dateOfBirth ?? null,
     address: profile?.address ?? null,
+    marketing_opt_in: marketingOptIn,
   }
 
   const { data: existing } = await supabase

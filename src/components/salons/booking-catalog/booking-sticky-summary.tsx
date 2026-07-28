@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ClockIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import {
   buildPackageServiceIds,
   formatInr,
@@ -234,7 +235,8 @@ export function BookingStickySummary({
                     <div className="min-w-0">
                       <p className="font-medium leading-snug">{service.name}</p>
                       <p className="mt-0.5 text-xs text-foreground/55">
-                        {service.durationMin} min · {formatInr(service.price)}
+                        {service.durationMin} min ·{" "}
+                        <ServicePriceText service={service} />
                       </p>
                     </div>
                     <button
@@ -264,7 +266,8 @@ export function BookingStickySummary({
                       <div className="min-w-0">
                         <p className="font-medium leading-snug">{service.name}</p>
                         <p className="mt-0.5 text-xs text-foreground/55">
-                          {service.durationMin} min · {formatInr(service.price)}
+                          {service.durationMin} min ·{" "}
+                          <ServicePriceText service={service} />
                         </p>
                       </div>
                       <button

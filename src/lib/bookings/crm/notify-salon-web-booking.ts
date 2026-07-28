@@ -13,14 +13,20 @@ function buildOwnerWhatsAppMessage(input: {
   serviceNames: string
   appointmentDate: string
   startTime: string
+  variant: "pending" | "confirmed"
 }) {
+  const actionLine =
+    input.variant === "confirmed"
+      ? "This booking is already confirmed. Open Glamzzo CRM to view details."
+      : "You have a new appointment. Please open Glamzzo CRM to accept or decline."
+
   return [
-    `💈 New Glammzo booking for ${input.salonName}`,
+    `💈 New Glamzzo booking for ${input.salonName}`,
     "",
     `${input.customerName} booked ${input.serviceNames}.`,
     `When: ${input.appointmentDate} at ${input.startTime}`,
     "",
-    "You have a new appointment. Please open Glammzo CRM to accept or decline.",
+    actionLine,
   ].join("\n")
 }
 
@@ -32,10 +38,12 @@ type NotifySalonInput = {
   serviceNames: string
   appointmentDate: string
   startTime: string
+  variant?: "pending" | "confirmed"
 }
 
 export async function notifySalonNewWebBooking(input: NotifySalonInput) {
   const supabase = createAdminClient()
+  const variant = input.variant ?? "pending"
 
   const { data: salon } = await supabase
     .from("salons")
@@ -48,15 +56,19 @@ export async function notifySalonNewWebBooking(input: NotifySalonInput) {
   const salonPhone = (salon as { phone?: string | null } | null)?.phone?.trim() || ""
 
   const timeLabel = formatSlotLabel(input.startTime)
+  const notificationMessage =
+    variant === "confirmed"
+      ? `${input.customerName} booked ${input.serviceNames} on ${input.appointmentDate} at ${timeLabel}. Booking is confirmed.`
+      : `${input.customerName} booked ${input.serviceNames} on ${input.appointmentDate} at ${timeLabel}. Accept or decline this appointment.`
 
   const { error: notificationError } = await supabase
     .from("notifications")
     .insert({
       salon_id: input.salonId,
       type: "system_notification",
-      priority: "high",
-      title: "New web booking",
-      message: `${input.customerName} booked ${input.serviceNames} on ${input.appointmentDate} at ${timeLabel}. Accept or decline this appointment.`,
+      priority: variant === "confirmed" ? "normal" : "high",
+      title: variant === "confirmed" ? "New confirmed booking" : "New web booking",
+      message: notificationMessage,
       entity_id: input.appointmentId,
       entity_type: WEB_BOOKING_ENTITY_TYPE,
       dedupe_key: `${WEB_BOOKING_DEDUPE_PREFIX}${input.appointmentId}`,
@@ -76,6 +88,7 @@ export async function notifySalonNewWebBooking(input: NotifySalonInput) {
     serviceNames: input.serviceNames,
     appointmentDate: input.appointmentDate,
     startTime: timeLabel,
+    variant,
   })
 
   for (const phone of ownerPhones) {

@@ -40,6 +40,7 @@ import { ServicePicker } from "@/components/booking/service-picker"
 import { StaffPicker } from "@/components/booking/staff-picker"
 import { TimeSlotPicker } from "@/components/booking/time-slot-picker"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -121,6 +122,7 @@ export function BookingForm({
   const [customerName, setCustomerName] = useState(defaultCustomerName)
   const [customerEmail, setCustomerEmail] = useState(defaultCustomerEmail)
   const [customerPhone, setCustomerPhone] = useState(defaultCustomerPhone)
+  const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [appliedOffer, setAppliedOffer] = useState<AppliedOfferDiscount | null>(null)
 
   useEffect(() => {
@@ -320,9 +322,6 @@ export function BookingForm({
     )
   }, [availabilityOptions, bookingContext, date, preferredStaffId, selectedIds, totalDuration])
 
-  const demoSlotTaken = (slot: string) =>
-    unavailableSlots.some((s) => s.date === date && s.time === slot)
-
   const timeSlotOptions = useMemo(() => {
     if (!date) return []
 
@@ -334,6 +333,9 @@ export function BookingForm({
         hint: slotStatusHint(entry.status),
       }))
     }
+
+    const demoSlotTaken = (slot: string) =>
+      unavailableSlots.some((s) => s.date === date && s.time === slot)
 
     return DEMO_TIME_SLOTS.map((slot) => ({
       value: slot,
@@ -562,6 +564,24 @@ export function BookingForm({
               inputMode="numeric"
               className="h-10"
             />
+          </div>
+          <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 sm:col-span-2">
+            <Checkbox
+              id="marketingOptIn"
+              checked={marketingOptIn}
+              onCheckedChange={(checked) => setMarketingOptIn(checked === true)}
+              className="mt-0.5"
+            />
+            <div className="space-y-1">
+              <Label htmlFor="marketingOptIn" className="text-sm font-medium leading-snug">
+                Send me offers and updates from {salon.name} on WhatsApp
+              </Label>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Promotional messages only. Booking confirmations and reminders are always sent
+                when you book.
+              </p>
+            </div>
+            <input type="hidden" name="marketingOptIn" value={marketingOptIn ? "true" : "false"} />
           </div>
         </div>
       </BookingFormCard>

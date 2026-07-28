@@ -1,6 +1,7 @@
 import { media } from "@/data/media"
 import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
+import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
 import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
 import type {
   CrmMarketplaceProfileRow,
@@ -176,12 +177,17 @@ function mapService(row: CrmServiceRow, completedBookingCount = 0): SalonService
   const addOnIds = [...(row.service_add_ons ?? [])]
     .sort((left, right) => left.sort_order - right.sort_order)
     .map((entry) => entry.add_on_service_id)
+  const { price, compareAtPrice } = resolveServicePayablePrice(
+    row.price,
+    row.offer_price,
+  )
 
   return {
     id: row.id,
     name: row.name,
     durationMin: row.duration_minutes,
-    price: Number.parseFloat(row.price) || 0,
+    price,
+    compareAtPrice,
     category: category.name,
     categorySortOrder: category.sortOrder,
     imageUrl,

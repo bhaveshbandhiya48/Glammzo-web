@@ -7,6 +7,7 @@ import { CheckIcon, ChevronDownIcon, Trash2Icon } from "lucide-react"
 
 import type { SalonService } from "@/types/salon"
 import { Button } from "@/components/ui/button"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import { cn } from "@/lib/utils"
 
 const serviceCardPadX = "px-4 sm:px-5"
@@ -74,7 +75,6 @@ export function ServicePicker({
               onToggle={() => onToggle(svc.id)}
               onToggleDetails={() => toggleExpanded(svc.id)}
               variant="list"
-              mode={mode}
             />
           </li>
         ))}
@@ -93,7 +93,6 @@ export function ServicePicker({
           onToggle={() => onToggle(svc.id)}
           onToggleDetails={() => {}}
           variant="cards"
-          mode={mode}
         />
       ))}
     </div>
@@ -118,8 +117,8 @@ function CompactCartServiceRow({
           {service.category} · {service.durationMin} min
         </p>
       </div>
-      <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-        ₹{service.price}
+      <p className="shrink-0 text-sm font-semibold text-foreground">
+        <ServicePriceText service={service} />
       </p>
       <Button
         type="button"
@@ -182,7 +181,6 @@ function ServicePickerItem({
   onToggle,
   onToggleDetails,
   variant,
-  mode = "select",
 }: {
   service: SalonService
   selected: boolean
@@ -190,7 +188,6 @@ function ServicePickerItem({
   onToggle: () => void
   onToggleDetails: () => void
   variant: "list" | "cards"
-  mode?: "select" | "cart"
 }) {
   const isList = variant === "list"
   const hasIncludes = service.includes.length > 0
@@ -226,8 +223,8 @@ function ServicePickerItem({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="font-heading text-base font-semibold tabular-nums sm:text-lg">
-            ₹{service.price}
+          <span className="font-heading text-base font-semibold sm:text-lg">
+            <ServicePriceText service={service} />
           </span>
           {!selected ? (
             <Button

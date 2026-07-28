@@ -5,7 +5,8 @@ import { ArrowRightIcon, CheckIcon, ClockIcon, PlusIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { formatInr, resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
+import { resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
 import { getServiceCardSummary } from "@/lib/salons/service-detail-utils"
 import type { SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
@@ -85,8 +86,8 @@ export function ServiceCard({
       </div>
 
       <div className="flex shrink-0 flex-col items-end justify-between gap-2 self-stretch py-0.5">
-        <p className="font-heading text-lg font-semibold leading-none tabular-nums text-foreground">
-          {formatInr(service.price)}
+        <p className="font-heading text-lg font-semibold leading-none text-foreground">
+          <ServicePriceText service={service} />
         </p>
 
         <div className="flex items-center gap-1.5">

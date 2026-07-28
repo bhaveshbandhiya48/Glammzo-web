@@ -1,8 +1,10 @@
 import type { BookedAppointment, SalonBookingContext, Weekday } from "@/lib/bookings/crm/types"
 import {
   BOOKING_ENGINE_CONFIG,
+  getAppointmentLeadMinutes,
   getTomorrowAcceptanceMinStartTime,
   isDateFullyClosedByClosure,
+  isManualNearSlotBlocked,
   isSlotBlockedByPartialClosure,
 } from "@/lib/bookings/crm/booking-confirmation-engine"
 import {
@@ -127,7 +129,7 @@ export function hasAssignableStaffForServices(
   context: SalonBookingContext,
   serviceIds: string[],
 ) {
-  return getEligibleStaffIds(context, serviceIds).length > 0
+  return getPartiallyEligibleStaffIds(context, serviceIds).length > 0
 }
 
 export function slotStatusHint(status: TimeSlotStatus): string | undefined {
@@ -230,7 +232,7 @@ export function pickStaffForSlot(
   startTime: string,
   endTime: string,
   preferredStaffId?: string | null,
-  _options?: BookingAvailabilityOptions,
+  options?: BookingAvailabilityOptions,
 ): string | null {
   const isFree = (staffId: string) =>
     isStaffAvailableForSlot(context, context.booked, {
@@ -240,7 +242,8 @@ export function pickStaffForSlot(
       endTime,
     })
 
-  if (preferredStaffId) {
+  // Package bookings auto-assign; ignore a preferred staff pin.
+  if (preferredStaffId && !options?.packageBooking) {
     if (!isStaffEligibleForServices(context, preferredStaffId, serviceIds)) {
       return null
     }
@@ -266,9 +269,9 @@ function resolveStaffPoolForSlots(
   context: SalonBookingContext,
   serviceIds: string[],
   preferredStaffId?: string | null,
-  _options?: BookingAvailabilityOptions,
+  options?: BookingAvailabilityOptions,
 ) {
-  if (preferredStaffId) {
+  if (preferredStaffId && !options?.packageBooking) {
     return context.staffIds.includes(preferredStaffId) ? [preferredStaffId] : []
   }
 
@@ -386,6 +389,12 @@ export function getTimeSlotOptionsForDate(
     context.timezone,
     appointmentDate,
     now,
+    {
+      bufferMinutes:
+        context.webBooking.confirmationMode === "MANUAL_CONFIRM"
+          ? BOOKING_ENGINE_CONFIG.minManualLeadMinutes
+          : 0,
+    },
   )
 
   if (tomorrowMinStart) {
@@ -440,10 +449,30 @@ export function getTimeSlotOptionsForDate(
       return { slot, status: "unavailable" as const }
     }
 
-    return {
-      slot,
-      status: resolveSlotStatus(context, staffPool, appointmentDate, startTime, endTime),
+    let status = resolveSlotStatus(
+      context,
+      staffPool,
+      appointmentDate,
+      startTime,
+      endTime,
+    )
+
+    if (
+      status === "available" &&
+      context.webBooking.confirmationMode === "MANUAL_CONFIRM" &&
+      isManualNearSlotBlocked(
+        getAppointmentLeadMinutes(
+          appointmentDate,
+          startTime,
+          context.timezone,
+          now,
+        ),
+      )
+    ) {
+      status = "booked"
     }
+
+    return { slot, status }
   })
 
   return { slots, closed: false }

@@ -52,6 +52,25 @@ export function formatInr(amount: number) {
   }).format(amount)
 }
 
+/** Payable price + optional compare-at when CRM offer_price is set and lower. */
+export function resolveServicePayablePrice(
+  price: string | number,
+  offerPrice?: string | number | null,
+) {
+  const original = Number.parseFloat(String(price)) || 0
+  const offerRaw =
+    offerPrice === null || offerPrice === undefined || offerPrice === ""
+      ? NaN
+      : Number.parseFloat(String(offerPrice))
+  const hasOffer =
+    Number.isFinite(offerRaw) && offerRaw > 0 && offerRaw < original
+
+  return {
+    price: hasOffer ? offerRaw : original,
+    compareAtPrice: hasOffer ? original : undefined,
+  }
+}
+
 export function buildPackageServiceIds(pkg: SalonPackage) {
   return pkg.items.flatMap((item) =>
     Array.from({ length: item.quantity }, () => item.serviceId),

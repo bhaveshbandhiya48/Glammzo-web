@@ -21,7 +21,9 @@ export async function loadSalonBookingContext(
 
     const { data: salonData, error: salonError } = await supabase
       .from("salons")
-      .select("id, name, timezone, settings, listing_status, is_active, status")
+      .select(
+        "id, name, timezone, settings, listing_status, is_active, status, booking_confirmation_mode",
+      )
       .eq("id", crmSalonId)
       .eq("is_active", true)
       .eq("status", "active")
@@ -230,7 +232,10 @@ export async function loadSalonBookingContext(
       serviceCategoryMap,
       categoryAssignmentsEnabled: !categoryTableMissing,
       staffSchedules,
-      webBooking: parseWebBookingSettings((salonData as { settings?: unknown }).settings),
+      webBooking: parseWebBookingSettings(
+        (salonData as { booking_confirmation_mode?: string | null })
+          .booking_confirmation_mode,
+      ),
       booked,
     }
 }

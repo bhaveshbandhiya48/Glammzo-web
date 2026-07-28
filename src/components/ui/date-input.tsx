@@ -116,9 +116,13 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             type="button"
             id={id}
             disabled={disabled}
-            aria-required={required}
             aria-haspopup="dialog"
             aria-expanded={open}
+            aria-label={
+              displayValue
+                ? `${displayValue}${required ? ", required" : ""}`
+                : `${placeholder}${required ? ", required" : ""}`
+            }
             className={cn(
               "flex h-11 w-full min-w-0 cursor-pointer items-center justify-between gap-2 rounded-xl border border-input bg-background/60 px-4 py-2 text-left text-sm text-foreground shadow-sm shadow-black/[0.02] transition-colors outline-none hover:border-foreground/25 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
               !displayValue && "text-muted-foreground",

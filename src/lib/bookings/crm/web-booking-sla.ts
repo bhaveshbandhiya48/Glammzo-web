@@ -1,16 +1,36 @@
-export const DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES = 60
+import {
+  BOOKING_ENGINE_CONFIG,
+  computeManualExpiresAt,
+  resolveConfirmationMode,
+  type BookingConfirmationMode,
+  remainingConfirmationSeconds,
+} from "@/lib/bookings/crm/booking-confirmation-engine"
+
+export const DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES =
+  BOOKING_ENGINE_CONFIG.nearResponseMinutes
 
 export type WebBookingSettings = {
+  confirmationMode: BookingConfirmationMode
+  confirmationRequired: boolean
   responseSlaMinutes: number
 }
 
 export {
   BOOKING_ENGINE_CONFIG,
-  computeBookingExpiresAt as computeResponseDeadline,
-} from "@/lib/bookings/crm/booking-confirmation-engine"
+  computeManualExpiresAt,
+  remainingConfirmationSeconds,
+  resolveConfirmationMode,
+}
 
-export function parseWebBookingSettings(settings: unknown): WebBookingSettings {
-  return { responseSlaMinutes: DEFAULT_WEB_BOOKING_RESPONSE_SLA_MINUTES }
+export function parseWebBookingSettings(
+  mode: string | null | undefined,
+): WebBookingSettings {
+  const confirmationMode = resolveConfirmationMode(mode)
+  return {
+    confirmationMode,
+    confirmationRequired: confirmationMode === "MANUAL_CONFIRM",
+    responseSlaMinutes: BOOKING_ENGINE_CONFIG.nearResponseMinutes,
+  }
 }
 
 export function formatSlaLabel(minutes: number) {

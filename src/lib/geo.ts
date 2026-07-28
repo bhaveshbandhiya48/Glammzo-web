@@ -11,13 +11,6 @@ const AREA_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "MG Road": { lat: 12.975, lng: 77.6063 },
 }
 
-const SALON_COORDINATES: Record<string, { lat: number; lng: number }> = {
-  s1: AREA_COORDINATES.Indiranagar,
-  s2: AREA_COORDINATES.Koramangala,
-  s3: AREA_COORDINATES["HSR Layout"],
-  s4: AREA_COORDINATES["MG Road"],
-}
-
 const LOCATION_ID_BY_AREA: Record<string, GlamzzoLocationId> = {
   Indiranagar: "blr_indiranagar",
   Koramangala: "blr_koramangala",

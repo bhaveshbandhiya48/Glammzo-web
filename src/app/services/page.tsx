@@ -54,10 +54,17 @@ export default async function ServicesPage() {
             </ul>
           ) : (
             <div className="rounded-3xl border border-border/70 bg-card px-6 py-12 text-center">
-              <p className="font-heading text-lg font-semibold">Categories are coming soon</p>
+              <p className="font-heading text-lg font-semibold">Browse salons for services</p>
               <p className="mt-2 text-sm text-foreground/60">
-                Published salons have not added services under the default categories yet.
+                Category filters will appear here as partners publish more treatments. In the
+                meantime, explore salons to compare services and book.
               </p>
+              <Button asChild className="mt-6">
+                <Link href="/explore">
+                  Explore salons
+                  <ArrowRightIcon className="size-4" />
+                </Link>
+              </Button>
             </div>
           )}
         </PageSection>

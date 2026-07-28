@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/sheet"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { buildBookHref } from "@/lib/bookings/utils"
-import { formatInr, resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
+import { resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
+import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import {
   buildServiceDetailContent,
   type ServiceDetailContent,
@@ -100,8 +101,8 @@ function ServiceDetailSummaryPanel({
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-foreground/50">Price</p>
-              <p className="font-heading text-2xl font-semibold tabular-nums text-foreground">
-                {formatInr(service.price)}
+              <p className="font-heading text-2xl font-semibold text-foreground">
+                <ServicePriceText service={service} />
               </p>
             </div>
             <div className="text-right">
@@ -136,7 +137,8 @@ function ServiceDetailSummaryPanel({
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{addOn.name}</p>
                       <p className="mt-0.5 text-xs text-foreground/55">
-                        {addOn.durationMin} min · {formatInr(addOn.price)}
+                        {addOn.durationMin} min ·{" "}
+                        <ServicePriceText service={addOn} />
                       </p>
                     </div>
                     <Button

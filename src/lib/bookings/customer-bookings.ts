@@ -2,6 +2,7 @@ import "server-only"
 
 import { fetchCrmCustomerBookings } from "@/lib/bookings/crm/fetch-customer-bookings"
 import { processConsumerBookingReminders } from "@/lib/bookings/crm/process-booking-reminders"
+import { processConsumerBookingOutcomeNotices } from "@/lib/bookings/crm/process-booking-outcome-notices"
 import { getBookings } from "@/lib/bookings/store"
 import { getSession } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -39,6 +40,9 @@ export async function getCustomerBookings(): Promise<Booking[]> {
   const crmBookings = await fetchCrmCustomerBookings(session.phone)
   void processConsumerBookingReminders().catch((error) => {
     console.error("[reminders] lazy process failed:", error)
+  })
+  void processConsumerBookingOutcomeNotices().catch((error) => {
+    console.error("[outcome-notices] lazy process failed:", error)
   })
   return mergeBookings(crmBookings, cookieBookings)
 }
