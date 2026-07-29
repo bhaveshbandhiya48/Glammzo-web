@@ -112,7 +112,7 @@ export function mapCrmAppointmentToBookingStatus(input: {
 export function getBookingStatusLabel(status: BookingStatus): string {
   switch (status) {
     case "pending":
-      return "Pending confirmation"
+      return "Pending Confirmation"
     case "confirmed":
       return "Confirmed"
     case "declined":

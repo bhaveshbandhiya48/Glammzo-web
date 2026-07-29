@@ -371,11 +371,7 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
               >
                 <BookingStatusBadge
                   status={booking.status}
-                  className={cn(
-                    "h-8 gap-1.5 px-3.5 text-[0.72rem] font-semibold tracking-[0.03em] shadow-sm shadow-black/[0.03]",
-                    isPending &&
-                      "border border-amber-200/90 bg-amber-50 text-amber-900 before:mr-0.5 before:inline-block before:size-1.5 before:rounded-full before:bg-amber-400 before:content-['']",
-                  )}
+                  className="h-9 px-4 text-[0.8125rem] shadow-md"
                 />
               </motion.div>
 

@@ -83,8 +83,8 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
     >
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border/55 px-4 py-3.5 sm:px-5">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h3 className="font-heading text-base font-semibold leading-snug tracking-tight text-foreground sm:text-lg">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2">
+            <h3 className="min-w-0 font-heading text-base font-semibold leading-snug tracking-tight text-foreground sm:text-lg">
               {booking.salonName}
             </h3>
             <BookingStatusBadge status={booking.status} />
