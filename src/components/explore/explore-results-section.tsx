@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react"
 
-import { ExploreAvailabilityNotice } from "@/components/explore/explore-availability-notice"
+import { ExploreCityComingSoon } from "@/components/explore/explore-city-coming-soon"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreGoogleMap } from "@/components/explore/explore-google-map"
 import { ExploreSalonGrid } from "@/components/explore/explore-salon-grid"
@@ -10,7 +10,7 @@ import { ExploreViewToggle, type ExploreViewMode } from "@/components/explore/ex
 import { SectionHeader } from "@/components/shared/section-header"
 import { useUserLocation } from "@/hooks/use-user-location"
 import type { ExploreSearchState, ExploreSortId } from "@/lib/explore-filters"
-import { filterSalonsByCityPreferExact, isSalonInCity } from "@/lib/salons/city-filter"
+import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 type ExploreResultsSectionProps = {
@@ -46,26 +46,21 @@ export function ExploreResultsSection({
 }: ExploreResultsSectionProps) {
   const [view, setView] = useState<ExploreViewMode>("list")
   const { browseCity } = useUserLocation()
-  const useStoredCity = !searchState.area && !searchState.city
-  const { salons: visibleSalons, usedFallback } = useMemo(
-    () =>
-      useStoredCity
-        ? filterSalonsByCityPreferExact(salons, browseCity)
-        : { salons, usedFallback: false },
-    [browseCity, salons, useStoredCity],
+  const locationLabel = searchState.city || browseCity
+
+  const listSalons = useMemo(
+    () => (locationLabel ? filterSalonsByCity(salons, locationLabel) : salons),
+    [locationLabel, salons],
   )
-  const cityFallback =
-    usedFallback ||
-    Boolean(
-      searchState.city &&
-        visibleSalons.length > 0 &&
-        !visibleSalons.some((salon) => isSalonInCity(salon, searchState.city)),
-    )
-  const visibleTitle = useStoredCity
-    ? cityFallback
-      ? `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} available`
-      : `${visibleSalons.length} salon${visibleSalons.length === 1 ? "" : "s"} in ${browseCity}`
-    : title
+
+  const visibleTitle =
+    listSalons.length === 0
+      ? locationLabel
+        ? `Salons in ${locationLabel}`
+        : title
+      : locationLabel
+        ? `${listSalons.length} salon${listSalons.length === 1 ? "" : "s"} in ${locationLabel}`
+        : `${listSalons.length} salon${listSalons.length === 1 ? "" : "s"} available`
 
   return (
     <>
@@ -83,27 +78,15 @@ export function ExploreResultsSection({
 
       <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
 
-      <ExploreAvailabilityNotice
-        salons={visibleSalons}
-        browseCity={searchState.city || browseCity}
-        cityFallback={cityFallback}
-      />
+      {featured ? <div className="mb-8 mt-6">{featured}</div> : null}
 
-      {!useStoredCity && featured ? <div className="mb-8 mt-6">{featured}</div> : null}
-
-      <div className={!useStoredCity && featured ? undefined : "mt-6"}>
-        {visibleSalons.length === 0 ? (
-          <div className="rounded-3xl border border-border/80 bg-card px-6 py-12 text-center">
-            <p className="font-heading text-lg font-semibold">
-              No salons available in {browseCity} yet
-            </p>
-            <p className="mt-2 text-sm text-foreground/60">
-              Change your location from the header to browse another city.
-            </p>
-          </div>
+      <div className={featured ? undefined : "mt-6"}>
+        {listSalons.length === 0 ? (
+          <ExploreCityComingSoon city={locationLabel || "your city"} />
         ) : view === "map" ? (
           <ExploreGoogleMap
-            salons={visibleSalons}
+            salons={salons}
+            locationCity={locationLabel}
             nearFromUrl={nearFromUrl}
             urlLatitude={urlLatitude}
             urlLongitude={urlLongitude}
@@ -112,7 +95,7 @@ export function ExploreResultsSection({
           />
         ) : (
           <ExploreSalonGrid
-            salons={visibleSalons}
+            salons={listSalons}
             sort={sort}
             nearFromUrl={nearFromUrl}
             urlLatitude={urlLatitude}
@@ -120,6 +103,7 @@ export function ExploreResultsSection({
             radiusKm={radiusKm}
             favoriteSalonIds={favoriteSalonIds}
             authenticated={authenticated}
+            preferNearest
           />
         )}
       </div>

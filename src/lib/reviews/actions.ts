@@ -10,7 +10,7 @@ import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-t
 export async function createSalonReviewAction(formData: FormData) {
   const session = await getSession()
   if (!session?.phone) {
-    redirect(`/login?next=/dashboard/bookings`)
+    redirect(`/login?next=/dashboard/profile%23bookings`)
   }
 
   const appointmentId = String(formData.get("appointmentId") ?? "").trim()
@@ -34,7 +34,7 @@ export async function createSalonReviewAction(formData: FormData) {
     comment.length < 3 ||
     comment.length > 2000
   ) {
-    redirect(`/dashboard/bookings?error=review`)
+    redirect(`/dashboard/profile?error=review#bookings`)
   }
 
   const supabase = createAdminClient()
@@ -47,11 +47,11 @@ export async function createSalonReviewAction(formData: FormData) {
     .maybeSingle()
 
   if (!appointment) {
-    redirect(`/dashboard/bookings?error=review`)
+    redirect(`/dashboard/profile?error=review#bookings`)
   }
 
   if (appointment.status !== "completed") {
-    redirect(`/dashboard/bookings?error=review`)
+    redirect(`/dashboard/profile?error=review#bookings`)
   }
 
   const phoneDigits = normalizeCustomerPhoneDigits(session.phone)
@@ -64,7 +64,7 @@ export async function createSalonReviewAction(formData: FormData) {
     .maybeSingle()
 
   if (!customer || customer.id !== appointment.customer_id) {
-    redirect(`/dashboard/bookings?error=review`)
+    redirect(`/dashboard/profile?error=review#bookings`)
   }
 
   // Prevent duplicates: appointment_id is unique for non-null values.
@@ -75,7 +75,7 @@ export async function createSalonReviewAction(formData: FormData) {
     .maybeSingle()
 
   if (existing) {
-    redirect(`/dashboard/bookings`)
+    redirect(`/dashboard/profile#bookings`)
   }
 
   const { error } = await supabase.from("salon_reviews").insert({
@@ -91,9 +91,9 @@ export async function createSalonReviewAction(formData: FormData) {
   })
 
   if (error) {
-    redirect(`/dashboard/bookings?error=review`)
+    redirect(`/dashboard/profile?error=review#bookings`)
   }
 
-  redirect(`/dashboard/bookings`)
+  redirect(`/dashboard/profile#bookings`)
 }
 

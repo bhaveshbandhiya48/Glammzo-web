@@ -21,7 +21,7 @@ export default async function BookingConfirmationPage({
   if (!session) redirect("/login")
 
   const { id } = await searchParams
-  if (!id) redirect("/dashboard/bookings")
+  if (!id) redirect("/dashboard/profile#bookings")
 
   const booking = await getCustomerBookingById(id)
   if (!booking) notFound()

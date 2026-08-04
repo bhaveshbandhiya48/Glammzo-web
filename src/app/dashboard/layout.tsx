@@ -9,7 +9,7 @@ export default async function AccountLayout({
   children: React.ReactNode
 }) {
   const session = await getSession()
-  if (!session) redirect("/login?next=/dashboard/bookings")
+  if (!session) redirect("/login?next=/dashboard/profile#bookings")
 
   return <SitePageShell>{children}</SitePageShell>
 }

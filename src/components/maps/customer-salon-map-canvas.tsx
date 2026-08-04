@@ -23,6 +23,10 @@ type CustomerSalonMapCanvasProps = {
   onSelectSalon: (salonId: string) => void
   onClearSelection?: () => void
   onUserLocationFound?: (coords: { latitude: number; longitude: number }) => void
+  /** Fires when the user changes zoom (in or out). */
+  onZoomChanged?: (zoom: number) => void
+  /** When false, marker updates do not re-fit the map viewport. */
+  autoFitBounds?: boolean
   children?: ReactNode
   showMapPopover?: boolean
   mapExpanded?: boolean
@@ -37,6 +41,8 @@ export function CustomerSalonMapCanvas({
   onSelectSalon,
   onClearSelection,
   onUserLocationFound,
+  onZoomChanged,
+  autoFitBounds = true,
   children,
   showMapPopover = false,
   mapExpanded = false,
@@ -49,10 +55,15 @@ export function CustomerSalonMapCanvas({
   const markersRef = useRef<google.maps.Marker[]>([])
   const userMarkerRef = useRef<google.maps.Marker | null>(null)
   const lastBoundsKeyRef = useRef("")
+  const zoomListenerRef = useRef<google.maps.MapsEventListener | null>(null)
+  const suppressZoomCallbackRef = useRef(false)
+  const onZoomChangedRef = useRef(onZoomChanged)
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
+
+  onZoomChangedRef.current = onZoomChanged
 
   const selectedSalon = useMemo(
     () => salons.find((salon) => salon.id === selectedSalonId) ?? null,
@@ -103,7 +114,11 @@ export function CustomerSalonMapCanvas({
       const { Marker, SymbolPath } = mapsRuntimeRef.current
 
       mapRef.current.panTo(latLng)
+      suppressZoomCallbackRef.current = true
       mapRef.current.setZoom(15)
+      window.setTimeout(() => {
+        suppressZoomCallbackRef.current = false
+      }, 400)
 
       if (!userMarkerRef.current) {
         userMarkerRef.current = new Marker({
@@ -160,6 +175,16 @@ export function CustomerSalonMapCanvas({
         mapRef.current.addListener("click", () => {
           onClearSelection?.()
         })
+
+        zoomListenerRef.current?.remove()
+        zoomListenerRef.current = mapRef.current.addListener("zoom_changed", () => {
+          if (suppressZoomCallbackRef.current) return
+          const zoom = mapRef.current?.getZoom()
+          if (typeof zoom === "number") {
+            onZoomChangedRef.current?.(zoom)
+          }
+        })
+
         setMapInstance(mapRef.current)
       } else {
         mapRef.current.setCenter(center)
@@ -198,7 +223,7 @@ export function CustomerSalonMapCanvas({
 
       markersRef.current = markers
 
-      if (salons.length > 0) {
+      if (autoFitBounds && salons.length > 0) {
         const boundsKey = `${center.lat},${center.lng}:${salons.map((s) => s.id).join(",")}`
         if (boundsKey !== lastBoundsKeyRef.current) {
           const bounds = new LatLngBounds()
@@ -210,8 +235,12 @@ export function CustomerSalonMapCanvas({
             }
             bounds.extend(position)
           })
+          suppressZoomCallbackRef.current = true
           mapRef.current.fitBounds(bounds, 80)
           lastBoundsKeyRef.current = boundsKey
+          window.setTimeout(() => {
+            suppressZoomCallbackRef.current = false
+          }, 400)
         }
       }
     }
@@ -223,7 +252,15 @@ export function CustomerSalonMapCanvas({
     return () => {
       cancelled = true
     }
-  }, [center, markerPositions, onClearSelection, onSelectSalon, salons, selectedSalonId])
+  }, [
+    autoFitBounds,
+    center,
+    markerPositions,
+    onClearSelection,
+    onSelectSalon,
+    salons,
+    selectedSalonId,
+  ])
 
   useEffect(() => {
     if (!mapInstance) return

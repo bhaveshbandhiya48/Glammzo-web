@@ -13,10 +13,14 @@ type BookingSummaryProps = {
   services: SalonService[]
   selectedPackage?: SalonPackage | null
   appliedOffer?: AppliedOfferDiscount | null
+  cashbackClaim?: { code: string; cashbackRupees: number } | null
   emptyLabel?: string
   compact?: boolean
   cancellationPolicy?: SalonCancellationPolicy | null
   totalDurationMin?: number
+  walletAppliedRupees?: number
+  freeServiceAppliedRupees?: number
+  payAtSalonRupees?: number
 }
 
 function formatServiceDuration(minutes: number): string {
@@ -62,10 +66,14 @@ export function BookingSummary({
   services,
   selectedPackage = null,
   appliedOffer = null,
+  cashbackClaim = null,
   emptyLabel = "Select at least one service to see your estimate.",
   compact = false,
   cancellationPolicy,
   totalDurationMin,
+  walletAppliedRupees = 0,
+  freeServiceAppliedRupees = 0,
+  payAtSalonRupees,
 }: BookingSummaryProps) {
   if (services.length === 0) {
     return <p className="text-sm text-muted-foreground">{emptyLabel}</p>
@@ -86,21 +94,27 @@ export function BookingSummary({
     ? formatPackageDuration(selectedPackage!, services) || formatDuration(duration)
     : formatDuration(duration)
   const hasDiscount = Boolean(appliedOffer && appliedOffer.discountAmount > 0)
+  const payAtSalon = payAtSalonRupees ?? Math.max(0, total - walletAppliedRupees - freeServiceAppliedRupees)
 
   if (compact) {
     return (
       <div className="space-y-1">
         <p className="font-heading text-3xl font-semibold tabular-nums sm:text-4xl">
-          {formatInr(total)}
+          {formatInr(payAtSalon)}
         </p>
+        <p className="text-sm text-muted-foreground">Pay at salon</p>
         {appliedOffer ? (
           <p className="text-sm text-emerald-700">
             You save {formatInr(appliedOffer.discountAmount)} with {appliedOffer.code}
           </p>
+        ) : cashbackClaim ? (
+          <p className="text-sm text-emerald-700">
+            {cashbackClaim.code}: {formatInr(cashbackClaim.cashbackRupees)} cashback after visit
+          </p>
         ) : null}
         <p className="text-sm text-muted-foreground">
           {packageMode ? "1 package" : `${services.length} service${services.length === 1 ? "" : "s"}`}{" "}
-          · ~{durationLabel}
+          · ~{formatDuration(duration)}
         </p>
       </div>
     )
@@ -109,19 +123,35 @@ export function BookingSummary({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm font-semibold text-foreground">Total to pay</p>
+        <p className="text-sm font-semibold text-foreground">Pay at salon</p>
         <AnimatePresence mode="wait">
           <motion.p
-            key={total}
+            key={payAtSalon}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="font-heading text-3xl font-semibold tracking-tight text-foreground tabular-nums sm:text-4xl"
           >
-            {formatInr(total)}
+            {formatInr(payAtSalon)}
           </motion.p>
         </AnimatePresence>
+
+        {(walletAppliedRupees > 0 || freeServiceAppliedRupees > 0) && (
+          <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+            <p>
+              Services total <span className="tabular-nums">{formatInr(total)}</span>
+            </p>
+            {freeServiceAppliedRupees > 0 ? (
+              <p className="text-emerald-700">
+                Loyalty credit −{formatInr(freeServiceAppliedRupees)}
+              </p>
+            ) : null}
+            {walletAppliedRupees > 0 ? (
+              <p className="text-emerald-700">Wallet −{formatInr(walletAppliedRupees)}</p>
+            ) : null}
+          </div>
+        )}
 
         <AnimatePresence>
           {hasDiscount ? (
@@ -139,6 +169,23 @@ export function BookingSummary({
               <p className="text-xs text-muted-foreground">
                 Original price{" "}
                 <span className="line-through tabular-nums">{formatInr(subtotal)}</span>
+              </p>
+            </motion.div>
+          ) : cashbackClaim ? (
+            <motion.div
+              key="cashback-note"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 rounded-lg border border-emerald-200/70 bg-emerald-50/80 px-3 py-2"
+            >
+              <p className="text-sm font-medium text-emerald-800">
+                {cashbackClaim.code}: {formatInr(cashbackClaim.cashbackRupees)} cashback after visit
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-800/75">
+                Pay the full amount at the salon today. Cashback is added to your wallet after this
+                visit is completed.
               </p>
             </motion.div>
           ) : null}
@@ -186,6 +233,23 @@ export function BookingSummary({
               </div>
               <p className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">
                 -{formatInr(appliedOffer!.discountAmount)}
+              </p>
+            </motion.div>
+          ) : cashbackClaim ? (
+            <motion.div
+              key={`cashback-line-${cashbackClaim.code}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-start justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Wallet cashback</p>
+                <p className="text-sm font-medium text-emerald-700">{cashbackClaim.code}</p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">
+                +{formatInr(cashbackClaim.cashbackRupees)} later
               </p>
             </motion.div>
           ) : null}

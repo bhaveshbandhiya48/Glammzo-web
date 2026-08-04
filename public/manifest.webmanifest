@@ -4,8 +4,8 @@
   "description": "Discover trusted salons and book appointments in minutes.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#c2410c",
+  "theme_color": "#f95c48",
+  "background_color": "#f6f4f1",
   "orientation": "portrait-primary",
   "icons": [
     {

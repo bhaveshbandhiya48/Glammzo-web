@@ -25,14 +25,21 @@ function normalizeSlug(value: string) {
 }
 
 function categoryImage(slug: string) {
+  // Most specific matches first so categories don't fall back to hair by mistake.
+  if (/(kid)/.test(slug)) return media.categories.kids
+  if (/(wax)/.test(slug)) return media.categories.waxing
+  if (/(thread)/.test(slug)) return media.categories.threading
+  if (/(cleanup|clean-up)/.test(slug)) return media.categories.cleanup
+  if (/(extension)/.test(slug)) return media.categories.extensions
+  if (/(bridal)/.test(slug)) return media.categories.bridal
+  if (/(facial|skin|cleanup)/.test(slug)) return media.categories.facial
+  if (/(yoga|meditation|wellness)/.test(slug)) return media.categories.yoga
+  if (/(fitness|nutrition|physio|healing)/.test(slug)) return media.categories.fitness
   if (/(nail|manicure|pedicure|gel)/.test(slug)) return media.categories.nails
-  if (/(makeup|bridal|brow|lash)/.test(slug)) return media.categories.makeup
+  if (/(makeup|brow|lash)/.test(slug)) return media.categories.makeup
   if (/(groom|beard|barber|haircut)/.test(slug)) return media.categories.grooming
-  if (
-    /(spa|massage|facial|skin|body|wellness|yoga|meditation|therapy|steam)/.test(slug)
-  ) {
-    return media.categories.spa
-  }
+  if (/(spa|massage|body|steam|therapy)/.test(slug)) return media.categories.spa
+  if (/(hair|styling)/.test(slug)) return media.categories.hair
   return media.categories.hair
 }
 
@@ -117,6 +124,7 @@ async function loadDefaultTemplates(): Promise<DefaultCategoryTemplateRow[]> {
 /**
  * Returns only global default-template categories that are currently offered
  * by at least one published salon. Custom salon categories never create cards.
+ * Packages are excluded — they are a separate catalog product, not a category.
  */
 export const getBrowseDefaultCategories = cache(async (): Promise<Category[]> => {
   const [templates, salons] = await Promise.all([loadDefaultTemplates(), getSalons()])
@@ -125,6 +133,7 @@ export const getBrowseDefaultCategories = cache(async (): Promise<Category[]> =>
   for (const salon of salons) {
     for (const service of salon.services) {
       const slug = normalizeSlug(service.category)
+      if (slug === "packages") continue
       const list = servicesByCategory.get(slug) ?? []
       list.push(service)
       servicesByCategory.set(slug, list)
@@ -132,6 +141,7 @@ export const getBrowseDefaultCategories = cache(async (): Promise<Category[]> =>
   }
 
   return templates
+    .filter((template) => template.slug !== "packages")
     .map((template) => {
       const services = servicesByCategory.get(template.slug) ?? []
       return services.length > 0 ? buildCategory(template, services) : null

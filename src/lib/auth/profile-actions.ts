@@ -55,7 +55,7 @@ export async function updateProfileAction(
 ): Promise<ProfileActionState> {
   const session = await getSession()
   if (!session) {
-    redirect("/login?next=/dashboard/settings")
+    redirect("/login?next=/dashboard/profile")
   }
 
   const name = String(formData.get("name") ?? "").trim()

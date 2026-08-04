@@ -18,16 +18,18 @@ export function ServiceCategoryGridCard({ category, priority }: ServiceCategoryG
           alt={`${category.eyebrow} services at Glammzo`}
           priority={priority}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
         {category.overlay.badge ? (
           <span className="absolute left-4 top-4 inline-flex rounded-full bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-sm">
             {category.overlay.badge}
           </span>
         ) : null}
         <div className="absolute bottom-4 left-4 right-4">
-          <p className="font-heading text-lg font-semibold text-white">{category.overlay.title}</p>
+          <p className="font-heading text-lg font-semibold text-white drop-shadow-sm">
+            {category.overlay.title}
+          </p>
           {category.overlay.subtitle ? (
-            <p className="mt-0.5 text-xs text-white/75">{category.overlay.subtitle}</p>
+            <p className="mt-0.5 text-xs text-white/85 drop-shadow-sm">{category.overlay.subtitle}</p>
           ) : null}
         </div>
       </div>

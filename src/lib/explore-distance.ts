@@ -87,7 +87,7 @@ export function resolveDistanceOrigin(options: {
 }
 
 export function computeSalonDistanceKm(
-  salon: Pick<Salon, "id" | "area" | "address" | "latitude" | "longitude">,
+  salon: Pick<Salon, "id" | "area" | "address" | "city" | "latitude" | "longitude">,
   origin: DistanceOrigin,
 ): number | null {
   const coords = resolveSalonCoordinates(salon)

@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session"
 import { isSalonFavorited } from "@/lib/favorites/server"
 import { trackListingView } from "@/lib/listing/track-listing-view"
 import { buildSalonJsonLd } from "@/lib/seo/salon-json-ld"
+import { SITE_URL } from "@/lib/seo/site-seo"
 import { primarySalonCategory } from "@/lib/salons/salon-detail-utils"
 import { Navbar } from "@/components/layout/navbar"
 import { SalonDetailView } from "@/components/salons/salon-detail/salon-detail-view"
@@ -49,10 +50,26 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const { preview } = await searchParams
   const salon = await getSalonById(id, { preview: isPreviewMode(preview) })
   if (!salon) return { title: "Salon not found" }
+
+  const place = [salon.area, salon.city].filter(Boolean).join(", ")
+  const title = place ? `${salon.name} · Salon in ${place}` : salon.name
+  const description =
+    salon.shortDescription ??
+    salon.description ??
+    `Book ${salon.name}${place ? ` in ${place}` : ""} on Glammzo. See services, fixed prices, and available slots.`
+
   return {
-    title: salon.name,
-    description: salon.shortDescription ?? salon.description,
-    robots: isPreviewMode(preview) ? { index: false, follow: false } : undefined,
+    title,
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/salons/${encodeURIComponent(salon.id)}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+    robots: isPreviewMode(preview) ? { index: false, follow: false } : { index: true, follow: true },
   }
 }
 
@@ -76,7 +93,7 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
   const allSalons = await getSalons()
   const similarSalons = pickSimilarSalons(salon, allSalons)
 
-  const pageUrl = `https://glammzo.com/salons/${encodeURIComponent(salon.id)}`
+  const pageUrl = `${SITE_URL}/salons/${encodeURIComponent(salon.id)}`
   const jsonLd = buildSalonJsonLd(salon, pageUrl)
 
   return (

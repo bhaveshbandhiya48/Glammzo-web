@@ -51,6 +51,8 @@ export async function createBookingAction(formData: FormData) {
   const packageId = String(formData.get("packageId") ?? "").trim()
   const promoCode = String(formData.get("promoCode") ?? "").trim()
   const marketingOptIn = parseMarketingOptIn(formData)
+  const useWallet = String(formData.get("useWallet") ?? "") === "1"
+  const useFreeService = String(formData.get("useFreeService") ?? "") === "1"
 
   const salon = await getSalonById(salonId)
   const serviceIds = parseServiceIds(serviceIdsRaw)
@@ -92,6 +94,8 @@ export async function createBookingAction(formData: FormData) {
       packageId: packageId || undefined,
       promoCode: promoCode || undefined,
       marketingOptIn,
+      useWallet,
+      useFreeService,
     })
 
     if (!result.success) {
@@ -194,14 +198,14 @@ export async function cancelBookingAction(formData: FormData) {
   })
 
   if (!bookingId || !cancellationReason) {
-    redirect("/dashboard/bookings?error=cancel")
+    redirect("/dashboard/profile?error=cancel#bookings")
   }
 
   if (isSupabaseConfigured() && session.phone && bookingId) {
     const result = await cancelCrmWebBooking(bookingId, session.phone, cancellationReason)
 
     if (!result.success) {
-      return redirect("/dashboard/bookings?error=cancel")
+      return redirect("/dashboard/profile?error=cancel#bookings")
     }
 
     const { getBookings, saveBookings } = await import("@/lib/bookings/store")
@@ -212,7 +216,7 @@ export async function cancelBookingAction(formData: FormData) {
         : booking,
     )
     await saveBookings(updated)
-    redirect("/dashboard/bookings")
+    redirect("/dashboard/profile#bookings")
   }
 
   const { getBookings, saveBookings } = await import("@/lib/bookings/store")
@@ -221,7 +225,7 @@ export async function cancelBookingAction(formData: FormData) {
     b.id === bookingId ? { ...b, status: "cancelled" as const } : b,
   )
   await saveBookings(updated)
-  redirect("/dashboard/bookings")
+  redirect("/dashboard/profile#bookings")
 }
 
 export async function rescheduleBookingAction(formData: FormData) {
@@ -233,7 +237,7 @@ export async function rescheduleBookingAction(formData: FormData) {
   const time = String(formData.get("time") ?? "")
 
   if (!appointmentId || !date || !time) {
-    redirect("/dashboard/bookings?error=reschedule")
+    redirect("/dashboard/profile?error=reschedule#bookings")
   }
 
   if (isSupabaseConfigured() && session.phone) {
@@ -249,8 +253,8 @@ export async function rescheduleBookingAction(formData: FormData) {
       redirect(`/dashboard/bookings/${appointmentId}/reschedule?error=${code}`)
     }
 
-    redirect("/dashboard/bookings?rescheduled=1")
+    redirect("/dashboard/profile?rescheduled=1#bookings")
   }
 
-  redirect("/dashboard/bookings?error=reschedule")
+  redirect("/dashboard/profile?error=reschedule#bookings")
 }

@@ -18,6 +18,8 @@ type ExploreSalonGridProps = {
   radiusKm?: number | null
   favoriteSalonIds?: string[]
   authenticated?: boolean
+  /** When true, nearest-first unless the user picked rating/price sort. */
+  preferNearest?: boolean
 }
 
 export function ExploreSalonGrid({
@@ -29,13 +31,19 @@ export function ExploreSalonGrid({
   radiusKm,
   favoriteSalonIds = [],
   authenticated = false,
+  preferNearest = false,
 }: ExploreSalonGridProps) {
   const favoriteSet = useMemo(() => new Set(favoriteSalonIds), [favoriteSalonIds])
   const origin = useExploreDistanceOrigin({ nearFromUrl, urlLatitude, urlLongitude })
 
   const displaySalons = useMemo(() => {
     const withDistance = applySalonDistances(salons, origin)
-    const shouldSortByDistance = sort === "nearest" || Boolean(nearFromUrl)
+    const explicitNonDistanceSort =
+      sort === "rating" || sort === "price-asc" || sort === "price-desc"
+    const shouldSortByDistance =
+      sort === "nearest" ||
+      Boolean(nearFromUrl) ||
+      (preferNearest && !explicitNonDistanceSort)
     const radius = radiusKm ?? null
 
     const filtered =
@@ -57,7 +65,7 @@ export function ExploreSalonGrid({
     }
 
     return filtered
-  }, [salons, origin, sort, nearFromUrl, radiusKm])
+  }, [salons, origin, sort, nearFromUrl, radiusKm, preferNearest])
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

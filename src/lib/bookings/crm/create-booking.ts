@@ -22,6 +22,8 @@ import {
   incrementSalonOfferRedemption,
   resolveBookingOfferDiscount,
 } from "@/lib/bookings/crm/validate-salon-offer"
+import { isLaunchPromoCode, LAUNCH_CASHBACK_MIN_RUPEES, LAUNCH_PROMO_CODE } from "@/lib/marketing/launch-promo"
+import { normalizePromoCode } from "@/lib/salons/offer-utils"
 import {
   BOOKING_ENGINE_CONFIG,
   computeManualExpiresAt,
@@ -34,6 +36,16 @@ import {
   remainingConfirmationSeconds,
 } from "@/lib/bookings/crm/booking-confirmation-engine"
 import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
+import {
+  computeWalletRedeemPaise,
+  debitCustomerWallet,
+  LOYALTY_DISCOUNT_CAP_PAISE,
+  getCustomerLoyalty,
+  getCustomerWallet,
+  pickLoyaltyDiscountLine,
+  redeemFreeServiceCredit,
+  restoreBookingWalletLoyalty,
+} from "@/lib/wallet/customer-wallet"
 
 export async function createCrmWebBooking(
   input: CreateCrmBookingInput,
@@ -350,10 +362,93 @@ export async function createCrmWebBooking(
     noteParts.push(input.notes.trim())
   }
 
+  const payableBeforeWallet =
+    appliedOffer?.finalTotal ??
+    (input.packageBooking && mappedPackage
+      ? mappedPackage.packagePrice
+      : input.serviceIds.reduce(
+          (sum, serviceId) => sum + (serviceById.get(serviceId)?.price ?? 0),
+          0,
+        ))
+
+  if (input.promoCode?.trim() && isLaunchPromoCode(input.promoCode)) {
+    if (payableBeforeWallet < LAUNCH_CASHBACK_MIN_RUPEES) {
+      return {
+        success: false,
+        error: `${LAUNCH_PROMO_CODE} needs a booking of ₹${LAUNCH_CASHBACK_MIN_RUPEES} or more.`,
+        code: "invalid",
+      }
+    }
+  }
+
+  const lineServices = input.serviceIds.map((serviceId) => {
+    const service = serviceById.get(serviceId)
+    return {
+      id: serviceId,
+      price: service?.price ?? 0,
+      duration_minutes: service?.duration_minutes ?? 0,
+    }
+  })
+
+  const wantsLoyalty = Boolean(input.useFreeService)
+  const loyaltyPick = pickLoyaltyDiscountLine(lineServices, wantsLoyalty)
+  if (wantsLoyalty && !loyaltyPick.service) {
+    return {
+      success: false,
+      error: "Add a service to use your ₹999 loyalty credit.",
+      code: "invalid",
+    }
+  }
+
+  if (wantsLoyalty) {
+    const loyalty = await getCustomerLoyalty(customerPhone)
+    if (!loyalty || loyalty.freeServiceCredits < 1) {
+      return {
+        success: false,
+        error: "You do not have a loyalty credit available.",
+        code: "invalid",
+      }
+    }
+  }
+
+  const afterLoyaltyPayable = Math.max(
+    0,
+    Math.round((payableBeforeWallet - loyaltyPick.discountRupees) * 100) / 100,
+  )
+
+  const wallet = await getCustomerWallet(customerPhone)
+  const walletPaise = computeWalletRedeemPaise({
+    payablePaise: Math.round(afterLoyaltyPayable * 100),
+    walletBalancePaise: wallet?.balancePaise ?? 0,
+    useWallet: Boolean(input.useWallet),
+    requestedPaise: input.walletAmountPaise,
+  })
+  const walletRupees = walletPaise / 100
+  const payAtSalon = Math.max(0, Math.round((afterLoyaltyPayable - walletRupees) * 100) / 100)
+
+  if (loyaltyPick.service) {
+    noteParts.push(
+      `Loyalty credit: ₹${loyaltyPick.discountRupees.toFixed(0)} off (up to ₹${LOYALTY_DISCOUNT_CAP_PAISE / 100})`,
+    )
+  }
+  if (walletPaise > 0) {
+    noteParts.push(`Glammzo wallet used: ₹${walletRupees.toFixed(0)}`)
+  }
+  noteParts.push(`Pay at salon: ₹${payAtSalon.toFixed(0)}`)
+
   let internalNotes = "source:glamzzo_web"
   if (appliedOffer) {
     internalNotes += `|promo:${appliedOffer.code}|offer_id:${appliedOffer.offerId}|discount:${appliedOffer.discountAmount}`
+  } else if (input.promoCode?.trim() && isLaunchPromoCode(input.promoCode)) {
+    internalNotes += `|launch_cashback:${normalizePromoCode(input.promoCode)}`
   }
+  if (walletPaise > 0) {
+    internalNotes += `|wallet_paise:${walletPaise}`
+  }
+  if (loyaltyPick.service) {
+    internalNotes += `|loyalty_service_id:${loyaltyPick.service.id}|loyalty_discount_paise:${loyaltyPick.discountPaise}`
+  }
+  internalNotes += `|pay_at_salon:${payAtSalon}`
 
   const bookedAt = new Date()
   const confirmationMode = context.webBooking.confirmationMode
@@ -441,11 +536,16 @@ export async function createCrmWebBooking(
 
   const appointmentServices = input.serviceIds.map((serviceId, index) => {
     const service = serviceById.get(serviceId)
+    const basePrice = service?.price ?? 0
+    const isLoyaltyLine = loyaltyPick.service?.id === serviceId
+    const price = isLoyaltyLine
+      ? Math.max(0, Math.round((basePrice - loyaltyPick.discountRupees) * 100) / 100)
+      : basePrice
     return {
       appointment_id: appointmentId,
       service_id: serviceId,
       sort_order: index,
-      price: service?.price ?? 0,
+      price,
       duration_minutes: service?.duration_minutes ?? 0,
     }
   })
@@ -456,6 +556,33 @@ export async function createCrmWebBooking(
 
   if (servicesError) {
     console.error("[bookings] appointment_services insert failed:", servicesError.message)
+  }
+
+  if (loyaltyPick.service) {
+    const freeResult = await redeemFreeServiceCredit({
+      phone: customerPhone,
+      appointmentId,
+      salonId: input.crmSalonId,
+      valuePaise: loyaltyPick.discountPaise,
+    })
+    if (!freeResult.ok) {
+      await supabase.from("appointments").delete().eq("id", appointmentId)
+      return { success: false, error: freeResult.error, code: "invalid" }
+    }
+  }
+
+  if (walletPaise > 0) {
+    const debit = await debitCustomerWallet({
+      phone: customerPhone,
+      amountPaise: walletPaise,
+      appointmentId,
+      salonId: input.crmSalonId,
+    })
+    if (!debit.ok) {
+      await restoreBookingWalletLoyalty(appointmentId)
+      await supabase.from("appointments").delete().eq("id", appointmentId)
+      return { success: false, error: debit.error, code: "invalid" }
+    }
   }
 
   if (appliedOffer) {

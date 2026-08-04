@@ -7,7 +7,7 @@ import {
 } from "@/lib/bookings/booking-status"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { Booking, BookingServiceItem, BookingStatus } from "@/types/booking"
+import type { Booking, BookingReview, BookingServiceItem, BookingStatus } from "@/types/booking"
 
 type AppointmentRow = {
   id: string
@@ -185,18 +185,30 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
   const appointmentRows = rows as unknown as AppointmentRow[]
   const appointmentIds = appointmentRows.map((r) => r.id)
 
-  // Determine which completed appointments already have a verified review.
-  const verifiedReviewAppointmentIds = new Set<string>()
+  // Load verified reviews for these appointments (for badge + card display).
+  const reviewsByAppointmentId = new Map<string, BookingReview>()
   if (appointmentIds.length > 0) {
     const { data: reviewRows, error: reviewError } = await supabase
       .from("salon_reviews")
-      .select("appointment_id")
+      .select("appointment_id, rating, comment, review_type")
       .eq("verified", true)
       .in("appointment_id", appointmentIds)
 
     if (!reviewError) {
-      for (const r of (reviewRows ?? []) as Array<{ appointment_id: string | null }>) {
-        if (r.appointment_id) verifiedReviewAppointmentIds.add(r.appointment_id)
+      for (const r of (reviewRows ?? []) as Array<{
+        appointment_id: string | null
+        rating: number | null
+        comment: string | null
+        review_type: string | null
+      }>) {
+        if (!r.appointment_id) continue
+        const rating = Number(r.rating)
+        if (!Number.isFinite(rating) || rating < 1) continue
+        reviewsByAppointmentId.set(r.appointment_id, {
+          rating: Math.min(5, Math.max(1, Math.round(rating))),
+          comment: (r.comment ?? "").trim(),
+          reviewType: (r.review_type ?? "").trim() || "Overall experience",
+        })
       }
     }
   }
@@ -240,7 +252,8 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       notes: row.notes?.includes("\n") ? row.notes.split("\n").slice(1).join("\n").trim() : undefined,
       status,
       isCrmCompleted: row.status === "completed",
-      hasVerifiedReview: verifiedReviewAppointmentIds.has(row.id),
+      hasVerifiedReview: reviewsByAppointmentId.has(row.id),
+      review: reviewsByAppointmentId.get(row.id),
       staffId: row.staff_id ?? undefined,
       staffName: staff?.full_name?.trim() || undefined,
       declineReason:

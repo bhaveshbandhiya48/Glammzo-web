@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { LockIcon } from "lucide-react"
 
 import { Container } from "@/components/layout/container"
@@ -25,15 +26,15 @@ export function LoginSection() {
                   <LockIcon className="size-4" />
                   Your account
                 </div>
-                <h2 className="mt-4 text-2xl sm:text-3xl">Log in to rebook faster</h2>
+                <h2 className="mt-4 text-2xl sm:text-3xl">Continue with your mobile number</h2>
                 <p className="mt-2 text-sm leading-6 text-foreground/65 sm:text-base">
-                  Save favorites, manage appointments, and rebook with one tap, all in a calm, premium experience.
+                  Save favorites, manage appointments, and rebook with one tap — we&apos;ll create
+                  your account the first time you verify.
                 </p>
               </div>
               <div className="grid gap-2">
-                <Button size="lg">Continue</Button>
-                <Button variant="outline" size="lg">
-                  Create account
+                <Button asChild size="lg">
+                  <Link href="/login">Continue with mobile</Link>
                 </Button>
               </div>
             </CardContent>
@@ -43,4 +44,3 @@ export function LoginSection() {
     </MotionSection>
   )
 }
-

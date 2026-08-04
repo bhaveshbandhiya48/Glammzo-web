@@ -2,6 +2,7 @@ import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { CrmOfferRow } from "@/lib/salons/crm-types"
+import { isLaunchPromoCode } from "@/lib/marketing/launch-promo"
 import {
   applyOfferDiscount,
   normalizePromoCode,
@@ -65,6 +66,11 @@ export async function resolveBookingOfferDiscount(input: {
 > {
   const promoCode = input.promoCode?.trim()
   if (!promoCode) {
+    return { ok: true, discount: null }
+  }
+
+  if (isLaunchPromoCode(promoCode)) {
+    // Launch code claims wallet cashback after visit — not a checkout discount.
     return { ok: true, discount: null }
   }
 

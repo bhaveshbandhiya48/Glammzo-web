@@ -1,12 +1,13 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect } from "react"
 
 import {
   updateProfileAction,
   type ProfileActionState,
 } from "@/lib/auth/profile-actions"
 import { CONSUMER_GENDER_OPTIONS } from "@/lib/auth/consumer-profile-constants"
+import { invalidateSessionStatusCache, refreshSessionStatus } from "@/hooks/use-session-status"
 import { Button } from "@/components/ui/button"
 import { DateInput } from "@/components/ui/date-input"
 import { Input } from "@/components/ui/input"
@@ -41,6 +42,12 @@ export function ProfileSettingsForm({
   defaultAddress,
 }: ProfileSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateProfileAction, initialState)
+
+  useEffect(() => {
+    if (state.ok && state.saved) {
+      void refreshSessionStatus()
+    }
+  }, [state])
 
   return (
     <form action={formAction} className="space-y-5">

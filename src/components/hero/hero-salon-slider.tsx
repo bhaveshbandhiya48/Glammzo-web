@@ -142,8 +142,16 @@ export function HeroSalonSlider({
 
   const slides = useMemo((): SalonWithDistance[] => {
     if (salons.length === 0) return []
-    return sortSalonsByDistance(salons, origin.latitude, origin.longitude).slice(0, maxSlides)
-  }, [salons, origin.latitude, origin.longitude, maxSlides])
+
+    const ranked = sortSalonsByDistance(salons, origin.latitude, origin.longitude)
+    const local = ranked.filter((salon) => isSalonInCity(salon, browseCity))
+    const others = ranked.filter((salon) => !isSalonInCity(salon, browseCity))
+    const ordered = local.length > 0 ? [...local, ...others] : ranked
+
+    return ordered.slice(0, maxSlides)
+  }, [salons, origin.latitude, origin.longitude, browseCity, maxSlides])
+
+  const slideIdsKey = slides.map((slide) => slide.id).join("|")
 
   const syncActiveIndex = useCallback(() => {
     const container = scrollRef.current
@@ -164,7 +172,7 @@ export function HeroSalonSlider({
   useEffect(() => {
     setActiveIndex(0)
     scrollRef.current?.scrollTo({ left: 0, behavior: "instant" })
-  }, [slides.length, origin.latitude, origin.longitude])
+  }, [browseCity, slideIdsKey, origin.latitude, origin.longitude])
 
   const scrollTo = (index: number) => {
     const container = scrollRef.current

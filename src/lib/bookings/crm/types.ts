@@ -69,6 +69,11 @@ export type CreateCrmBookingInput = {
   packageId?: string
   promoCode?: string
   marketingOptIn?: boolean
+  /** Apply Glammzo wallet credit (rupees will be converted to paise server-side if needed). */
+  useWallet?: boolean
+  walletAmountPaise?: number
+  /** Redeem one loyalty credit: up to ₹999 off one service (free if ≤ ₹999). */
+  useFreeService?: boolean
 }
 
 export type CreateCrmBookingResult =

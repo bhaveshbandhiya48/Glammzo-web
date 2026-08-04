@@ -1,26 +1,56 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRightIcon, ClockIcon, ScissorsIcon, StoreIcon } from "lucide-react"
+import { ArrowRightIcon } from "lucide-react"
 
-import { stats, siteCopy } from "@/data/site-copy"
+import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
 import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/motion"
-import { cn } from "@/lib/utils"
 
-const { statement, stats: statsCopy } = siteCopy
+const { statement } = siteCopy
 
-const statIcons = [StoreIcon, ScissorsIcon, ClockIcon] as const
+type StatementSectionProps = {
+  salonCount?: number
+  categoryCount?: number
+}
 
-export function StatementSection() {
+function formatCount(value: number | null | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return "—"
+  }
+  return value.toLocaleString("en-IN")
+}
+
+export function StatementSection({
+  salonCount = 0,
+  categoryCount = 0,
+}: StatementSectionProps) {
+  const metrics = [
+    {
+      value: formatCount(salonCount),
+      label: "Salon partners",
+      detail: "Live listings on Glammzo",
+    },
+    {
+      value: formatCount(categoryCount),
+      label: "Service categories",
+      detail: "Browse and book by need",
+    },
+    {
+      value: "<2 min",
+      label: "To confirm",
+      detail: "Search to booked slot",
+    },
+  ]
+
   return (
     <MotionSection
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-80px" }}
       variants={stagger}
-      className="section-y-separated section-band-statement !py-14 sm:!py-16"
+      className="section-y-separated !py-16 sm:!py-20"
     >
       <Container>
         <MotionDiv variants={fadeUp} className="mx-auto max-w-2xl text-center">
@@ -29,7 +59,7 @@ export function StatementSection() {
           <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-foreground/60 sm:text-base">
             {statement.subtitle}
           </p>
-          <Button asChild size="lg" className="mt-6 px-7 shadow-md shadow-primary/15">
+          <Button asChild size="lg" className="mt-7 px-7">
             <Link href="/explore">
               {statement.cta}
               <ArrowRightIcon className="size-4" />
@@ -37,41 +67,25 @@ export function StatementSection() {
           </Button>
         </MotionDiv>
 
-        <MotionDiv variants={fadeUp} className="mx-auto mt-10 max-w-4xl sm:mt-12">
-          <p className="mb-4 text-center text-xs font-medium uppercase tracking-[0.2em] text-foreground/45">
-            {statsCopy.eyebrow}
-          </p>
-          <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03] backdrop-blur-sm">
-            <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-border/60">
-              {stats.map((stat, index) => {
-                const Icon = statIcons[index] ?? StoreIcon
-                return (
-                  <div
-                    key={stat.label}
-                    className={cn(
-                      "flex flex-col items-center px-5 py-6 text-center sm:items-start sm:px-6 sm:py-7 sm:text-left",
-                      index > 0 && "border-t border-border/60 sm:border-t-0",
-                    )}
-                  >
-                    <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="size-4" aria-hidden />
-                    </div>
-                    <p className="mt-4 font-heading text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
-                      {stat.value}
-                    </p>
-                    <p className="mt-1 font-heading text-base font-semibold text-foreground">
-                      {stat.label}
-                    </p>
-                    {stat.description ? (
-                      <p className="mt-1 text-sm leading-relaxed text-foreground/55">
-                        {stat.description}
-                      </p>
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+        <MotionDiv variants={fadeUp} className="mx-auto mt-14 max-w-3xl sm:mt-16">
+          <dl className="grid gap-8 border-t border-border/70 pt-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border/60">
+            {metrics.map((metric) => (
+              <div
+                key={metric.label}
+                className="flex flex-col items-center text-center sm:px-8"
+              >
+                <dt className="order-2 mt-2 text-sm font-medium text-foreground/70">
+                  {metric.label}
+                </dt>
+                <dd className="order-1 font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
+                  {metric.value}
+                </dd>
+                <p className="order-3 mt-1 text-xs leading-relaxed text-foreground/45">
+                  {metric.detail}
+                </p>
+              </div>
+            ))}
+          </dl>
         </MotionDiv>
       </Container>
     </MotionSection>

@@ -7,7 +7,8 @@ import {
   ClockIcon,
   HashIcon,
   MapPinIcon,
-  ScissorsIcon,
+  SparklesIcon,
+  StarIcon,
   TimerIcon,
   UserIcon,
 } from "lucide-react"
@@ -20,7 +21,7 @@ import {
   canConsumerRebookBooking,
   canConsumerRescheduleBooking,
 } from "@/lib/bookings/booking-status"
-import { buildBookHref, formatBookingDate, formatDuration } from "@/lib/bookings/utils"
+import { buildBookHref, formatBookingDate, formatBookingNotesForDisplay, formatDuration, hasPayAtSalonNote } from "@/lib/bookings/utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import { Button } from "@/components/ui/button"
 import type { Booking } from "@/types/booking"
@@ -54,6 +55,25 @@ function MetaChip({
   )
 }
 
+function ReviewStars({ rating }: { rating: number }) {
+  return (
+    <span className="inline-flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <StarIcon
+          key={i}
+          className={cn(
+            "size-3.5",
+            i < rating
+              ? "fill-primary text-primary"
+              : "fill-muted text-muted-foreground/25",
+          )}
+          aria-hidden
+        />
+      ))}
+    </span>
+  )
+}
+
 export function AppointmentCard({ booking, authenticated, index = 0 }: AppointmentCardProps) {
   const serviceIds = booking.services.map((svc) => svc.id)
   const rebookHref = buildBookHref(booking.salonId, serviceIds, authenticated)
@@ -68,6 +88,12 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
     Boolean(booking.crmAppointmentId) &&
     !booking.hasVerifiedReview
 
+  const isCompleted =
+    Boolean(booking.isCrmCompleted) || booking.status === "completed"
+  const displayNotes = formatBookingNotesForDisplay(booking.notes)
+  const showSalonPaymentLabel =
+    hasPayAtSalonNote(booking.notes) || isCompleted
+  const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
   const hasActions = canReschedule || canCancel || canRebook || canLeaveReview
 
   return (
@@ -113,7 +139,7 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
 
       <div className="border-b border-border/55 px-4 py-3.5 sm:px-5">
         <p className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">
-          <ScissorsIcon className="size-3" aria-hidden />
+          <SparklesIcon className="size-3" aria-hidden />
           Service{booking.services.length === 1 ? "" : "s"}
         </p>
         <ul className="mt-2 divide-y divide-border/45">
@@ -134,20 +160,40 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
         </ul>
       </div>
 
-      {(booking.declineReason || booking.notes) && (
+      {(booking.declineReason || displayNotes) && (
         <div className="space-y-2 border-b border-border/55 px-4 py-3 sm:px-5">
           {booking.declineReason ? (
             <p className="rounded-xl bg-destructive/5 px-3 py-2 text-sm text-destructive/90">
               Salon note: {booking.declineReason}
             </p>
           ) : null}
-          {booking.notes ? (
+          {displayNotes ? (
             <p className="rounded-xl bg-muted/40 px-3 py-2 text-sm text-foreground/60">
-              Note: {booking.notes}
+              Note: {displayNotes}
             </p>
           ) : null}
         </div>
       )}
+
+      {booking.review ? (
+        <div className="border-b border-border/55 px-4 py-3.5 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">
+              <StarIcon className="size-3" aria-hidden />
+              Your review
+            </p>
+            <ReviewStars rating={booking.review.rating} />
+          </div>
+          <p className="mt-1.5 text-xs font-medium text-foreground/55">
+            {booking.review.reviewType}
+          </p>
+          {booking.review.comment ? (
+            <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+              {booking.review.comment}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/55 px-4 py-3.5 sm:px-5">
         <div>
@@ -157,6 +203,11 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
           <p className="mt-1 font-heading text-xl font-semibold tabular-nums tracking-tight text-foreground">
             {formatInr(booking.price)}
           </p>
+          {showSalonPaymentLabel ? (
+            <p className="mt-1 text-xs font-medium text-foreground/55">
+              {salonPaymentLabel}
+            </p>
+          ) : null}
         </div>
         <div className="text-right">
           <p className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">

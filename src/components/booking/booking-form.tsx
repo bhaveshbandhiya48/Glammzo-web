@@ -35,7 +35,9 @@ import type { Salon } from "@/types/salon"
 import { BookingFormCard } from "@/components/booking/booking-form-card"
 import { BookingFormSubmitButtons } from "@/components/booking/booking-form-submit"
 import { BookingSummary, getBookingPayableTotal } from "@/components/booking/booking-summary"
-import { PromoCodeField } from "@/components/booking/promo-code-field"
+import { PromoCodeField, type CashbackClaim } from "@/components/booking/promo-code-field"
+import { WalletLoyaltyFields } from "@/components/booking/wallet-loyalty-fields"
+import { computeWalletRedeemPaise, pickLoyaltyDiscountLine } from "@/lib/wallet/wallet-math"
 import { ServicePicker } from "@/components/booking/service-picker"
 import { StaffPicker } from "@/components/booking/staff-picker"
 import { TimeSlotPicker } from "@/components/booking/time-slot-picker"
@@ -77,6 +79,9 @@ export function BookingForm({
   defaultCustomerPhone = "",
   defaultCustomerEmail = "",
   initialPromoCode = "",
+  walletBalanceRupees = 0,
+  freeServiceCredits = 0,
+  stampsTowardNextFree = 0,
 }: {
   salon: Salon
   initialServiceIds?: string[]
@@ -87,6 +92,9 @@ export function BookingForm({
   defaultCustomerPhone?: string
   defaultCustomerEmail?: string
   initialPromoCode?: string
+  walletBalanceRupees?: number
+  freeServiceCredits?: number
+  stampsTowardNextFree?: number
 }) {
   const validInitial = initialServiceIds.filter((id) =>
     salon.services.some((s) => s.id === id),
@@ -124,10 +132,22 @@ export function BookingForm({
   const [customerPhone, setCustomerPhone] = useState(defaultCustomerPhone)
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [appliedOffer, setAppliedOffer] = useState<AppliedOfferDiscount | null>(null)
+  const [cashbackClaim, setCashbackClaim] = useState<CashbackClaim | null>(null)
+  const [useWallet, setUseWallet] = useState(walletBalanceRupees > 0)
+  const [useFreeService, setUseFreeService] = useState(false)
 
   useEffect(() => {
     setAppliedOffer(null)
+    setCashbackClaim(null)
   }, [selectedIds, packageId])
+
+  useEffect(() => {
+    if (walletBalanceRupees <= 0) setUseWallet(false)
+  }, [walletBalanceRupees])
+
+  useEffect(() => {
+    if (freeServiceCredits <= 0) setUseFreeService(false)
+  }, [freeServiceCredits])
 
   const selectedServices = useMemo(
     () => resolveServices(salon.services, selectedIds),
@@ -371,14 +391,33 @@ export function BookingForm({
     [appliedOffer, selectedPackage, selectedServices],
   )
 
+  const loyaltyPick = useMemo(
+    () =>
+      pickLoyaltyDiscountLine(
+        selectedServices.map((s) => ({ id: s.id, price: s.price })),
+        useFreeService && !selectedPackage,
+      ),
+    [selectedPackage, selectedServices, useFreeService],
+  )
+
+  const afterLoyaltyTotal = Math.max(0, payableTotal - loyaltyPick.discountRupees)
+  const walletAppliedRupees =
+    computeWalletRedeemPaise({
+      payablePaise: Math.round(afterLoyaltyTotal * 100),
+      walletBalancePaise: Math.round(walletBalanceRupees * 100),
+      useWallet,
+    }) / 100
+  const payAtSalonRupees = Math.max(
+    0,
+    Math.round((afterLoyaltyTotal - walletAppliedRupees) * 100) / 100,
+  )
+
   const submitLabel =
-    payableTotal > 0
-      ? `Book appointment · ${formatInr(payableTotal)}`
+    selectedServices.length > 0
+      ? `Book · pay at salon ${formatInr(payAtSalonRupees)}`
       : packageMode
         ? "Book package appointment"
-        : selectedServices.length > 1
-          ? `Book ${selectedServices.length} services`
-          : "Book appointment"
+        : "Book appointment"
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) => toggleServiceId(prev, id))
@@ -684,18 +723,40 @@ export function BookingForm({
           packageId={packageId}
           value={appliedOffer}
           onChange={setAppliedOffer}
+          onCashbackChange={setCashbackClaim}
           initialCode={initialPromoCode}
           hideLabel
         />
       </BookingFormCard>
+
+      {(walletBalanceRupees > 0 || freeServiceCredits > 0 || stampsTowardNextFree > 0) && (
+        <BookingFormCard title="Wallet & loyalty" contentClassName="space-y-0">
+          <WalletLoyaltyFields
+            walletBalanceRupees={walletBalanceRupees}
+            freeServiceCredits={freeServiceCredits}
+            stampsTowardNextFree={stampsTowardNextFree}
+            useWallet={useWallet}
+            useFreeService={useFreeService && !selectedPackage}
+            onUseWalletChange={setUseWallet}
+            onUseFreeServiceChange={setUseFreeService}
+            walletAppliedRupees={walletAppliedRupees}
+            freeServiceAppliedRupees={loyaltyPick.discountRupees}
+            payAtSalonRupees={payAtSalonRupees}
+          />
+        </BookingFormCard>
+      )}
 
       <BookingFormCard title="Payment summary" sticky contentClassName="space-y-0">
         <BookingSummary
           services={selectedServices}
           selectedPackage={selectedPackage}
           appliedOffer={appliedOffer}
+          cashbackClaim={cashbackClaim}
           cancellationPolicy={salon.cancellationPolicy}
           totalDurationMin={totalDuration}
+          walletAppliedRupees={walletAppliedRupees}
+          freeServiceAppliedRupees={loyaltyPick.discountRupees}
+          payAtSalonRupees={payAtSalonRupees}
         />
 
         <BookingFormSubmitButtons canSubmit={canSubmit} submitLabel={submitLabel} />

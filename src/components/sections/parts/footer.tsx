@@ -34,8 +34,8 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Product",
     links: [
       { label: "Explore Salons", href: "/explore" },
+      { label: "Salon Near Me", href: "/salons-near-me" },
       { label: "Services", href: "/services" },
-      { label: "Browse Categories", href: "/services" },
       { label: "How It Works", href: "/#how" },
     ],
   },
@@ -97,7 +97,7 @@ function FooterNavColumn({ title, links }: FooterColumn) {
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/80 bg-foreground text-background">
+    <footer className="hidden border-t border-border/80 bg-foreground text-background md:block">
       <Container className="pt-6 pb-10 sm:pt-8 sm:pb-12">
         <ul className="mb-8 grid grid-cols-2 gap-4 sm:mb-10 sm:grid-cols-4 sm:gap-5">
           {TRUST_STRIP.map(({ label, icon: Icon }) => (

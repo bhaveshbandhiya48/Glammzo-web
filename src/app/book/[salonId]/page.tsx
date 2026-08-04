@@ -10,6 +10,7 @@ import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
 import { parseServiceIds } from "@/lib/bookings/utils"
 import { formatPhoneForInput } from "@/lib/phone/display"
 import { getSalonById } from "@/lib/salons"
+import { getCustomerLoyalty, getCustomerWallet } from "@/lib/wallet/customer-wallet"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
 
 type Props = {
@@ -45,6 +46,10 @@ export default async function BookPage({ params, searchParams }: Props) {
     : null
 
   const unavailableSlots: { date: string; time: string }[] = []
+
+  const [wallet, loyalty] = session.phone
+    ? await Promise.all([getCustomerWallet(session.phone), getCustomerLoyalty(session.phone)])
+    : [null, null]
 
   return (
     <SitePageShell>
@@ -92,6 +97,9 @@ export default async function BookPage({ params, searchParams }: Props) {
             defaultCustomerEmail={resolveSessionDisplayEmail(session.email)}
             defaultCustomerPhone={session.phone ? formatPhoneForInput(session.phone) : ""}
             initialPromoCode={promo ?? ""}
+            walletBalanceRupees={wallet?.balanceRupees ?? 0}
+            freeServiceCredits={loyalty?.freeServiceCredits ?? 0}
+            stampsTowardNextFree={loyalty?.stampsTowardNextFree ?? 0}
           />
         </div>
       </div>

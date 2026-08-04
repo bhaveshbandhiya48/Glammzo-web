@@ -12,22 +12,35 @@ import { NearbySalonsSection } from "@/components/sections/parts/nearby-salons-s
 import { PartnerSection } from "@/components/sections/parts/partner-section"
 import { StatementSection } from "@/components/sections/parts/statement-section"
 import { TestimonialsSection } from "@/components/sections/parts/testimonials-section"
+import { WhyChooseSection } from "@/components/sections/parts/why-choose-section"
+import { LaunchOfferCtaSection } from "@/components/sections/parts/launch-offer-cta-section"
+import { First200CashbackBanner } from "@/components/marketing/first-200-cashback-banner"
 import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
+import { getSalons } from "@/lib/salons"
 
 export async function LandingPage() {
-  const categories = await getBrowseDefaultCategories()
+  const [categories, salons] = await Promise.all([
+    getBrowseDefaultCategories(),
+    getSalons(),
+  ])
 
   return (
     <MotionProvider>
       <Navbar />
       <main className="page-main">
+        <First200CashbackBanner />
         <HeroSection />
         <MarqueeBand />
         <NearbySalonsMarqueeSection />
         <HowItWorksSection />
+        <WhyChooseSection />
+        <LaunchOfferCtaSection />
         <CategoriesSection categories={categories} />
         <NearbySalonsSection />
-        <StatementSection />
+        <StatementSection
+          salonCount={salons.length}
+          categoryCount={categories.length}
+        />
         <FeaturedExperienceSection />
         <TestimonialsSection />
         <PartnerSection />

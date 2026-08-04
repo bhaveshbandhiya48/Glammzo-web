@@ -1,5 +1,5 @@
 import { getSearchParam } from "@/lib/search-params"
-import { filterSalonsByCityPreferExact } from "@/lib/salons/city-filter"
+import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 export const EXPLORE_CATEGORY_FILTERS = [
@@ -133,6 +133,7 @@ export function buildExploreHref(
     sp.set("lng", String(next.urlLongitude))
   } else if (next.city) {
     sp.set("city", next.city)
+    if (next.area) sp.set("area", next.area)
   } else if (next.area) {
     sp.set("area", next.area)
   }
@@ -207,9 +208,15 @@ export function filterExploreSalons(
     )
   }
 
-  if (state.city) {
-    result = filterSalonsByCityPreferExact(result, state.city).salons
-  } else if (!state.nearMode && state.area) {
+  // Browse-by-city is strict: only show salons in the selected city.
+  // Homepage PreferExact still falls back for launch visibility; Explore must not.
+  if (state.city && !state.nearMode) {
+    result = filterSalonsByCity(result, state.city)
+    if (state.area) {
+      const area = state.area.toLowerCase()
+      result = result.filter((salon) => salon.area.toLowerCase().includes(area))
+    }
+  } else if (!state.city && !state.nearMode && state.area) {
     const area = state.area.toLowerCase()
     result = result.filter((salon) => salon.area.toLowerCase().includes(area))
   }

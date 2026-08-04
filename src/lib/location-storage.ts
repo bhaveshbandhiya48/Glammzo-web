@@ -147,3 +147,48 @@ export function buildExploreNearMeHref(
   if (extra?.category && extra.category !== "all") sp.set("category", extra.category)
   return `/explore?${sp.toString()}`
 }
+
+const EXPLORE_FILTER_PARAMS = [
+  "category",
+  "q",
+  "sort",
+  "price",
+  "rating",
+  "radius",
+  "open",
+] as const
+
+/** Build `/explore` URL for a stored location, keeping non-location filters. */
+export function buildExploreHrefForStoredLocation(
+  stored: StoredLocation,
+  currentSearch?: string | URLSearchParams,
+): string {
+  const current =
+    typeof currentSearch === "string"
+      ? new URLSearchParams(currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch)
+      : currentSearch
+        ? new URLSearchParams(currentSearch)
+        : new URLSearchParams()
+
+  const sp = new URLSearchParams()
+  for (const key of EXPLORE_FILTER_PARAMS) {
+    const value = current.get(key)
+    if (value) sp.set(key, value)
+  }
+
+  if (hasActiveNearMe(stored) && stored.latitude != null && stored.longitude != null) {
+    sp.set("near", "1")
+    sp.set("lat", stored.latitude.toFixed(5))
+    sp.set("lng", stored.longitude.toFixed(5))
+  } else {
+    const city = resolveBrowseCityFromStored(stored)
+    if (city) sp.set("city", city)
+    const area = stored.areaLabelOverride?.trim()
+    if (area && area.toLowerCase() !== city.toLowerCase()) {
+      sp.set("area", area)
+    }
+  }
+
+  const qs = sp.toString()
+  return qs ? `/explore?${qs}` : "/explore"
+}

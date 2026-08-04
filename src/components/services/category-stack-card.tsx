@@ -51,13 +51,13 @@ export function CategoryStackCard({ category, index, total }: CategoryStackCardP
             />
           </div>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent md:bg-gradient-to-l md:from-black/25 md:via-transparent md:to-transparent" />
-          <div className="pointer-events-none absolute bottom-5 left-5 right-5 max-w-[280px] rounded-2xl border border-white/20 bg-white/95 p-4 shadow-lg shadow-black/10 backdrop-blur-sm sm:bottom-6 sm:left-auto sm:right-6">
+          <div className="pointer-events-none absolute bottom-5 left-5 right-5 max-w-[280px] rounded-xl border border-white/20 bg-white/95 px-3.5 py-3 shadow-md shadow-black/10 backdrop-blur-sm sm:bottom-6 sm:left-auto sm:right-6">
             {category.overlay.badge ? (
-              <span className="inline-flex rounded-full bg-[#F5E6A8] px-2.5 py-1 text-[11px] font-semibold text-foreground">
+              <span className="inline-flex rounded-md bg-[#F5E6A8] px-2 py-0.5 text-[11px] font-semibold text-foreground">
                 {category.overlay.badge}
               </span>
             ) : null}
-            <p className="mt-2 font-heading text-base font-semibold leading-snug text-foreground">
+            <p className="mt-1.5 font-heading text-base font-semibold leading-snug text-foreground">
               {category.overlay.title}
             </p>
             {category.overlay.subtitle ? (

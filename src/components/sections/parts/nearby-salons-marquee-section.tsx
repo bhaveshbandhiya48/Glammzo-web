@@ -53,6 +53,10 @@ export function NearbySalonsMarqueeSection() {
       ? `/explore?city=${encodeURIComponent(browseCity)}`
       : "/explore"
 
+  if (loaded && nearbySalons.length === 0) {
+    return null
+  }
+
   return (
     <MotionSection
       id="nearby-salons"

@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/auth/login-form"
+import { ContinueWithPhoneForm } from "@/components/auth/continue-with-phone-form"
 
 export default async function LoginPage({
   searchParams,
@@ -8,6 +8,5 @@ export default async function LoginPage({
   const sp = (await searchParams) ?? {}
   const rawNext = Array.isArray(sp.next) ? sp.next[0] : sp.next
   const nextPath = typeof rawNext === "string" && rawNext.startsWith("/") ? rawNext : "/"
-  return <LoginForm nextPath={nextPath} />
+  return <ContinueWithPhoneForm nextPath={nextPath} />
 }
-

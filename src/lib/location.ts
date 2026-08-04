@@ -88,6 +88,9 @@ export function formatHeroAreaLabel(
       return stored.displayLabel.split(",")[0]?.trim() || stored.displayLabel
     }
   }
+  if (stored?.city?.trim() && !stored.nearMe) {
+    return stored.city.trim()
+  }
   if (stored?.defaultFallback) return DEFAULT_FALLBACK_HERO_AREA
   if (stored?.areaLabelOverride) return stored.areaLabelOverride
   return loc.areaLabel
@@ -117,6 +120,15 @@ export function formatStoredLocationLabel(
     const city = stored.city ?? loc.label
     return `${city} · ${stored.resolvedArea}`
   }
+  // Manual city pick from the location dialog search.
+  if (stored?.city?.trim() && !stored.nearMe) {
+    const city = stored.city.trim()
+    const area = stored.areaLabelOverride?.trim()
+    if (area && area.toLowerCase() !== city.toLowerCase()) {
+      return `${city} · ${area}`
+    }
+    return city
+  }
   if (stored?.areaLabelOverride && stored.areaLabelOverride !== "Near me") {
     return formatLocationLabel(loc, stored.areaLabelOverride)
   }
@@ -145,6 +157,10 @@ export function formatBrowseSalonsCityLabel(
       const [locality] = stored.displayLabel.split(",")
       return locality?.trim() || stored.displayLabel
     }
+  }
+  // Manual city pick (e.g. typed Jamnagar in the location dialog).
+  if (stored?.city?.trim()) {
+    return stored.city.trim()
   }
   return loc.label
 }

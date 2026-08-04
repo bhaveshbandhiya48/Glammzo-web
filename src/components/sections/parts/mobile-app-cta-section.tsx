@@ -17,7 +17,7 @@ export function MobileAppCtaSection() {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-80px" }}
-      className="section-y"
+      className="section-y hidden md:block"
     >
       <Container>
         <MotionDiv variants={fadeUp}>

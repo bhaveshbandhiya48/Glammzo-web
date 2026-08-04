@@ -14,6 +14,13 @@ export type BookingServiceItem = {
   durationMin: number
 }
 
+/** Customer's verified review for a completed visit (when already submitted). */
+export type BookingReview = {
+  rating: number
+  comment: string
+  reviewType: string
+}
+
 export type Booking = {
   id: string
   salonId: string
@@ -25,6 +32,8 @@ export type Booking = {
   isCrmCompleted?: boolean
   /** True only when a verified customer review already exists. */
   hasVerifiedReview?: boolean
+  /** Submitted review details when `hasVerifiedReview` is true. */
+  review?: BookingReview
   /** Assigned team member for this visit (CRM). */
   staffId?: string
   staffName?: string

@@ -72,3 +72,34 @@ export function formatBookingDate(isoDate: string): string {
     year: "numeric",
   })
 }
+
+const PAY_AT_SALON_NOTE = /^pay at salon:\s*₹?\s*[\d,]+(?:\.\d+)?$/i
+const PAID_AT_SALON_NOTE = /^paid at salon$/i
+
+function isPayAtSalonNoteLine(line: string) {
+  const trimmed = line.trim()
+  return PAY_AT_SALON_NOTE.test(trimmed) || PAID_AT_SALON_NOTE.test(trimmed)
+}
+
+/** True when booking notes include a pay-/paid-at-salon line. */
+export function hasPayAtSalonNote(notes: string | null | undefined): boolean {
+  if (!notes?.trim()) return false
+  return notes.split("\n").some(isPayAtSalonNoteLine)
+}
+
+/**
+ * Consumer-facing booking notes with pay-at-salon lines removed
+ * (those are shown with the total instead).
+ */
+export function formatBookingNotesForDisplay(
+  notes: string | null | undefined,
+): string {
+  const raw = notes?.trim()
+  if (!raw) return ""
+
+  return raw
+    .split("\n")
+    .filter((line) => !isPayAtSalonNoteLine(line))
+    .join("\n")
+    .trim()
+}

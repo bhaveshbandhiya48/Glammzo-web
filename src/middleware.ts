@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
       : pathname.startsWith("/dashboard/")
         ? pathname
         : pathname === "/dashboard"
-          ? "/dashboard/bookings"
+          ? "/dashboard/profile#bookings"
           : "/"
     url.searchParams.set("next", next)
     return NextResponse.redirect(url)

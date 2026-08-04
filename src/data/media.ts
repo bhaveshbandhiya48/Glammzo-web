@@ -1,15 +1,24 @@
 /**
- * Glammzo media, curated salon booking imagery (Unsplash + Pexels).
- * Re-sync: npm run media:sync · Credits: src/data/media-credits.ts
+ * Glammzo media, curated salon booking imagery.
+ * Category images: public/images/categories/*.png
  */
 
 export const media = {
   categories: {
-    hair: "/images/categories/hair.jpg",
-    spa: "/images/categories/spa.jpg",
-    nails: "/images/categories/nails.jpg",
-    makeup: "/images/categories/makeup.jpg",
-    grooming: "/images/categories/grooming.jpg",
+    hair: "/images/categories/hair.png",
+    spa: "/images/categories/spa.png",
+    nails: "/images/categories/nails.png",
+    makeup: "/images/categories/makeup.png",
+    grooming: "/images/categories/grooming.png",
+    bridal: "/images/categories/bridal.png",
+    cleanup: "/images/categories/cleanup.png",
+    extensions: "/images/categories/extensions.png",
+    facial: "/images/categories/facial.png",
+    fitness: "/images/categories/fitness.png",
+    kids: "/images/categories/kids.png",
+    threading: "/images/categories/threading.png",
+    waxing: "/images/categories/waxing.png",
+    yoga: "/images/categories/yoga.png",
   },
   salons: {
     s1: "/images/salons/s1.jpg",
@@ -23,6 +32,11 @@ export const media = {
   sections: {
     featuredExperience: "/images/sections/featured-experience.jpg",
     mobileApp: "/images/sections/mobile-app.jpg",
+    partnerSalon: "/images/sections/partner-salon.jpg",
+    exploreComingSoon: "/images/sections/explore-coming-soon.jpg",
+    partnerFlangeSign: "/images/sections/partner-flange-kit.jpg",
+    partnerFlangeHero: "/images/sections/partner-flange-hero.jpg",
+    partnerFlangeCta: "/images/sections/partner-flange-cta.jpg",
   },
   auth: {
     salon: "/images/auth/salon.jpg",

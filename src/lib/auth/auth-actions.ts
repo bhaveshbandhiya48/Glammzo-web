@@ -214,7 +214,7 @@ function resolveSafeNextPath(value: string) {
   }
 
   if (pathname === "/dashboard") {
-    return "/dashboard/bookings"
+    return "/dashboard/profile#bookings"
   }
 
   return next

@@ -27,7 +27,7 @@ function rescheduleErrorMessage(error: string | undefined) {
 
 export default async function RescheduleBookingPage({ params, searchParams }: PageProps) {
   const session = await getSession()
-  if (!session?.phone) redirect("/login?next=/dashboard/bookings")
+  if (!session?.phone) redirect("/login?next=/dashboard/profile%23bookings")
 
   const { appointmentId } = await params
   const { error } = await searchParams
@@ -71,7 +71,7 @@ export default async function RescheduleBookingPage({ params, searchParams }: Pa
   if (!customer || customer.phone_normalized !== phoneDigits) notFound()
 
   if (row.status === "cancelled" || row.status === "completed" || row.status === "no_show") {
-    redirect("/dashboard/bookings?error=reschedule")
+    redirect("/dashboard/profile?error=reschedule#bookings")
   }
 
   const salonRelation = Array.isArray(row.salons) ? row.salons[0] : row.salons
@@ -100,7 +100,7 @@ export default async function RescheduleBookingPage({ params, searchParams }: Pa
     <div className="mx-auto max-w-lg space-y-6">
       <div>
         <Link
-          href="/dashboard/bookings"
+          href="/dashboard/profile#bookings"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/60 transition-colors hover:text-foreground focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <ArrowLeftIcon className="size-4" aria-hidden />

@@ -1,3 +1,5 @@
+import { LAUNCH_PROMO_CODE, LAUNCH_CASHBACK_RUPEES, LAUNCH_CASHBACK_MIN_RUPEES } from "@/lib/marketing/launch-promo"
+
 export type HelpTopic = {
   id: string
   title: string
@@ -91,7 +93,7 @@ export const HELP_CENTER = {
         "Completed visits may allow leaving a review when prompted.",
         "If a salon declines or a request expires, you can book again anytime.",
       ],
-      relatedHref: "/dashboard/bookings",
+      relatedHref: "/dashboard/profile#bookings",
       relatedLabel: "Open My Appointments",
     },
     {
@@ -102,11 +104,14 @@ export const HELP_CENTER = {
         "Service and package prices come from each salon’s catalogue.",
         "Totals shown during booking are estimates for the items you select.",
         "Unless checkout clearly says otherwise, pay at the salon for the visit.",
+        "Glammzo wallet credit and free-service loyalty rewards can reduce what you pay at the salon.",
+        `Use promo code ${LAUNCH_PROMO_CODE} when you book ₹${LAUNCH_CASHBACK_MIN_RUPEES}+ to unlock ₹${LAUNCH_CASHBACK_RUPEES} wallet cashback after your first completed visit.`,
+        "Every 10 completed visits unlocks ₹999 off one service (free if that service costs ₹999 or less).",
         "Final charges may change if you add services or the salon applies taxes/fees.",
         "For refund questions on pay-at-salon visits, contact the salon directly.",
       ],
-      relatedHref: "/cancellation-policy#payments-refunds",
-      relatedLabel: "Read payment notes",
+      relatedHref: "/dashboard/profile#wallet",
+      relatedLabel: "Open profile wallet",
     },
     {
       id: "account",

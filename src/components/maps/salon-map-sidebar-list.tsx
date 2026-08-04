@@ -48,13 +48,6 @@ export function SalonMapSidebarList({
         className,
       )}
     >
-      <div className="border-b border-border/60 bg-card px-4 py-3">
-        <p className="text-sm font-semibold text-foreground">
-          {salons.length} salon{salons.length === 1 ? "" : "s"}
-        </p>
-        <p className="mt-0.5 text-xs text-foreground/50">Tap a salon or select a pin on the map</p>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto p-3 [scrollbar-width:thin]">
         <div className="grid grid-cols-2 gap-3">
           {salons.map((salon) => (

@@ -15,6 +15,7 @@ import {
 } from "@/lib/location-storage"
 import { getExploreMapCenter, mapSalonsToNearbyRecords } from "@/lib/maps/explore-map"
 import { isGoogleMapsConfigured } from "@/lib/maps/config"
+import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
 
@@ -31,6 +32,8 @@ const CustomerSalonMapCanvas = dynamic(
 
 type ExploreGoogleMapProps = {
   salons: Salon[]
+  /** Header / explore city used for the initial map scope. */
+  locationCity?: string
   nearFromUrl?: boolean
   urlLatitude?: number
   urlLongitude?: number
@@ -43,6 +46,7 @@ const MAP_HEIGHT_EXPANDED = "h-[min(85vh,56rem)]"
 
 export function ExploreGoogleMap({
   salons,
+  locationCity,
   nearFromUrl,
   urlLatitude,
   urlLongitude,
@@ -52,12 +56,20 @@ export function ExploreGoogleMap({
   const origin = useExploreDistanceOrigin({ nearFromUrl, urlLatitude, urlLongitude })
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null)
   const [mapExpanded, setMapExpanded] = useState(false)
+  const [showAllRegistered, setShowAllRegistered] = useState(false)
 
   const mapCenter = getExploreMapCenter(origin)
 
+  const citySalons = useMemo(() => {
+    if (!locationCity?.trim()) return salons
+    return filterSalonsByCity(salons, locationCity)
+  }, [locationCity, salons])
+
+  const scopedSalons = showAllRegistered ? salons : citySalons
+
   const salonsWithDistance = useMemo(
-    () => applySalonDistances(salons, origin),
-    [salons, origin],
+    () => applySalonDistances(scopedSalons, origin),
+    [scopedSalons, origin],
   )
 
   const mapSalons = useMemo(
@@ -69,6 +81,11 @@ export function ExploreGoogleMap({
     const mapIds = new Set(mapSalons.map((salon) => salon.id))
     return salonsWithDistance.filter((salon) => mapIds.has(salon.id))
   }, [salonsWithDistance, mapSalons])
+
+  // Reset to selected-city scope when the header location changes.
+  useEffect(() => {
+    setShowAllRegistered(false)
+  }, [locationCity])
 
   useEffect(() => {
     if (mapSalons.length === 0) {
@@ -133,6 +150,10 @@ export function ExploreGoogleMap({
           }
           window.dispatchEvent(new CustomEvent(LOCATION_UPDATED_EVENT))
         }}
+        onZoomChanged={() => {
+          setShowAllRegistered(true)
+        }}
+        autoFitBounds={!showAllRegistered}
         showMapPopover={mapExpanded}
         mapExpanded={mapExpanded}
         onToggleMapExpanded={() => setMapExpanded((current) => !current)}

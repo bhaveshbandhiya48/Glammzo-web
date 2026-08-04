@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon, CheckIcon } from "lucide-react"
 
+import { media } from "@/data/media"
 import { siteCopy } from "@/data/site-copy"
 import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { Navbar } from "@/components/layout/navbar"
@@ -11,12 +13,28 @@ import { SectionHeader } from "@/components/shared/section-header"
 import { ServiceCategoryGridCard } from "@/components/services/service-category-grid-card"
 import { Button } from "@/components/ui/button"
 import { Footer } from "@/components/sections/parts/footer"
+import { SEO_SERVICES, SITE_URL } from "@/lib/seo/site-seo"
 
 const { categories: categoriesCopy } = siteCopy
 
+const BOOKING_HIGHLIGHTS = [
+  "Upfront prices before you book",
+  "Real ratings from recent visits",
+  "Confirm your slot in minutes",
+] as const
+
 export const metadata: Metadata = {
-  title: "Services",
-  description: categoriesCopy.subtitle,
+  title: SEO_SERVICES.title,
+  description: SEO_SERVICES.description,
+  keywords: [
+    "salon services near me",
+    "hair salon near me",
+    "spa near me",
+    "nail salon near me",
+  ],
+  alternates: {
+    canonical: `${SITE_URL}/services`,
+  },
 }
 
 export default async function ServicesPage() {
@@ -70,23 +88,67 @@ export default async function ServicesPage() {
         </PageSection>
 
         <PageSection tone="featured" separated>
-          <SectionHeader
-            eyebrow="Ready to book?"
-            title="Find salons offering these services"
-            subtitle="Compare ratings, prices, and availability and confirm in minutes."
-            align="center"
-            className="mb-8"
-          />
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="px-8">
-              <Link href="/explore">
-                Explore salons
-                <ArrowRightIcon className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="px-8">
-              <Link href="/#how">How it works</Link>
-            </Button>
+          <div className="overflow-hidden rounded-[1.5rem] bg-foreground text-background shadow-[0_28px_70px_-32px_rgba(0,0,0,0.45)] ring-1 ring-black/10">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+              <div className="relative min-h-[220px] sm:min-h-[280px] lg:min-h-full">
+                <Image
+                  src={media.sections.exploreComingSoon}
+                  alt="Professional salon ready for booking"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 48vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/15 lg:to-black/50" />
+              </div>
+
+              <div className="flex flex-col justify-center px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+                <p className="text-[11px] font-semibold tracking-[0.16em] text-white/55 uppercase">
+                  Ready to book?
+                </p>
+                <h2 className="mt-3 font-heading text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+                  Find salons for the service you want
+                </h2>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-white/70 sm:text-base">
+                  Compare ratings, prices, and availability, then confirm your appointment without
+                  phone calls.
+                </p>
+
+                <ul className="mt-6 space-y-2.5">
+                  {BOOKING_HIGHLIGHTS.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-2.5 text-sm font-medium text-white/85"
+                    >
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <CheckIcon className="size-3" strokeWidth={2.5} aria-hidden />
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="px-8 shadow-lg shadow-primary/30 transition-transform duration-200 hover:-translate-y-0.5"
+                  >
+                    <Link href="/explore">
+                      Explore salons
+                      <ArrowRightIcon className="size-4 transition-transform duration-200 group-hover/button:translate-x-1" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="ghost"
+                    className="border border-white/25 bg-white/5 px-8 text-white hover:bg-white/12 hover:text-white"
+                  >
+                    <Link href="/#how">How it works</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </PageSection>
       </main>

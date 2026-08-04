@@ -1,9 +1,10 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Bricolage_Grotesque, Inter, Sora } from "next/font/google"
 
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
 import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
 import { getSalons } from "@/lib/salons"
+import { SEO_HOME, SITE_URL } from "@/lib/seo/site-seo"
 import { ExploreDistanceOriginProvider } from "@/providers/explore-distance-origin-provider"
 import { SalonCatalogProvider } from "@/providers/salon-catalog-provider"
 import "./globals.css"
@@ -29,23 +30,36 @@ const logoFont = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: {
-    default: "Glammzo · Salon booking, made calm",
+    default: SEO_HOME.title,
     template: "%s · Glammzo",
   },
-  description:
-    "Discover trusted salons, compare services with upfront pricing, and book appointments in minutes.",
-  metadataBase: new URL("https://glammzo.com"),
+  description: SEO_HOME.description,
+  metadataBase: new URL(SITE_URL),
+  applicationName: "Glammzo",
+  keywords: [...SEO_HOME.keywords],
+  authors: [{ name: "Glammzo" }],
+  creator: "Glammzo",
+  publisher: "Fixxzo Technologies Private Limited",
+  category: "beauty",
   openGraph: {
-    title: "Glammzo · Salon booking, made calm",
-    description:
-      "Discover trusted salons, compare services with upfront pricing, and book in minutes.",
+    title: SEO_HOME.title,
+    description: SEO_HOME.description,
     type: "website",
+    siteName: "Glammzo",
+    locale: "en_IN",
+    url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Glammzo",
-    description:
-      "Discover nearby salons, compare services, and reserve appointments effortlessly.",
+    title: SEO_HOME.title,
+    description: SEO_HOME.description,
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   icons: {
     icon: [{ url: "/brand/glamzzo-icon.svg", type: "image/svg+xml" }],
@@ -57,6 +71,13 @@ export const metadata: Metadata = {
     title: "Glammzo",
     statusBarStyle: "default",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f6f4f1",
 }
 
 export default async function RootLayout({

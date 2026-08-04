@@ -26,6 +26,23 @@ export function filterSalonsByCity(salons: Salon[], city: string): Salon[] {
   return salons.filter((salon) => isSalonInCity(salon, city))
 }
 
+/** Distinct neighbourhood labels for salons in a city (excludes city-name-only areas). */
+export function getSalonAreasForCity(salons: Salon[], city: string): string[] {
+  const selectedCity = normalizeCityName(city)
+  if (!selectedCity) return []
+
+  const areas = new Map<string, string>()
+  for (const salon of filterSalonsByCity(salons, city)) {
+    const area = salon.area?.trim()
+    if (!area) continue
+    if (normalizeCityName(area) === selectedCity) continue
+    const key = area.toLowerCase()
+    if (!areas.has(key)) areas.set(key, area)
+  }
+
+  return Array.from(areas.values()).sort((a, b) => a.localeCompare(b))
+}
+
 /**
  * Prefer exact city matches. When none exist yet, keep showing other published
  * partners so launch cities outside the default browse city are not invisible.

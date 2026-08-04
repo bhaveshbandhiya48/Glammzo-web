@@ -18,7 +18,7 @@ import {
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
 import { BookingSuccessConfetti } from "@/components/booking/booking-success-confetti"
 import { Button } from "@/components/ui/button"
-import { formatBookingDate, formatDuration } from "@/lib/bookings/utils"
+import { formatBookingDate, formatBookingNotesForDisplay, formatDuration, hasPayAtSalonNote } from "@/lib/bookings/utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import type { Booking, BookingStatus } from "@/types/booking"
 import { cn } from "@/lib/utils"
@@ -126,6 +126,12 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
   const hasHiddenServices = hiddenServices.length > 0
   const bookingReference = booking.id.slice(0, 8).toUpperCase()
   const StatusIcon = isNegative ? XCircleIcon : CheckCircle2Icon
+  const isCompleted =
+    Boolean(booking.isCrmCompleted) || booking.status === "completed"
+  const displayNotes = formatBookingNotesForDisplay(booking.notes)
+  const showSalonPaymentLabel =
+    hasPayAtSalonNote(booking.notes) || isCompleted || !isNegative
+  const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
 
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-col">
@@ -275,13 +281,13 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
               </ul>
             </div>
 
-            {booking.notes ? (
+            {displayNotes ? (
               <div className="rounded-2xl border border-border/50 bg-muted/30 px-4 py-3.5">
                 <p className="text-[0.68rem] font-semibold tracking-[0.14em] text-foreground/40 uppercase">
                   Your notes
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
-                  {booking.notes}
+                  {displayNotes}
                 </p>
               </div>
             ) : null}
@@ -296,7 +302,7 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                   Estimated Total
                 </p>
                 <p className="mt-3 text-xs font-medium text-foreground/50">
-                  Pay at Salon
+                  {showSalonPaymentLabel ? salonPaymentLabel : null}
                 </p>
               </div>
               <p className="font-heading text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[2rem]">
@@ -453,7 +459,7 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                 size="lg"
                 className="h-12 w-full rounded-full text-[0.95rem] shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/25"
               >
-                <Link href="/dashboard/bookings">Manage Booking</Link>
+                <Link href="/dashboard/profile#bookings">Manage Booking</Link>
               </Button>
               <Button
                 asChild

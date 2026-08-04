@@ -7,6 +7,7 @@ import { FloatingGradientBlob } from "@/components/hero/FloatingGradientBlob"
 import { siteCopy } from "@/data/site-copy"
 import { media } from "@/data/media"
 import { HeroLiveBadge } from "@/components/explore/explore-location-copy"
+import { HeroLaunchOfferCallout } from "@/components/sections/parts/hero-launch-offer-callout"
 import { HeroVisual } from "@/components/sections/parts/hero-visual"
 import { Container } from "@/components/layout/container"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -91,8 +92,12 @@ export function HeroSection() {
             </div>
           </MotionDiv>
 
-          <MotionDiv variants={fadeUp} className="flex w-full justify-center">
+          <MotionDiv
+            variants={fadeUp}
+            className="mx-auto flex w-full max-w-[520px] flex-col gap-3"
+          >
             <HeroVisual />
+            <HeroLaunchOfferCallout />
           </MotionDiv>
         </div>
       </Container>

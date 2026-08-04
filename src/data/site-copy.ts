@@ -15,21 +15,30 @@ export const siteCopy = {
   ] as const,
   hero: {
     badge: "Now live near you",
-    headline: "Your next salon visit,",
-    headlineAccent: "booked in minutes.",
+    headline: "Find a salon near you,",
+    headlineAccent: "book in minutes.",
     subhead:
-      "Glammzo helps you find the right salon, see real prices, and confirm appointments without phone calls or guesswork.",
-    primaryCta: "Find a salon",
+      "Discover salons nearby, see fixed prices, and confirm appointments without phone calls or guesswork.",
+    offerLine: "Book your first service and get ₹200 cashback",
+    primaryCta: "Book your first service",
     secondaryCta: "See how it works",
     searchPlaceholder: "Service or salon",
     locationPlaceholder: "Area",
     socialProof: "Trusted by early users across the city",
   },
+  launchOfferCta: {
+    eyebrow: "Launch offer",
+    title: "Book your first service and get ₹200 cashback",
+    subtitle:
+      "Complete your first visit and ₹200 lands in your Glammzo wallet for your next booking.",
+    primaryCta: "Find a salon & book",
+    secondaryCta: "Copy offer code",
+  },
   statement: {
     eyebrow: "Why Glammzo",
     title: "Great salons. Zero phone tag.",
     subtitle:
-      "Compare trusted studios, see prices upfront, and lock your slot in under two minutes — no calls, no back-and-forth.",
+      "Compare trusted studios, see prices upfront, and lock your slot in under two minutes. No calls, no back and forth.",
     cta: "Find salons near you",
   },
   stats: {
@@ -40,11 +49,17 @@ export const siteCopy = {
     title: "Three steps to your chair",
     subtitle: "Search, compare, and book. The flow stays simple whether it’s a quick trim or a full spa day.",
   },
+  whyChoose: {
+    eyebrow: "Why choose Glammzo",
+    title: "Booking that feels simple and clear",
+    subtitle:
+      "Verified salons, upfront prices, launch discounts, and loyalty rewards — without the phone tag.",
+  },
   categories: {
     eyebrow: "Services",
     title: "Everything you book in one place",
     subtitle:
-      "From everyday grooming to special occasion glam. Explore by category and book with clear pricing.",
+      "From everyday grooming to special occasion glam, explore by category and book with clear pricing.",
   },
   salons: {
     eyebrow: "Featured partners",
@@ -54,9 +69,9 @@ export const siteCopy = {
     partnerCta: "Own a salon? Join us",
   },
   nearbySalonsMarquee: {
-    eyebrow: "Near you",
+    eyebrow: "Salon near me",
     title: "Salons near you",
-    subtitle: "Live listings within 10 km — tap any card to view services and book.",
+    subtitle: "Live listings within 10 km. Find a salon nearby and book online.",
     viewAllCta: "View all salons",
   },
   experience: {
@@ -131,6 +146,33 @@ export const howItWorksSteps = [
     title: "Confirm",
     description:
       "Choose a time slot, book instantly, and get a clear confirmation with reminders included.",
+  },
+] as const
+
+export const whyChooseReasons = [
+  {
+    id: "verified",
+    title: "Verified salon partners",
+    description:
+      "Browse live listings with hours, services, and photos published by partner salons so you know what you’re booking.",
+  },
+  {
+    id: "pricing",
+    title: "Transparent pricing",
+    description:
+      "See fixed prices and durations before you request a slot. No surprise totals when you’re ready to book.",
+  },
+  {
+    id: "booking",
+    title: "Book in minutes",
+    description:
+      "Pick a service, choose a time, and confirm online. Skip the back-and-forth calls and WhatsApp threads.",
+  },
+  {
+    id: "rewards",
+    title: "Discounts & loyalty",
+    description:
+      "Use launch offer codes for ₹200 wallet cashback, and every 10th completed service unlocks a free service (or ₹999 off).",
   },
 ] as const
 

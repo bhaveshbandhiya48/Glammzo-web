@@ -8,6 +8,7 @@ import { useMemo } from "react"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import { useCitySalonCatalog } from "@/hooks/use-city-salon-catalog"
 import { applySalonDistances } from "@/lib/explore-distance"
+import { NEARBY_SALON_RADIUS_KM } from "@/lib/salons/nearby-salons"
 import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
 import { SectionHeader } from "@/components/shared/section-header"
@@ -19,11 +20,21 @@ import { cn } from "@/lib/utils"
 
 const { salons: salonsCopy } = siteCopy
 
+function salonLocationLabel(salon: Pick<Salon, "area" | "city" | "distanceKm">) {
+  const city = salon.city?.trim()
+  const area = salon.area?.trim()
+  // Far / other-city cards: city is clearer than a local area name.
+  if ((salon.distanceKm ?? 0) > NEARBY_SALON_RADIUS_KM && city) {
+    return city
+  }
+  return area || city || "—"
+}
+
 function toNearbyPreview(salon: Salon) {
   return {
     id: salon.id,
     name: salon.name,
-    area: salon.area,
+    locationLabel: salonLocationLabel(salon),
     imageUrl: salon.imageUrl,
     rating: salon.rating,
     reviews: salon.reviews,
@@ -92,7 +103,7 @@ export function NearbySalonsSection() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-white/70">
                         <MapPinIcon className="size-4 shrink-0" />
-                        <span>{s.area}</span>
+                        <span>{s.locationLabel}</span>
                         {s.distanceKm > 0 ? (
                           <>
                             <span>·</span>

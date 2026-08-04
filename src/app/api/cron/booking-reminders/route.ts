@@ -1,5 +1,6 @@
 import { processConsumerBookingReminders } from "@/lib/bookings/crm/process-booking-reminders"
 import { processConsumerBookingOutcomeNotices } from "@/lib/bookings/crm/process-booking-outcome-notices"
+import { processPendingCompletionRewards } from "@/lib/wallet/process-completion-rewards"
 import { isCronRequestAuthorized } from "@/lib/env/cron-auth"
 
 export const runtime = "nodejs"
@@ -10,14 +11,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [remindersSent, outcomeSent] = await Promise.all([
+    const [remindersSent, outcomeSent, rewards] = await Promise.all([
       processConsumerBookingReminders(),
       processConsumerBookingOutcomeNotices(),
+      processPendingCompletionRewards(40),
     ])
     return Response.json({
       ok: true,
       sent: remindersSent,
       outcomeNoticesSent: outcomeSent,
+      walletRewards: rewards,
     })
   } catch (error) {
     console.error("[cron] booking reminders failed:", error)

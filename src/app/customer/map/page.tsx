@@ -7,8 +7,10 @@ import { PageSection } from "@/components/layout/page-section"
 import { Footer } from "@/components/sections/parts/footer"
 
 export const metadata: Metadata = {
-  title: "Salon map",
-  description: "Discover nearby salons on Glammzo with an interactive map.",
+  title: "Salon map near me",
+  description:
+    "Discover salons near me on an interactive map. Find nearby beauty and hair salons, compare locations, and book on Glammzo.",
+  robots: { index: true, follow: true },
 }
 
 export default function CustomerMapPage() {

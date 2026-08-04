@@ -68,5 +68,8 @@ export async function cancelCrmWebBooking(
     return { success: false, error: "Could not cancel booking. Please try again." }
   }
 
+  const { restoreBookingWalletLoyalty } = await import("@/lib/wallet/customer-wallet")
+  await restoreBookingWalletLoyalty(appointmentId)
+
   return { success: true }
 }

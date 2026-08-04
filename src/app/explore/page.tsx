@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { cookies } from "next/headers"
 
-import { siteCopy } from "@/data/site-copy"
-import { getSalonsByCategory } from "@/lib/salons"
+import { getSalons, getSalonsByCategory } from "@/lib/salons"
 import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { getConsumerFavoriteSalonIds } from "@/lib/favorites/server"
 import { getSession } from "@/lib/auth/session"
@@ -15,12 +14,13 @@ import { SectionHeader } from "@/components/shared/section-header"
 import { ExploreFeaturedGrid } from "@/components/explore/explore-featured-grid"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreResultsSection } from "@/components/explore/explore-results-section"
+import { ExploreCityComingSoon } from "@/components/explore/explore-city-coming-soon"
 import {
-  ExploreEmptyCityMessage,
   ExplorePageTitle,
   ExplorePartnerSubtitle,
   ExploreResultsSubtitle,
 } from "@/components/explore/explore-location-copy"
+import { PartnerDiscoverCta } from "@/components/sections/parts/partner-discover-cta"
 import { Footer } from "@/components/sections/parts/footer"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,10 +36,26 @@ import {
   sortExploreSalons,
 } from "@/lib/explore-filters"
 import { GLAMZZO_CITY_COOKIE } from "@/lib/location-city-cookie"
+import { SEO_EXPLORE, SITE_URL } from "@/lib/seo/site-seo"
 
 export const metadata: Metadata = {
-  title: "Explore salons",
-  description: siteCopy.brand.description,
+  title: SEO_EXPLORE.title,
+  description: SEO_EXPLORE.description,
+  keywords: [
+    "salon near me",
+    "salons near me",
+    "explore salons",
+    "book salon online",
+    "salon Bengaluru",
+  ],
+  alternates: {
+    canonical: `${SITE_URL}/explore`,
+  },
+  openGraph: {
+    title: SEO_EXPLORE.title,
+    description: SEO_EXPLORE.description,
+    url: `${SITE_URL}/explore`,
+  },
 }
 
 export const dynamic = "force-dynamic"
@@ -92,9 +108,10 @@ export default async function ExplorePage({
 
   const radiusKm = resolveExploreRadiusKm(radius)
 
-  const [byCategory, browseCategories] = await Promise.all([
+  const [byCategory, browseCategories, allSalons] = await Promise.all([
     getSalonsByCategory(active),
     getBrowseDefaultCategories(),
+    getSalons(),
   ])
   const categoryFilters = [
     { id: "all", label: "All" },
@@ -107,7 +124,10 @@ export default async function ExplorePage({
   const list = sortExploreSalons(filtered, sort)
   const crmConnected = isSupabaseConfigured()
   const awaitingPublish =
-    crmConnected && list.length === 0 && !hasAnyExploreFilters(searchState)
+    crmConnected &&
+    allSalons.length === 0 &&
+    list.length === 0 &&
+    !hasAnyExploreFilters(searchState)
   const activeFilterLabel =
     categoryFilters.find((filter) => filter.id === active)?.label ??
     getExploreCategoryLabel(active)
@@ -198,7 +218,13 @@ export default async function ExplorePage({
             <>
               <SectionHeader
                 eyebrow="Results"
-                title="No matches right now"
+                title={
+                  awaitingPublish
+                    ? "No matches right now"
+                    : city
+                      ? `Salons in ${city}`
+                      : "Salons near you"
+                }
                 subtitle={
                   <ExploreResultsSubtitle
                     activeFilterLabel={activeFilterLabel}
@@ -211,24 +237,24 @@ export default async function ExplorePage({
 
               <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
 
-              <div className="mx-auto mt-6 max-w-md rounded-3xl border border-border/80 bg-card px-8 py-12 text-center shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
-                <p className="font-heading text-lg font-semibold">No salons match yet</p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/60">
-                  {awaitingPublish ? (
-                    <>
-                      Glammzo is connected to your CRM, but no salon is{" "}
-                      <span className="font-medium text-foreground">published</span> yet. In the CRM,
-                      open <span className="font-medium text-foreground">Settings → Public listing</span>,
-                      complete the checklist, then click Publish.
-                    </>
-                  ) : (
-                    <ExploreEmptyCityMessage />
-                  )}
-                </p>
-                <Button asChild className="mt-6">
-                  <Link href="/explore">View all salons</Link>
-                </Button>
-              </div>
+              {awaitingPublish ? (
+                <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border/70 bg-card px-8 py-10 text-center shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
+                  <p className="font-heading text-lg font-semibold">No salons match yet</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/60">
+                    Glammzo is connected to your CRM, but no salon is{" "}
+                    <span className="font-medium text-foreground">published</span> yet. In the CRM,
+                    open <span className="font-medium text-foreground">Settings → Public listing</span>,
+                    complete the checklist, then click Publish.
+                  </p>
+                  <Button asChild className="mt-6">
+                    <Link href="/explore">View all salons</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <ExploreCityComingSoon city={city || area || "your city"} />
+                </div>
+              )}
             </>
           ) : (
             <ExploreResultsSection
@@ -272,18 +298,10 @@ export default async function ExplorePage({
         </PageSection>
 
         <PageSection tone="featured" separated>
-          <SectionHeader
-            eyebrow="Own a salon?"
-            title="Get discovered on Glammzo"
+          <PartnerDiscoverCta
             subtitle={<ExplorePartnerSubtitle />}
-            align="center"
-            className="mb-8"
+            salonCount={allSalons.length}
           />
-          <div className="flex justify-center">
-            <Button asChild size="lg" className="px-8">
-              <Link href="/for-salons">Partner with us</Link>
-            </Button>
-          </div>
         </PageSection>
       </main>
       <Footer />

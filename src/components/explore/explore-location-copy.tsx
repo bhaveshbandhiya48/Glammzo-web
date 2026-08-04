@@ -32,15 +32,6 @@ export function ExploreResultsSubtitle({
   )
 }
 
-export function ExploreEmptyCityMessage() {
-  const { browseCity } = useUserLocation()
-  return (
-    <>
-      Try a different category or area. We&apos;re adding partners in {browseCity} every week.
-    </>
-  )
-}
-
 export function ExplorePartnerSubtitle() {
   const { browseCity } = useUserLocation()
   return (
