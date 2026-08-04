@@ -8,7 +8,6 @@ import { SalonDetailHero } from "@/components/salons/salon-detail/salon-detail-h
 import { SalonDetailSection } from "@/components/salons/salon-detail/salon-detail-section"
 import { SalonGalleryMasonry } from "@/components/salons/salon-gallery-masonry"
 import { SalonBookingCatalogSection } from "@/components/salons/salon-booking-catalog-section"
-import { SalonOffersSection } from "@/components/salons/salon-offers-section"
 import { SalonDetailInfoGrid } from "@/components/salons/salon-detail/salon-detail-info-grid"
 import { SalonDetailAbout } from "@/components/salons/salon-detail/salon-detail-about"
 import { SalonDetailAmenities } from "@/components/salons/salon-detail/salon-detail-amenities"
@@ -81,6 +80,7 @@ export function SalonDetailView({
             authenticated={authenticated}
             customerReviews={salon.customerReviews}
             cancellationPolicy={salon.cancellationPolicy}
+            offers={salon.offers}
           />
         </SalonDetailSection>
 
@@ -92,22 +92,6 @@ export function SalonDetailView({
             subtitle="Real photos from the team—tap any image to browse full screen."
           >
             <SalonGalleryMasonry gallery={galleryImages} salonName={salon.name} />
-          </SalonDetailSection>
-        ) : null}
-
-        {salon.offers.length > 0 ? (
-          <SalonDetailSection
-            id="offers"
-            eyebrow="Limited time"
-            title="Offers"
-            subtitle="Apply a promo when you book online."
-          >
-            <SalonOffersSection
-              offers={salon.offers}
-              salonId={salon.id}
-              authenticated={authenticated}
-              embedded
-            />
           </SalonDetailSection>
         ) : null}
 

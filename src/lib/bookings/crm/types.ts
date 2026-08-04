@@ -87,6 +87,10 @@ export type CreateCrmBookingResult =
       confirmationRequired: boolean
       confirmationDeadline: string | null
       remainingConfirmationTime: number | null
+      /** Payable after promo / loyalty / wallet — what the guest pays at the salon. */
+      payAtSalonRupees: number
+      /** Catalog / package subtotal before wallet + loyalty. */
+      subtotalRupees: number
     }
   | {
       success: false

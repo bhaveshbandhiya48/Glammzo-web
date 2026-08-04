@@ -13,6 +13,7 @@ import {
   applyOfferDiscount,
   computeBookingSubtotal,
   normalizePromoCode,
+  offerNotCoveredMessage,
   offerValidationMessage,
 } from "@/lib/salons/offer-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
@@ -88,7 +89,13 @@ export async function validatePromoCodeAction(input: {
   const result = applyOfferDiscount(offer, pricingInput)
 
   if ("error" in result) {
-    return { success: false, error: offerValidationMessage(result.error) }
+    return {
+      success: false,
+      error:
+        result.error === "no_eligible_services"
+          ? offerNotCoveredMessage(offer)
+          : offerValidationMessage(result.error),
+    }
   }
 
   return { success: true, kind: "discount", discount: result }

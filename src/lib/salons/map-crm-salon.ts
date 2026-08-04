@@ -471,6 +471,8 @@ export function mapCrmSalonToWeb(
 
     const staffRole = staff?.designation?.trim() || null
 
+    const ownerReply = r.owner_reply?.trim() || null
+
     return {
       id: r.id,
       staffId: r.staff_id?.trim() || null,
@@ -488,6 +490,15 @@ export function mapCrmSalonToWeb(
       },
       comment: r.comment,
       verified: r.verified,
+      ownerReply,
+      ownerReplyDate:
+        ownerReply && r.owner_reply_at
+          ? new Date(r.owner_reply_at).toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            })
+          : null,
     }
   })
 

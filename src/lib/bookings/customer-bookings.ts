@@ -3,6 +3,7 @@ import "server-only"
 import { fetchCrmCustomerBookings } from "@/lib/bookings/crm/fetch-customer-bookings"
 import { processConsumerBookingReminders } from "@/lib/bookings/crm/process-booking-reminders"
 import { processConsumerBookingOutcomeNotices } from "@/lib/bookings/crm/process-booking-outcome-notices"
+import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
 import { getBookings } from "@/lib/bookings/store"
 import { getSession } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -36,6 +37,11 @@ export async function getCustomerBookings(): Promise<Booking[]> {
   if (!session?.phone || !isSupabaseConfigured()) {
     return cookieBookings
   }
+
+  // Flip past-deadline pending → expired in CRM (WhatsApp) before we map UI status.
+  await triggerCrmExpiredWebBookingsCron().catch((error) => {
+    console.error("[bookings] expire trigger failed:", error)
+  })
 
   const crmBookings = await fetchCrmCustomerBookings(session.phone)
   void processConsumerBookingReminders().catch((error) => {

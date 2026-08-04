@@ -2,10 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import {
-  BookingStickySummary,
-  MobileBookingBar,
-} from "@/components/salons/booking-catalog/booking-sticky-summary"
 import { BrowseServicesAccordion } from "@/components/salons/booking-catalog/browse-services-accordion"
 import {
   BrowseAccordionSkeleton,
@@ -18,6 +14,7 @@ import { FeaturedServicesSlider } from "@/components/salons/booking-catalog/feat
 import { PackageCard } from "@/components/salons/booking-catalog/package-card"
 import { PackageDetailSheet } from "@/components/salons/booking-catalog/package-detail-sheet"
 import { ServiceDetailSheet } from "@/components/salons/booking-catalog/service-detail-sheet"
+import { BookingAssistantSidebar } from "@/components/salons/booking-assistant/booking-assistant-sidebar"
 import { useSalonCartSelection } from "@/hooks/use-salon-cart-selection"
 import {
   buildCatalogFilterChips,
@@ -33,14 +30,17 @@ import {
   mergePackageWithExtras,
   packageServiceIdsIncluded,
   pickMostBookedServices,
-  pickRecommendedPackage,
   removePackageServiceIds,
   serviceIdsMatchPackage,
   type CatalogFilterId,
 } from "@/lib/salons/catalog-utils"
-import { buildBookHref, resolveServices, toggleServiceId, removeOneServiceId } from "@/lib/bookings/utils"
+import {
+  eligibleServicesForOffer,
+} from "@/lib/salons/offer-utils"
+import { resolveServices, toggleServiceId, removeOneServiceId } from "@/lib/bookings/utils"
 import type {
   SalonCancellationPolicy,
+  SalonOffer,
   SalonPackage,
   SalonReview,
   SalonService,
@@ -56,6 +56,7 @@ type SalonBookingCatalogSectionProps = {
   authenticated: boolean
   customerReviews?: SalonReview[]
   cancellationPolicy?: SalonCancellationPolicy
+  offers?: SalonOffer[]
 }
 
 export function SalonBookingCatalogSection({
@@ -67,6 +68,7 @@ export function SalonBookingCatalogSection({
   authenticated,
   customerReviews = [],
   cancellationPolicy,
+  offers = [],
 }: SalonBookingCatalogSectionProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState<CatalogFilterId>("all")
@@ -92,8 +94,13 @@ export function SalonBookingCatalogSection({
 
   const browseSectionRef = useRef<HTMLDivElement>(null)
   const categoryRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const serviceRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didInitOpen = useRef(false)
   const [hydrated, setHydrated] = useState(false)
+  const [highlightedServiceIds, setHighlightedServiceIds] = useState<Set<string>>(
+    () => new Set(),
+  )
 
   useEffect(() => {
     setHydrated(true)
@@ -127,11 +134,6 @@ export function SalonBookingCatalogSection({
   const featuredBadges = useMemo(
     () => inferServiceBadges(featuredServices, bookingFrequency),
     [featuredServices, bookingFrequency],
-  )
-
-  const recommendedPackage = useMemo(
-    () => pickRecommendedPackage(filteredPackages.length > 0 ? filteredPackages : packages),
-    [filteredPackages, packages],
   )
 
   const groupedFilteredServices = useMemo(
@@ -175,6 +177,64 @@ export function SalonBookingCatalogSection({
       categoryRefs.current.set(category, node)
     } else {
       categoryRefs.current.delete(category)
+    }
+  }, [])
+
+  const registerServiceRef = useCallback((serviceId: string, node: HTMLDivElement | null) => {
+    if (node) {
+      serviceRefs.current.set(serviceId, node)
+    } else {
+      serviceRefs.current.delete(serviceId)
+    }
+  }, [])
+
+  const handleViewEligibleServices = useCallback(
+    (offer: SalonOffer) => {
+      const eligible = eligibleServicesForOffer(offer, services)
+      if (eligible.length === 0) return
+
+      const categoriesToOpen = new Set(eligible.map((service) => service.category))
+      setOpenCategories((current) => {
+        const next = new Set(current)
+        for (const category of categoriesToOpen) {
+          next.add(category)
+        }
+        return next
+      })
+      setActiveFilter("all")
+      setSearchQuery("")
+
+      const ids = new Set(eligible.map((service) => service.id))
+      setHighlightedServiceIds(ids)
+
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
+
+      window.requestAnimationFrame(() => {
+        browseSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+        const first = eligible[0]
+        if (!first) return
+        window.setTimeout(() => {
+          serviceRefs.current
+            .get(first.id)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" })
+        }, 220)
+      })
+
+      highlightTimeoutRef.current = setTimeout(() => {
+        setHighlightedServiceIds(new Set())
+        highlightTimeoutRef.current = null
+      }, 2600)
+    },
+    [services],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
+      }
     }
   }, [])
 
@@ -235,8 +295,6 @@ export function SalonBookingCatalogSection({
     }
   }
 
-  const bookHref = buildBookHref(salonId, selectedIds, authenticated, selectedPackage?.id)
-
   const detailPackage = useMemo(
     () => packages.find((pkg) => pkg.id === detailPackageId) ?? null,
     [detailPackageId, packages],
@@ -276,11 +334,6 @@ export function SalonBookingCatalogSection({
     setSelectedIds((prev) => removeOneServiceId(prev, id))
   }
 
-  function handleClearAll() {
-    setPackageId(null)
-    setSelectedIds([])
-  }
-
   function handleClearPackage() {
     if (!selectedPackage) {
       setPackageId(null)
@@ -299,10 +352,28 @@ export function SalonBookingCatalogSection({
   const showBrowse = servicesOnlyFilter && filteredServices.length > 0
   const isLoading = !hydrated
 
+  const assistantProps = {
+    services,
+    offers,
+    selectedIds,
+    selectedServices,
+    extraServices,
+    selectedPackage,
+    salonId,
+    salonCoverImageUrl,
+    authenticated,
+    onRemoveService: handleRemoveService,
+    onClearPackage: handleClearPackage,
+    onAddService: (id: string) => {
+      setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    },
+    onViewEligibleServices: handleViewEligibleServices,
+  }
+
   return (
     <>
-      <div className="grid items-start gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_min(100%,360px)] lg:gap-8 lg:pb-0">
-        <div className="min-w-0 space-y-6">
+      <div className="grid items-start gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:gap-8 lg:pb-0">
+        <div className="order-1 min-w-0 space-y-6">
           <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
 
           <CategoryFilterChips
@@ -347,23 +418,6 @@ export function SalonBookingCatalogSection({
             </section>
           ) : null}
 
-          <BookingStickySummary
-            className="hidden md:block lg:hidden"
-            selectedServices={selectedServices}
-            extraServices={extraServices}
-            selectedPackage={selectedPackage}
-            recommendedPackage={recommendedPackage}
-            allServices={services}
-            salonId={salonId}
-            authenticated={authenticated}
-            bookHref={bookHref}
-            onRemoveService={handleRemoveService}
-            onClearPackage={handleClearPackage}
-            onClearAll={handleClearAll}
-            onAddRecommendedPackage={addPackage}
-            onViewRecommendedPackage={(pkg) => openPackageDetails(pkg.id)}
-          />
-
           {showFeatured ? (
             <section className="space-y-4">
               <div>
@@ -381,6 +435,7 @@ export function SalonBookingCatalogSection({
                 <FeaturedServicesSlider
                   services={featuredServices}
                   badges={featuredBadges}
+                  offers={offers}
                   selectedIds={selectedIds}
                   onOpenDetails={openServiceDetails}
                   onToggleService={handleToggleService}
@@ -405,13 +460,16 @@ export function SalonBookingCatalogSection({
               ) : (
                 <BrowseServicesAccordion
                   services={filteredServices}
+                  offers={offers}
                   openCategories={openCategories}
                   selectedIds={selectedIds}
+                  highlightedServiceIds={highlightedServiceIds}
                   onToggleCategory={toggleCategory}
                   onOpenService={openServiceDetails}
                   onToggleService={handleToggleService}
                   searchQuery={searchQuery}
                   registerCategoryRef={registerCategoryRef}
+                  registerServiceRef={registerServiceRef}
                 />
               )}
             </section>
@@ -424,32 +482,12 @@ export function SalonBookingCatalogSection({
           ) : null}
         </div>
 
-        <BookingStickySummary
-          className="hidden lg:block"
-          selectedServices={selectedServices}
-          extraServices={extraServices}
-          selectedPackage={selectedPackage}
-          recommendedPackage={recommendedPackage}
-          allServices={services}
-          salonId={salonId}
-          authenticated={authenticated}
-          bookHref={bookHref}
-          onRemoveService={handleRemoveService}
-          onClearPackage={handleClearPackage}
-          onClearAll={handleClearAll}
-          onAddRecommendedPackage={addPackage}
-          onViewRecommendedPackage={(pkg) => openPackageDetails(pkg.id)}
+        <BookingAssistantSidebar
+          {...assistantProps}
+          showMobileBar
+          className="order-2 lg:sticky lg:top-[5.75rem] lg:self-start"
         />
       </div>
-
-      <MobileBookingBar
-        selectedServices={selectedServices}
-        extraServices={extraServices}
-        selectedPackage={selectedPackage}
-        bookHref={bookHref}
-        salonId={salonId}
-        authenticated={authenticated}
-      />
 
       <PackageDetailSheet
         pkg={detailPackage}
@@ -470,6 +508,7 @@ export function SalonBookingCatalogSection({
         salonReviews={customerReviews}
         salonId={salonId}
         authenticated={authenticated}
+        offers={offers}
         selected={detailService ? selectedIds.includes(detailService.id) : false}
         open={detailServiceOpen}
         onOpenChange={setDetailServiceOpen}

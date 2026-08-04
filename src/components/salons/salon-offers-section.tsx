@@ -1,6 +1,6 @@
-import { TagIcon } from "lucide-react"
+import Link from "next/link"
+import { ArrowRightIcon, PercentIcon, TagIcon } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   formatOfferDiscountLabel,
@@ -33,70 +33,100 @@ export function SalonOffersSection({
   if (offers.length === 0) return null
 
   return (
-    <section className={cn("space-y-5", className)}>
+    <section className={cn("space-y-4", className)}>
       {embedded ? null : (
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="section-eyebrow">Offers</p>
-          <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-[1.65rem]">
-            Promo codes
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/65">
-            Apply these codes at checkout when you book online.
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="section-eyebrow">Offers</p>
+            <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-[1.65rem]">
+              Promo codes
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/65">
+              Instant checkout discounts — enter the code in Promo code when you book. Not wallet
+              cashback.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href={buildOfferBookHref(salonId, offers[0]!.code, authenticated)}>
+              Book to redeem
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="outline">
-          <a href={buildOfferBookHref(salonId, offers[0]!.code, authenticated)}>
-            Book to redeem
-          </a>
-        </Button>
-      </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div
+        className={cn(
+          "grid gap-3",
+          offers.length === 1 ? "grid-cols-1" : "sm:grid-cols-2",
+        )}
+      >
         {offers.map((offer) => {
           const expiry = formatOfferExpiry(offer.endsAt)
+          const discountLabel = formatOfferDiscountLabel(offer)
+          const href = buildOfferBookHref(salonId, offer.code, authenticated)
 
           return (
             <article
               key={offer.id}
-              className="rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.06] via-card to-card p-6 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className={cn(
+                "group relative overflow-hidden rounded-2xl border border-primary/20",
+                "bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-card",
+                "px-4 py-4 sm:px-5 sm:py-4",
+                "transition duration-200 hover:border-primary/35 hover:shadow-md hover:shadow-primary/5",
+              )}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <TagIcon className="size-4" />
+              <div
+                className="pointer-events-none absolute -right-6 -top-8 size-28 rounded-full bg-primary/10 blur-2xl"
+                aria-hidden
+              />
+
+              <div className="relative flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+                    {offer.discountType === "percent" ? (
+                      <PercentIcon className="size-5" aria-hidden />
+                    ) : (
+                      <TagIcon className="size-5" aria-hidden />
+                    )}
                   </span>
+
                   <div className="min-w-0">
-                    <h3 className="font-heading text-lg font-semibold text-foreground">
-                      {offer.title}
-                    </h3>
-                    {offer.description ? (
-                      <p className="mt-1 text-sm leading-relaxed text-foreground/65">
-                        {offer.description}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-heading text-xl font-semibold tracking-tight text-primary sm:text-2xl">
+                        {discountLabel}
                       </p>
-                    ) : null}
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-700 uppercase">
+                        Instant off
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+                      {offer.title}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/55">
+                      <code className="rounded-md border border-dashed border-primary/35 bg-background/80 px-2 py-0.5 font-semibold tracking-wide text-primary">
+                        {offer.code}
+                      </code>
+                      {expiry ? <span>Until {expiry}</span> : null}
+                      {offer.appliesTo === "selected_services" ? (
+                        <span>Selected services</span>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-foreground/55">
+                      Apply this code in <span className="font-medium text-foreground/70">Promo code</span> at
+                      checkout — instant discount on your total, not cashback.
+                    </p>
                   </div>
                 </div>
-                <Badge className="shrink-0 rounded-full bg-primary/10 text-primary hover:bg-primary/10">
-                  {formatOfferDiscountLabel(offer)}
-                </Badge>
-              </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <code className="rounded-lg border border-dashed border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-semibold tracking-wide text-primary">
-                  {offer.code}
-                </code>
-                {expiry ? (
-                  <span className="text-xs text-foreground/55">Valid until {expiry}</span>
-                ) : null}
-                {offer.appliesTo === "selected_services" ? (
-                  <span className="text-xs text-foreground/55">Selected services only</span>
-                ) : null}
-                <Button asChild size="sm" className="ml-auto shrink-0">
-                  <a href={buildOfferBookHref(salonId, offer.code, authenticated)}>
-                    Book now
-                  </a>
+                <Button
+                  asChild
+                  size="sm"
+                  className="ml-auto shrink-0 rounded-full px-4"
+                >
+                  <Link href={href}>
+                    Book with code
+                    <ArrowRightIcon className="size-3.5" aria-hidden />
+                  </Link>
                 </Button>
               </div>
             </article>

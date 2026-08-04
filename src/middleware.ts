@@ -14,10 +14,10 @@ export function middleware(req: NextRequest) {
   if (!token) {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
-    // If user hits dashboard while logged out, send them to home after login.
-    // For booking pages, preserve the exact path so they can continue.
+    url.search = ""
+    // Preserve booking query (services, package, promo) so apply-offer → continue still works after login.
     const next = pathname.startsWith("/book")
-      ? pathname
+      ? `${pathname}${req.nextUrl.search}`
       : pathname.startsWith("/dashboard/")
         ? pathname
         : pathname === "/dashboard"

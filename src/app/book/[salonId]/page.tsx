@@ -99,7 +99,6 @@ export default async function BookPage({ params, searchParams }: Props) {
             initialPromoCode={promo ?? ""}
             walletBalanceRupees={wallet?.balanceRupees ?? 0}
             freeServiceCredits={loyalty?.freeServiceCredits ?? 0}
-            stampsTowardNextFree={loyalty?.stampsTowardNextFree ?? 0}
           />
         </div>
       </div>

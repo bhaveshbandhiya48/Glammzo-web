@@ -68,7 +68,11 @@ export function PromoCodeField({
         packageId,
       })
 
-      if (!result.success) return
+      if (!result.success) {
+        setCode(initialCode.trim().toUpperCase())
+        setError(result.error)
+        return
+      }
 
       if (result.kind === "discount") {
         setCode(result.discount.code)
@@ -126,6 +130,33 @@ export function PromoCodeField({
       )
     })
   }, [cashback?.code, packageId, salonId, serviceIds.join("|")])
+
+  // Drop salon offer discount if cart services are no longer covered.
+  useEffect(() => {
+    if (!value) return
+
+    startTransition(async () => {
+      const result = await validatePromoCodeAction({
+        salonId,
+        code: value.code,
+        serviceIds,
+        packageId,
+      })
+
+      if (result.success && result.kind === "discount") {
+        setError(null)
+        onChange(result.discount)
+        return
+      }
+
+      onChange(null)
+      setError(
+        result.success
+          ? "Offer not applied — this service isn't covered."
+          : result.error,
+      )
+    })
+  }, [value?.code, packageId, salonId, serviceIds.join("|")])
 
   function clearPromo() {
     setCode("")

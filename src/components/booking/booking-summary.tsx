@@ -137,22 +137,6 @@ export function BookingSummary({
           </motion.p>
         </AnimatePresence>
 
-        {(walletAppliedRupees > 0 || freeServiceAppliedRupees > 0) && (
-          <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <p>
-              Services total <span className="tabular-nums">{formatInr(total)}</span>
-            </p>
-            {freeServiceAppliedRupees > 0 ? (
-              <p className="text-emerald-700">
-                Loyalty credit −{formatInr(freeServiceAppliedRupees)}
-              </p>
-            ) : null}
-            {walletAppliedRupees > 0 ? (
-              <p className="text-emerald-700">Wallet −{formatInr(walletAppliedRupees)}</p>
-            ) : null}
-          </div>
-        )}
-
         <AnimatePresence>
           {hasDiscount ? (
             <motion.div
@@ -165,10 +149,6 @@ export function BookingSummary({
             >
               <p className="text-sm font-medium text-emerald-700">
                 You saved {formatInr(appliedOffer!.discountAmount)} today
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Original price{" "}
-                <span className="line-through tabular-nums">{formatInr(subtotal)}</span>
               </p>
             </motion.div>
           ) : cashbackClaim ? (
@@ -199,7 +179,9 @@ export function BookingSummary({
               <p className="text-sm font-medium text-foreground">{selectedPackage!.name}</p>
               <p className="text-xs text-muted-foreground">{durationLabel}</p>
             </div>
-            <p className="shrink-0 text-sm font-semibold tabular-nums">{formatInr(selectedPackage!.packagePrice)}</p>
+            <p className="shrink-0 text-sm font-semibold tabular-nums">
+              {formatInr(selectedPackage!.packagePrice)}
+            </p>
           </div>
         ) : (
           services.map((svc) => (
@@ -217,6 +199,11 @@ export function BookingSummary({
           ))
         )}
 
+        <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+          <p className="text-sm text-muted-foreground">Subtotal</p>
+          <p className="text-sm font-medium tabular-nums text-foreground">{formatInr(subtotal)}</p>
+        </div>
+
         <AnimatePresence>
           {hasDiscount ? (
             <motion.div
@@ -232,7 +219,7 @@ export function BookingSummary({
                 <p className="text-sm font-medium text-emerald-700">{appliedOffer!.code}</p>
               </div>
               <p className="shrink-0 text-sm font-semibold tabular-nums text-emerald-700">
-                -{formatInr(appliedOffer!.discountAmount)}
+                −{formatInr(appliedOffer!.discountAmount)}
               </p>
             </motion.div>
           ) : cashbackClaim ? (
@@ -254,20 +241,41 @@ export function BookingSummary({
             </motion.div>
           ) : null}
         </AnimatePresence>
+
+        {freeServiceAppliedRupees > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-emerald-700">Loyalty credit</p>
+            <p className="text-sm font-semibold tabular-nums text-emerald-700">
+              −{formatInr(freeServiceAppliedRupees)}
+            </p>
+          </div>
+        ) : null}
+
+        {walletAppliedRupees > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-emerald-700">Wallet</p>
+            <p className="text-sm font-semibold tabular-nums text-emerald-700">
+              −{formatInr(walletAppliedRupees)}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-4">
-        <p className="text-base font-semibold text-foreground">Total</p>
+        <div>
+          <p className="text-base font-semibold text-foreground">Total payable</p>
+          <p className="text-xs text-muted-foreground">Pay at salon</p>
+        </div>
         <AnimatePresence mode="wait">
           <motion.p
-            key={`total-${total}`}
+            key={`total-${payAtSalon}`}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             className="text-lg font-semibold tabular-nums text-foreground"
           >
-            {formatInr(total)}
+            {formatInr(payAtSalon)}
           </motion.p>
         </AnimatePresence>
       </div>

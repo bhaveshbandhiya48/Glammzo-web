@@ -308,19 +308,48 @@ async function fetchGalleryForSalons(
   return (data ?? []) as CrmSalonGalleryImageRow[]
 }
 
-const REVIEW_SELECT =
+const REVIEW_SELECT_WITH_OWNER_REPLY =
+  "id, salon_id, customer_id, appointment_id, staff_id, service_id, rating, review_type, comment, verified, owner_reply, owner_reply_at, created_at, customer:customers(full_name, first_name, last_name), staff:staff(full_name, designation, staff_roles(name)), service:services(name)"
+
+const REVIEW_SELECT_BASE =
   "id, salon_id, customer_id, appointment_id, staff_id, service_id, rating, review_type, comment, verified, created_at, customer:customers(full_name, first_name, last_name), staff:staff(full_name, designation, staff_roles(name)), service:services(name)"
+
+function isMissingOwnerReplyColumns(message: string) {
+  const lower = message.toLowerCase()
+  return lower.includes("owner_reply")
+}
 
 async function fetchReviewsForSalons(salonIds: string[]): Promise<CrmSalonReviewRow[]> {
   if (salonIds.length === 0) return []
 
   try {
     const supabase = createAdminClient()
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("salon_reviews")
-      .select(REVIEW_SELECT)
+      .select(REVIEW_SELECT_WITH_OWNER_REPLY)
       .in("salon_id", salonIds)
       .order("created_at", { ascending: false })
+
+    if (error && isMissingOwnerReplyColumns(error.message)) {
+      const fallback = await supabase
+        .from("salon_reviews")
+        .select(REVIEW_SELECT_BASE)
+        .in("salon_id", salonIds)
+        .order("created_at", { ascending: false })
+
+      if (fallback.error) {
+        console.error("[salons] Failed to fetch CRM reviews:", fallback.error.message)
+        return []
+      }
+
+      return ((fallback.data ?? []) as Omit<CrmSalonReviewRow, "owner_reply" | "owner_reply_at">[]).map(
+        (row) => ({
+          ...row,
+          owner_reply: null,
+          owner_reply_at: null,
+        }),
+      )
+    }
 
     if (error) {
       console.error("[salons] Failed to fetch CRM reviews:", error.message)

@@ -16,9 +16,16 @@ import {
 } from "lucide-react"
 
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
+import { BookingPriceBreakdownCard } from "@/components/booking/booking-price-breakdown"
 import { BookingSuccessConfetti } from "@/components/booking/booking-success-confetti"
 import { Button } from "@/components/ui/button"
-import { formatBookingDate, formatBookingNotesForDisplay, formatDuration, hasPayAtSalonNote } from "@/lib/bookings/utils"
+import {
+  formatBookingDate,
+  formatBookingNotesForDisplay,
+  formatDuration,
+  hasPayAtSalonNote,
+  parseBookingPriceBreakdown,
+} from "@/lib/bookings/utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import type { Booking, BookingStatus } from "@/types/booking"
 import { cn } from "@/lib/utils"
@@ -129,8 +136,9 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
   const isCompleted =
     Boolean(booking.isCrmCompleted) || booking.status === "completed"
   const displayNotes = formatBookingNotesForDisplay(booking.notes)
+  const breakdown = parseBookingPriceBreakdown(booking)
   const showSalonPaymentLabel =
-    hasPayAtSalonNote(booking.notes) || isCompleted || !isNegative
+    hasPayAtSalonNote(booking.notes) || isCompleted || !isNegative || breakdown.hasAdjustments
   const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
 
   return (
@@ -239,7 +247,14 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                         {service.durationMin} min
                       </p>
                     </div>
-                    <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground/75">
+                    <p
+                      className={cn(
+                        "shrink-0 text-sm tabular-nums",
+                        breakdown.hasAdjustments
+                          ? "font-medium text-foreground/45"
+                          : "font-semibold text-foreground/75",
+                      )}
+                    >
                       {formatInr(service.price)}
                     </p>
                   </li>
@@ -269,7 +284,14 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                                 {service.durationMin} min
                               </p>
                             </div>
-                            <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground/75">
+                            <p
+                              className={cn(
+                                "shrink-0 text-sm tabular-nums",
+                                breakdown.hasAdjustments
+                                  ? "font-medium text-foreground/45"
+                                  : "font-semibold text-foreground/75",
+                              )}
+                            >
                               {formatInr(service.price)}
                             </p>
                           </li>
@@ -279,6 +301,11 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                   </li>
                 ) : null}
               </ul>
+              {breakdown.hasAdjustments ? (
+                <p className="mt-2 text-xs text-foreground/45">
+                  Service prices are before promo and wallet. See payment summary for what you pay.
+                </p>
+              ) : null}
             </div>
 
             {displayNotes ? (
@@ -286,7 +313,7 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                 <p className="text-[0.68rem] font-semibold tracking-[0.14em] text-foreground/40 uppercase">
                   Your notes
                 </p>
-                <p className="mt-1.5 text-sm leading-relaxed text-foreground/70">
+                <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-line text-foreground/70">
                   {displayNotes}
                 </p>
               </div>
@@ -295,20 +322,14 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
 
           {/* Payment + reference */}
           <div className="mt-auto border-t border-border/50 bg-gradient-to-b from-muted/25 to-muted/40 px-6 py-6 sm:px-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="inline-flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-foreground/40 uppercase">
-                  <WalletIcon className="size-3.5 text-primary/70" aria-hidden />
-                  Estimated Total
-                </p>
-                <p className="mt-3 text-xs font-medium text-foreground/50">
-                  {showSalonPaymentLabel ? salonPaymentLabel : null}
-                </p>
-              </div>
-              <p className="font-heading text-[1.75rem] font-semibold tabular-nums tracking-tight text-foreground sm:text-[2rem]">
-                {formatInr(booking.price)}
-              </p>
-            </div>
+            <p className="mb-3 inline-flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-foreground/40 uppercase">
+              <WalletIcon className="size-3.5 text-primary/70" aria-hidden />
+              Payment summary
+            </p>
+            <BookingPriceBreakdownCard
+              breakdown={breakdown}
+              payableLabel={showSalonPaymentLabel ? salonPaymentLabel : undefined}
+            />
 
             <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/45 pt-5">
               <p className="inline-flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.14em] text-foreground/40 uppercase">

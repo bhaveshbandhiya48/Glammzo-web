@@ -8,29 +8,40 @@ import {
   formatCategoryHeading,
   groupServicesByCategory,
 } from "@/lib/salons/catalog-utils"
-import type { SalonService } from "@/types/salon"
+import {
+  bestOfferForService,
+  countOffersForServices,
+  formatOfferDiscountBadge,
+} from "@/lib/salons/offer-utils"
+import type { SalonOffer, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type BrowseServicesAccordionProps = {
   services: SalonService[]
+  offers?: SalonOffer[]
   openCategories: Set<string>
   selectedIds: string[]
+  highlightedServiceIds?: Set<string>
   onToggleCategory: (category: string) => void
   onOpenService: (service: SalonService) => void
   onToggleService: (serviceId: string) => void
   searchQuery: string
   registerCategoryRef: (category: string, node: HTMLDivElement | null) => void
+  registerServiceRef?: (serviceId: string, node: HTMLDivElement | null) => void
 }
 
 export function BrowseServicesAccordion({
   services,
+  offers = [],
   openCategories,
   selectedIds,
+  highlightedServiceIds,
   onToggleCategory,
   onOpenService,
   onToggleService,
   searchQuery,
   registerCategoryRef,
+  registerServiceRef,
 }: BrowseServicesAccordionProps) {
   const grouped = useMemo(() => groupServicesByCategory(services), [services])
   const expandAll = searchQuery.trim().length > 0
@@ -47,6 +58,7 @@ export function BrowseServicesAccordion({
     <div className="space-y-2">
       {grouped.map((group) => {
         const expanded = expandAll || openCategories.has(group.category)
+        const offerCount = countOffersForServices(offers, group.items)
 
         return (
           <div
@@ -57,15 +69,22 @@ export function BrowseServicesAccordion({
             <button
               type="button"
               onClick={() => onToggleCategory(group.category)}
-              className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-accent/20"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent/20"
               aria-expanded={expanded}
             >
-              <span className="font-heading text-[15px] font-semibold text-foreground">
-                {formatCategoryHeading(group.category, group.items.length)}
+              <span className="min-w-0">
+                <span className="font-heading text-[15px] font-semibold text-foreground">
+                  {formatCategoryHeading(group.category, group.items.length)}
+                </span>
+                {offerCount > 0 ? (
+                  <span className="mt-0.5 block text-xs font-medium text-primary">
+                    {offerCount} offer{offerCount === 1 ? "" : "s"} available
+                  </span>
+                ) : null}
               </span>
               <ChevronDownIcon
                 className={cn(
-                  "size-4 text-foreground/45 transition-transform duration-300",
+                  "size-4 shrink-0 text-foreground/45 transition-transform duration-300",
                   expanded && "rotate-180",
                 )}
               />
@@ -79,15 +98,27 @@ export function BrowseServicesAccordion({
             >
               <div className="overflow-hidden">
                 <div className="border-t border-border/50">
-                  {group.items.map((service) => (
-                    <ServiceCatalogRow
-                      key={service.id}
-                      service={service}
-                      selected={selectedIds.includes(service.id)}
-                      onOpen={() => onOpenService(service)}
-                      onToggle={() => onToggleService(service.id)}
-                    />
-                  ))}
+                  {group.items.map((service) => {
+                    const bestOffer = bestOfferForService(
+                      offers,
+                      service.id,
+                      service.price,
+                    )
+                    return (
+                      <ServiceCatalogRow
+                        key={service.id}
+                        service={service}
+                        selected={selectedIds.includes(service.id)}
+                        offerBadgeLabel={
+                          bestOffer ? formatOfferDiscountBadge(bestOffer) : null
+                        }
+                        highlighted={highlightedServiceIds?.has(service.id) ?? false}
+                        registerRef={(node) => registerServiceRef?.(service.id, node)}
+                        onOpen={() => onOpenService(service)}
+                        onToggle={() => onToggleService(service.id)}
+                      />
+                    )
+                  })}
                 </div>
               </div>
             </div>

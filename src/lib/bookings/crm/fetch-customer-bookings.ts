@@ -5,6 +5,7 @@ import {
   extractDeclineReasonForDisplay,
   mapCrmAppointmentToBookingStatus,
 } from "@/lib/bookings/booking-status"
+import { parsePayAtSalonAmount } from "@/lib/bookings/utils"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Booking, BookingReview, BookingServiceItem, BookingStatus } from "@/types/booking"
@@ -21,6 +22,8 @@ type AppointmentRow = {
   booking_source: string | null
   internal_notes: string | null
   cancellation_reason: string | null
+  expires_at: string | null
+  response_deadline: string | null
   created_at: string
   staff_id: string | null
   salons: { id: string; name: string; slug: string; city: string | null } | null
@@ -165,6 +168,8 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       booking_source,
       internal_notes,
       cancellation_reason,
+      expires_at,
+      response_deadline,
       created_at,
       staff_id,
       salons ( id, name, slug, city ),
@@ -227,7 +232,9 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       linkedServices && linkedServices.length > 0
         ? linkedServices
         : parseServicesFromNotes(row.notes, service ?? null)
-    const price = services.reduce((total, item) => total + item.price, 0)
+    const serviceTotal = services.reduce((total, item) => total + item.price, 0)
+    const payAtSalon = parsePayAtSalonAmount(row.notes, row.internal_notes)
+    const price = payAtSalon ?? serviceTotal
     const durationMin =
       row.duration_minutes || services.reduce((total, item) => total + item.durationMin, 0)
     const status: BookingStatus = mapCrmAppointmentToBookingStatus({
@@ -236,6 +243,7 @@ export async function fetchCrmCustomerBookings(phone: string): Promise<Booking[]
       cancellationReason: row.cancellation_reason,
       bookingSource: row.booking_source,
       internalNotes: row.internal_notes,
+      expiresAt: row.expires_at ?? row.response_deadline,
     })
 
     return {

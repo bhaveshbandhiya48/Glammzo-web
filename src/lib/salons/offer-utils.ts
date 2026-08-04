@@ -125,10 +125,18 @@ export function offerValidationMessage(error: OfferValidationError) {
     case "max_redemptions":
       return "This promo code has reached its usage limit."
     case "no_eligible_services":
-      return "This promo code does not apply to the services in your cart."
+      return "Offer not applied — this service isn't covered."
     default:
       return "This promo code cannot be used."
   }
+}
+
+/** Short UX copy when a selected-services offer doesn't match the cart. */
+export function offerNotCoveredMessage(offer: Pick<SalonOffer, "appliesTo">) {
+  if (offer.appliesTo === "selected_services") {
+    return "Offer not applied — this service isn't covered."
+  }
+  return offerValidationMessage("no_eligible_services")
 }
 
 type BookingPricingInput = {
@@ -247,4 +255,70 @@ export function applyOfferDiscount(
     discountAmount,
     finalTotal: Math.max(0, subtotal - discountAmount),
   }
+}
+
+export function isServiceEligibleForOffer(offer: SalonOffer, serviceId: string) {
+  if (offer.appliesTo === "all_services") return true
+  return offer.serviceIds.includes(serviceId)
+}
+
+export function offersForService(offers: SalonOffer[], serviceId: string, now = new Date()) {
+  return filterBookableOffers(offers, now).filter((offer) =>
+    isServiceEligibleForOffer(offer, serviceId),
+  )
+}
+
+export function bestOfferForService(
+  offers: SalonOffer[],
+  serviceId: string,
+  servicePrice = 0,
+  now = new Date(),
+) {
+  const eligible = offersForService(offers, serviceId, now)
+  if (eligible.length === 0) return null
+
+  return [...eligible].sort((a, b) => {
+    const aSave =
+      a.discountType === "percent"
+        ? (servicePrice * a.discountValue) / 100
+        : a.discountValue
+    const bSave =
+      b.discountType === "percent"
+        ? (servicePrice * b.discountValue) / 100
+        : b.discountValue
+    return bSave - aSave
+  })[0] ?? null
+}
+
+export function eligibleServicesForOffer(offer: SalonOffer, services: SalonService[]) {
+  if (offer.appliesTo === "all_services") {
+    return services
+  }
+  const eligibleIds = new Set(offer.serviceIds)
+  return services.filter((service) => eligibleIds.has(service.id))
+}
+
+export function formatOfferDiscountBadge(
+  offer: Pick<SalonOffer, "discountType" | "discountValue">,
+) {
+  if (offer.discountType === "percent") {
+    return `${offer.discountValue}% OFF`
+  }
+  return `₹${offer.discountValue} OFF`
+}
+
+/** Count distinct bookable offers that touch any service in the list. */
+export function countOffersForServices(
+  offers: SalonOffer[],
+  services: SalonService[],
+  now = new Date(),
+) {
+  const bookable = filterBookableOffers(offers, now)
+  if (bookable.length === 0 || services.length === 0) return 0
+
+  const serviceIds = new Set(services.map((service) => service.id))
+  return bookable.filter((offer) => {
+    if (offer.appliesTo === "all_services") return true
+    return offer.serviceIds.some((id) => serviceIds.has(id))
+  }).length
 }

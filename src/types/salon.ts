@@ -136,6 +136,9 @@ export type SalonReview = {
   staffMember: SalonStaffMember
   comment: string
   verified?: boolean
+  /** Public reply from the salon owner/manager when set in CRM. */
+  ownerReply?: string | null
+  ownerReplyDate?: string | null
 }
 
 export type Salon = {

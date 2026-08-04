@@ -81,7 +81,6 @@ export function BookingForm({
   initialPromoCode = "",
   walletBalanceRupees = 0,
   freeServiceCredits = 0,
-  stampsTowardNextFree = 0,
 }: {
   salon: Salon
   initialServiceIds?: string[]
@@ -94,7 +93,6 @@ export function BookingForm({
   initialPromoCode?: string
   walletBalanceRupees?: number
   freeServiceCredits?: number
-  stampsTowardNextFree?: number
 }) {
   const validInitial = initialServiceIds.filter((id) =>
     salon.services.some((s) => s.id === id),
@@ -729,22 +727,22 @@ export function BookingForm({
         />
       </BookingFormCard>
 
-      {(walletBalanceRupees > 0 || freeServiceCredits > 0 || stampsTowardNextFree > 0) && (
-        <BookingFormCard title="Wallet & loyalty" contentClassName="space-y-0">
-          <WalletLoyaltyFields
-            walletBalanceRupees={walletBalanceRupees}
-            freeServiceCredits={freeServiceCredits}
-            stampsTowardNextFree={stampsTowardNextFree}
-            useWallet={useWallet}
-            useFreeService={useFreeService && !selectedPackage}
-            onUseWalletChange={setUseWallet}
-            onUseFreeServiceChange={setUseFreeService}
-            walletAppliedRupees={walletAppliedRupees}
-            freeServiceAppliedRupees={loyaltyPick.discountRupees}
-            payAtSalonRupees={payAtSalonRupees}
-          />
-        </BookingFormCard>
-      )}
+      <BookingFormCard
+        title={walletBalanceRupees > 0 || freeServiceCredits > 0 ? "Wallet & rewards" : "Rewards"}
+        contentClassName="space-y-0"
+      >
+        <WalletLoyaltyFields
+          walletBalanceRupees={walletBalanceRupees}
+          freeServiceCredits={freeServiceCredits}
+          useWallet={useWallet}
+          useFreeService={useFreeService && !selectedPackage}
+          onUseWalletChange={setUseWallet}
+          onUseFreeServiceChange={setUseFreeService}
+          walletAppliedRupees={walletAppliedRupees}
+          freeServiceAppliedRupees={loyaltyPick.discountRupees}
+          payAtSalonRupees={payAtSalonRupees}
+        />
+      </BookingFormCard>
 
       <BookingFormCard title="Payment summary" sticky contentClassName="space-y-0">
         <BookingSummary

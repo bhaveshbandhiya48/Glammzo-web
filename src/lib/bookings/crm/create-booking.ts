@@ -630,6 +630,8 @@ export async function createCrmWebBooking(
     confirmationRequired: !autoConfirm,
     confirmationDeadline: expiresAt,
     remainingConfirmationTime: remainingConfirmationSeconds(expiresAt, bookedAt),
+    payAtSalonRupees: payAtSalon,
+    subtotalRupees: payableBeforeWallet,
   }
 }
 

@@ -94,6 +94,8 @@ export type CrmSalonReviewRow = {
   review_type: string
   comment: string
   verified: boolean
+  owner_reply: string | null
+  owner_reply_at: string | null
   created_at: string
   customer?: {
     full_name?: string | null

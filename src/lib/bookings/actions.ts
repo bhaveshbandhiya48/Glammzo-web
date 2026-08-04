@@ -128,7 +128,7 @@ export async function createBookingAction(formData: FormData) {
       })),
       date,
       time: displayTime,
-      price: totalPrice,
+      price: result.payAtSalonRupees,
       durationMin: totalDuration,
       notes: notes || undefined,
       status: result.appointmentStatus === "confirmed" ? "confirmed" : "pending",

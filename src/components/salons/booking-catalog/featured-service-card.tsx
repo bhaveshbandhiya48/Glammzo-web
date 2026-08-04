@@ -5,14 +5,16 @@ import { ClockIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ServiceOfferBadge } from "@/components/salons/offers/service-offer-badge"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import { resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
-import type { SalonService } from "@/types/salon"
+import type { SalonOffer, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type FeaturedServiceCardProps = {
   service: SalonService
   badge?: ServiceBadge
+  offer?: Pick<SalonOffer, "discountType" | "discountValue" | "code"> | null
   selected?: boolean
   onOpenDetails: () => void
   onToggle: () => void
@@ -22,6 +24,7 @@ type FeaturedServiceCardProps = {
 export function FeaturedServiceCard({
   service,
   badge,
+  offer = null,
   selected = false,
   onOpenDetails,
   onToggle,
@@ -56,11 +59,14 @@ export function FeaturedServiceCard({
           sizes="(max-width: 640px) 40vw, 22vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        {badge ? (
-          <Badge className="absolute top-2 left-2 z-10 rounded-full border-0 bg-background/95 px-2 py-0.5 text-[10px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
-            <span aria-hidden>{badge.emoji}</span> {badge.label}
-          </Badge>
-        ) : null}
+        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+          {offer ? <ServiceOfferBadge offer={offer} /> : null}
+          {!offer && badge ? (
+            <Badge className="rounded-full border-0 bg-background/95 px-2 py-0.5 text-[10px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
+              <span aria-hidden>{badge.emoji}</span> {badge.label}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col p-3 sm:p-3.5">

@@ -13,25 +13,34 @@ import { cn } from "@/lib/utils"
 type ServiceCatalogRowProps = {
   service: SalonService
   selected?: boolean
+  offerBadgeLabel?: string | null
+  highlighted?: boolean
   onOpen: () => void
   onToggle: () => void
   className?: string
+  registerRef?: (node: HTMLDivElement | null) => void
 }
 
 export function ServiceCatalogRow({
   service,
   selected = false,
+  offerBadgeLabel = null,
+  highlighted = false,
   onOpen,
   onToggle,
   className,
+  registerRef,
 }: ServiceCatalogRowProps) {
   const thumbnail = resolveServiceThumbnail(service)
   const summary = getServiceCardSummary(service)
 
   return (
     <div
+      ref={registerRef}
+      data-service-id={service.id}
       className={cn(
-        "flex min-h-[76px] w-full items-center gap-2 border-b border-border/50 last:border-b-0",
+        "flex min-h-[76px] w-full items-center gap-2 border-b border-border/50 last:border-b-0 transition-colors duration-500",
+        highlighted && "bg-primary/10 ring-2 ring-inset ring-primary/30",
         className,
       )}
     >
@@ -51,7 +60,14 @@ export function ServiceCatalogRow({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-medium text-foreground">{service.name}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-[15px] font-medium text-foreground">{service.name}</p>
+            {offerBadgeLabel ? (
+              <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-primary">
+                {offerBadgeLabel}
+              </span>
+            ) : null}
+          </div>
           {summary ? (
             <p className="mt-0.5 truncate text-xs text-foreground/50">{summary}</p>
           ) : null}

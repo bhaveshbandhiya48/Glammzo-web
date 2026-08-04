@@ -5,12 +5,14 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { FeaturedServiceCard } from "@/components/salons/booking-catalog/featured-service-card"
 import type { ServiceBadge } from "@/lib/salons/catalog-utils"
-import type { SalonService } from "@/types/salon"
+import { bestOfferForService } from "@/lib/salons/offer-utils"
+import type { SalonOffer, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type FeaturedServicesSliderProps = {
   services: SalonService[]
   badges: Map<string, ServiceBadge>
+  offers?: SalonOffer[]
   selectedIds: string[]
   onOpenDetails: (service: SalonService) => void
   onToggleService: (serviceId: string) => void
@@ -23,6 +25,7 @@ const PEEK_CARD_WIDTH = "w-[calc((100%-1.5rem)/2.5)]"
 export function FeaturedServicesSlider({
   services,
   badges,
+  offers = [],
   selectedIds,
   onOpenDetails,
   onToggleService,
@@ -93,6 +96,7 @@ export function FeaturedServicesSlider({
             key={service.id}
             service={service}
             badge={badges.get(service.id)}
+            offer={bestOfferForService(offers, service.id, service.price)}
             selected={selectedIds.includes(service.id)}
             onOpenDetails={() => onOpenDetails(service)}
             onToggle={() => onToggleService(service.id)}
@@ -123,6 +127,7 @@ export function FeaturedServicesSlider({
             <FeaturedServiceCard
               service={service}
               badge={badges.get(service.id)}
+              offer={bestOfferForService(offers, service.id, service.price)}
               selected={selectedIds.includes(service.id)}
               onOpenDetails={() => onOpenDetails(service)}
               onToggle={() => onToggleService(service.id)}

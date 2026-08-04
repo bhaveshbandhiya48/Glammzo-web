@@ -53,15 +53,13 @@ export function mapCrmAppointmentToBookingStatus(input: {
   rejectReason?: string | null
   bookingSource?: string | null
   internalNotes?: string | null
+  /** When set, past-deadline pending web bookings show as expired even before cron flips status. */
+  expiresAt?: string | null
 }): BookingStatus {
   const isWebBooking = isWebBookingAppointment({
     bookingSource: input.bookingSource,
     internalNotes: input.internalNotes,
   })
-
-  if (input.status === "pending" && isWebBooking) {
-    return "pending"
-  }
 
   if (input.status === "rejected") {
     return "declined"
@@ -69,6 +67,21 @@ export function mapCrmAppointmentToBookingStatus(input: {
 
   if (input.status === "expired") {
     return "expired"
+  }
+
+  if (
+    isWebBooking &&
+    (input.status === "pending" || input.status === "scheduled") &&
+    input.expiresAt
+  ) {
+    const expiresMs = new Date(input.expiresAt).getTime()
+    if (Number.isFinite(expiresMs) && expiresMs <= Date.now()) {
+      return "expired"
+    }
+  }
+
+  if (input.status === "pending" && isWebBooking) {
+    return "pending"
   }
 
   if (input.status === "cancelled_by_customer") {

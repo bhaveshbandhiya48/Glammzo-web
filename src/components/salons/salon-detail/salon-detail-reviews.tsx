@@ -74,6 +74,20 @@ function ReviewCard({ review }: { review: SalonReview }) {
         ) : null}
       </p>
 
+      {review.ownerReply?.trim() ? (
+        <div className="mt-4 rounded-xl border border-border/60 bg-muted/25 px-4 py-3">
+          <p className="text-xs font-medium tracking-wide text-foreground/55 uppercase">
+            Response from salon
+          </p>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-foreground/80">
+            {review.ownerReply}
+          </p>
+          {review.ownerReplyDate ? (
+            <p className="mt-1.5 text-xs text-foreground/45">{review.ownerReplyDate}</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mt-4 flex items-center gap-3">
         <Button
           type="button"

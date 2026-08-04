@@ -14,12 +14,14 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { buildBookHref } from "@/lib/bookings/utils"
 import { resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
+import { ServiceDetailOffers } from "@/components/salons/offers/service-detail-offers"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import {
   buildServiceDetailContent,
   type ServiceDetailContent,
 } from "@/lib/salons/service-detail-utils"
-import type { SalonReview, SalonService } from "@/types/salon"
+import { offersForService } from "@/lib/salons/offer-utils"
+import type { SalonOffer, SalonReview, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type ServiceDetailSheetProps = {
@@ -28,6 +30,7 @@ type ServiceDetailSheetProps = {
   salonReviews: SalonReview[]
   salonId: string
   authenticated: boolean
+  offers?: SalonOffer[]
   selected: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -43,6 +46,7 @@ function ServiceDetailSummaryPanel({
   bookHref,
   selected,
   selectedIds,
+  serviceOffers,
   onToggle,
   onAddOnToggle,
   compactImage = false,
@@ -53,6 +57,7 @@ function ServiceDetailSummaryPanel({
   bookHref: string
   selected: boolean
   selectedIds: string[]
+  serviceOffers: SalonOffer[]
   onToggle: () => void
   onAddOnToggle: (id: string) => void
   compactImage?: boolean
@@ -121,6 +126,8 @@ function ServiceDetailSummaryPanel({
           ) : null}
         </div>
 
+        <ServiceDetailOffers offers={serviceOffers} className="mt-5" />
+
         {content.addOns.length > 0 ? (
           <div className="mt-5 space-y-3">
             <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
@@ -182,6 +189,7 @@ export function ServiceDetailSheet({
   salonReviews,
   salonId,
   authenticated,
+  offers = [],
   selected,
   open,
   onOpenChange,
@@ -196,6 +204,7 @@ export function ServiceDetailSheet({
   const content = buildServiceDetailContent(service, allServices, salonReviews)
   const thumbnail = resolveServiceThumbnail(service)
   const bookHref = buildBookHref(salonId, [service.id], authenticated)
+  const serviceOffers = offersForService(offers, service.id)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -214,6 +223,7 @@ export function ServiceDetailSheet({
           bookHref={bookHref}
           selected={selected}
           selectedIds={selectedIds}
+          serviceOffers={serviceOffers}
           onToggle={onToggle}
           onAddOnToggle={onAddOnToggle}
           compactImage={!isDesktop}

@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
+import { BookingPriceBreakdownCard } from "@/components/booking/booking-price-breakdown"
 import { CancelBookingButton } from "@/components/booking/cancel-booking-button"
 import { LeaveReviewDialog } from "@/components/reviews/leave-review-dialog"
 import {
@@ -21,7 +22,14 @@ import {
   canConsumerRebookBooking,
   canConsumerRescheduleBooking,
 } from "@/lib/bookings/booking-status"
-import { buildBookHref, formatBookingDate, formatBookingNotesForDisplay, formatDuration, hasPayAtSalonNote } from "@/lib/bookings/utils"
+import {
+  buildBookHref,
+  formatBookingDate,
+  formatBookingNotesForDisplay,
+  formatDuration,
+  hasPayAtSalonNote,
+  parseBookingPriceBreakdown,
+} from "@/lib/bookings/utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import { Button } from "@/components/ui/button"
 import type { Booking } from "@/types/booking"
@@ -91,8 +99,9 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
   const isCompleted =
     Boolean(booking.isCrmCompleted) || booking.status === "completed"
   const displayNotes = formatBookingNotesForDisplay(booking.notes)
+  const breakdown = parseBookingPriceBreakdown(booking)
   const showSalonPaymentLabel =
-    hasPayAtSalonNote(booking.notes) || isCompleted
+    hasPayAtSalonNote(booking.notes) || isCompleted || breakdown.hasAdjustments
   const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
   const hasActions = canReschedule || canCancel || canRebook || canLeaveReview
 
@@ -152,12 +161,24 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
                 <p className="truncate text-sm font-medium text-foreground">{service.name}</p>
                 <p className="mt-0.5 text-xs text-foreground/45">{service.durationMin} min</p>
               </div>
-              <p className="shrink-0 text-sm font-medium tabular-nums text-foreground/80">
+              <p
+                className={cn(
+                  "shrink-0 text-sm tabular-nums",
+                  breakdown.hasAdjustments
+                    ? "font-medium text-foreground/45"
+                    : "font-medium text-foreground/80",
+                )}
+              >
                 {formatInr(service.price)}
               </p>
             </li>
           ))}
         </ul>
+        {breakdown.hasAdjustments ? (
+          <p className="mt-2 text-xs text-foreground/45">
+            Service prices are before promo and wallet. See payment summary for what you pay.
+          </p>
+        ) : null}
       </div>
 
       {(booking.declineReason || displayNotes) && (
@@ -168,7 +189,7 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
             </p>
           ) : null}
           {displayNotes ? (
-            <p className="rounded-xl bg-muted/40 px-3 py-2 text-sm text-foreground/60">
+            <p className="rounded-xl bg-muted/40 px-3 py-2 text-sm whitespace-pre-line text-foreground/60">
               Note: {displayNotes}
             </p>
           ) : null}
@@ -195,26 +216,22 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/55 px-4 py-3.5 sm:px-5">
-        <div>
-          <p className="text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">
-            Estimated Total
-          </p>
-          <p className="mt-1 font-heading text-xl font-semibold tabular-nums tracking-tight text-foreground">
-            {formatInr(booking.price)}
-          </p>
-          {showSalonPaymentLabel ? (
-            <p className="mt-1 text-xs font-medium text-foreground/55">
-              {salonPaymentLabel}
-            </p>
-          ) : null}
-        </div>
-        <div className="text-right">
+      <div className="border-b border-border/55 px-4 py-3.5 sm:px-5">
+        <p className="mb-2 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">
+          Payment summary
+        </p>
+        <BookingPriceBreakdownCard
+          breakdown={breakdown}
+          payableLabel={showSalonPaymentLabel ? salonPaymentLabel : undefined}
+          compact
+          className="w-full"
+        />
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/45 pt-3">
           <p className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.12em] text-foreground/40 uppercase">
             <HashIcon className="size-3" aria-hidden />
             Reference
           </p>
-          <p className="mt-1 text-sm font-semibold tracking-wide text-foreground/70">
+          <p className="text-sm font-semibold tracking-wide text-foreground/70">
             #{bookingReference}
           </p>
         </div>

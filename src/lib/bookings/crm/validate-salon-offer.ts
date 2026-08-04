@@ -6,6 +6,7 @@ import { isLaunchPromoCode } from "@/lib/marketing/launch-promo"
 import {
   applyOfferDiscount,
   normalizePromoCode,
+  offerNotCoveredMessage,
   offerValidationMessage,
 } from "@/lib/salons/offer-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
@@ -86,7 +87,13 @@ export async function resolveBookingOfferDiscount(input: {
   })
 
   if ("error" in result) {
-    return { ok: false, error: offerValidationMessage(result.error) }
+    return {
+      ok: false,
+      error:
+        result.error === "no_eligible_services"
+          ? offerNotCoveredMessage(offer)
+          : offerValidationMessage(result.error),
+    }
   }
 
   return { ok: true, discount: result }
