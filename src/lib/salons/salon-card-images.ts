@@ -1,5 +1,7 @@
 import type { Salon } from "@/types/salon"
 
+const EXPLORE_CARD_GALLERY_LIMIT = 3
+
 function addUniqueUrl(urls: string[], url: string | null | undefined) {
   const trimmed = url?.trim()
   if (!trimmed || urls.includes(trimmed)) {
@@ -64,48 +66,69 @@ export function parseGalleryUrlsFromSettings(settings: unknown): string[] {
   return urls
 }
 
+function normalizeUrlSet(urls: Array<string | null | undefined>): Set<string> {
+  return new Set(
+    urls
+      .map((url) => url?.trim())
+      .filter((url): url is string => Boolean(url)),
+  )
+}
+
+/**
+ * Gallery photos only — never include explore/list or cover images.
+ * Cover belongs on the salon hero; explore/list belongs on listing cards.
+ */
 export function buildSalonGalleryImages(options: {
-  imageUrl: string
-  coverImageUrl?: string | null
-  listImageUrl?: string | null
   gallery?: string[]
   settings?: unknown
-  serviceImageUrls?: Array<string | null | undefined>
+  /** Explore / list / cover URLs that must stay out of the gallery. */
+  excludeUrls?: Array<string | null | undefined>
 }): string[] {
+  const excluded = normalizeUrlSet(options.excludeUrls ?? [])
   const urls: string[] = []
 
-  addUniqueUrl(urls, options.coverImageUrl)
-  addUniqueUrl(urls, options.listImageUrl)
-  addUniqueUrl(urls, options.imageUrl)
-
   for (const url of options.gallery ?? []) {
-    addUniqueUrl(urls, url)
+    const trimmed = url?.trim()
+    if (!trimmed || excluded.has(trimmed)) continue
+    addUniqueUrl(urls, trimmed)
   }
 
   for (const url of parseGalleryUrlsFromSettings(options.settings)) {
-    addUniqueUrl(urls, url)
-  }
-
-  for (const url of options.serviceImageUrls ?? []) {
+    if (excluded.has(url)) continue
     addUniqueUrl(urls, url)
   }
 
   return urls
 }
 
+/**
+ * Explore card slider: owner's explore/list photo first, then up to 3 gallery photos.
+ * Cover is never included.
+ */
 export function getSalonCardImages(
   salon: Pick<Salon, "imageUrl" | "coverImageUrl" | "gallery">,
 ): string[] {
-  const urls = buildSalonGalleryImages({
-    imageUrl: salon.imageUrl,
-    coverImageUrl: salon.coverImageUrl,
-    gallery: salon.gallery,
-  })
+  const exploreUrl = salon.imageUrl?.trim() || null
+  const coverUrl = salon.coverImageUrl?.trim() || null
+  const urls: string[] = []
+
+  if (exploreUrl) {
+    addUniqueUrl(urls, exploreUrl)
+  }
+
+  for (const url of salon.gallery ?? []) {
+    if (urls.length >= 1 + EXPLORE_CARD_GALLERY_LIMIT) break
+    const trimmed = url?.trim()
+    if (!trimmed) continue
+    if (coverUrl && trimmed === coverUrl) continue
+    if (exploreUrl && trimmed === exploreUrl) continue
+    addUniqueUrl(urls, trimmed)
+  }
 
   if (urls.length > 0) {
     return urls
   }
 
-  const fallback = salon.imageUrl?.trim() || salon.coverImageUrl?.trim()
-  return fallback ? [fallback] : []
+  // Last resort so cards never render blank when media is incomplete.
+  return exploreUrl ? [exploreUrl] : coverUrl ? [coverUrl] : []
 }

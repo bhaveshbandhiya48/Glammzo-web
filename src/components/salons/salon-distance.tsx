@@ -15,18 +15,13 @@ import { cn } from "@/lib/utils"
 
 type SalonDistanceFields = Pick<
   Salon,
-  "id" | "area" | "address" | "latitude" | "longitude" | "distanceKm"
+  "id" | "area" | "address" | "city" | "latitude" | "longitude" | "distanceKm"
 >
 
 export function useSalonDistanceKm(salon: SalonDistanceFields): number | null {
   const origin = useExploreDistanceOrigin({})
 
-  return useMemo(() => {
-    if (salon.distanceKm > 0) {
-      return salon.distanceKm
-    }
-    return computeSalonDistanceKm(salon, origin)
-  }, [origin, salon])
+  return useMemo(() => computeSalonDistanceKm(salon, origin), [origin, salon])
 }
 
 /** Area label with distance from the user’s saved / detected location (booking summary). */
@@ -55,7 +50,8 @@ export function SalonDistance({
     }
   }, [salon])
 
-  const distanceLabel = distanceKm != null && distanceKm > 0 ? formatDistanceKm(distanceKm) : null
+  const distanceLabel =
+    distanceKm != null && Number.isFinite(distanceKm) ? formatDistanceKm(distanceKm) : null
 
   return (
     <p className={className}>
@@ -75,7 +71,8 @@ export function SalonDistanceFromYou({
   className?: string
 }) {
   const distanceKm = useSalonDistanceKm(salon)
-  const distanceLabel = distanceKm != null && distanceKm > 0 ? formatDistanceKm(distanceKm) : null
+  const distanceLabel =
+    distanceKm != null && Number.isFinite(distanceKm) ? formatDistanceKm(distanceKm) : null
 
   if (!distanceLabel) return null
 

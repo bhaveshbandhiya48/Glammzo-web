@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SalonCardImageSlider } from "@/components/salons/salon-card-image-slider"
 import { computeSalonDistanceKm } from "@/lib/explore-distance"
-import { formatDistanceKm } from "@/lib/maps/haversine"
+import { formatDistanceKmShort } from "@/lib/maps/haversine"
 import { getSalonCardImages } from "@/lib/salons/salon-card-images"
 import { cn } from "@/lib/utils"
 
@@ -38,15 +38,14 @@ export function SalonCard({
 }) {
   const origin = useExploreDistanceOrigin({})
 
-  const distanceKm = useMemo(() => {
-    if (salon.distanceKm > 0) {
-      return salon.distanceKm
-    }
+  // Always measure from the live origin (GPS / selected place), not a stale salon.distanceKm.
+  const distanceKm = useMemo(
+    () => computeSalonDistanceKm(salon, origin),
+    [origin, salon],
+  )
 
-    return computeSalonDistanceKm(salon, origin) ?? 0
-  }, [origin, salon])
-
-  const distanceLabel = distanceKm > 0 ? formatDistanceKm(distanceKm) : null
+  const distanceLabel =
+    distanceKm != null && Number.isFinite(distanceKm) ? formatDistanceKmShort(distanceKm) : null
   const compact = density === "compact"
   const cardImages = useMemo(() => getSalonCardImages(salon), [salon])
 
@@ -167,10 +166,10 @@ function SalonCardImage({
                 )}
               >
                 <MapPinIcon className={cn("shrink-0", compact ? "size-3" : "size-3.5")} />
-                <span className="truncate">
-                  {salon.area}
-                  {distanceLabel ? ` · ${distanceLabel}` : null}
-                </span>
+                <span className="min-w-0 truncate">{salon.area}</span>
+                {distanceLabel ? (
+                  <span className="shrink-0 whitespace-nowrap">· {distanceLabel}</span>
+                ) : null}
               </p>
               <h3
                 className={cn(

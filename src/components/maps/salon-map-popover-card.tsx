@@ -20,7 +20,7 @@ export function SalonMapPopoverCard({ salon, onClose, className }: SalonMapPopov
   const salonId = salon.slug || salon.id
   const salonHref = `/salons/${salonId}`
   const bookHref = salonServicesSectionHref(salonId)
-  const imageSrc = salon.coverImageUrl || salon.imageUrl
+  const imageSrc = salon.imageUrl || salon.coverImageUrl
   const priceLabel = formatMapPriceLabel(salon.priceFrom)
 
   return (

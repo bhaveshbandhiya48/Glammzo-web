@@ -9,6 +9,7 @@ import { media } from "@/data/media"
 import { MirrorShine } from "@/components/hero/MirrorShine"
 import { sortSalonsByDistance } from "@/lib/geo"
 import type { DistanceOrigin } from "@/lib/explore-distance"
+import { formatDistanceKmShort } from "@/lib/maps/haversine"
 import { isSalonInCity } from "@/lib/salons/city-filter"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
@@ -21,12 +22,6 @@ type HeroSalonSliderProps = {
   browseCity: string
   hasDeviceLocation?: boolean
   maxSlides?: number
-}
-
-function formatDistanceKm(km: number): string {
-  if (km < 1) return `${(Math.round(km * 10) / 10).toFixed(1)} km`
-  if (km < 10) return `${km.toFixed(1)} km`
-  return `${Math.round(km)} km`
 }
 
 function badgeForSalon(
@@ -70,7 +65,7 @@ function HeroSalonSlide({
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         <Image
-          src={salon.coverImageUrl ?? salon.imageUrl}
+          src={salon.imageUrl}
           alt={salon.name}
           fill
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
@@ -104,10 +99,14 @@ function HeroSalonSlide({
                 {salon.name}
               </h3>
               <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/75">
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex min-w-0 items-center gap-1">
                   <MapPinIcon className="size-3.5 shrink-0" aria-hidden />
-                  {salon.area}
-                  {showDistance ? ` · ${formatDistanceKm(salon.distanceKm)}` : null}
+                  <span className="truncate">{salon.area}</span>
+                  {showDistance && Number.isFinite(salon.distanceKm) ? (
+                    <span className="shrink-0 whitespace-nowrap">
+                      · {formatDistanceKmShort(salon.distanceKm)}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="text-white/35" aria-hidden>
                   ·
@@ -207,8 +206,10 @@ export function HeroSalonSlider({
     )
   }
 
-  const showDistance = hasDeviceLocation || !origin.isDefaultCity
+  // Always show computed km when available (GPS or selected place / city centroid).
+  const showDistance = true
   const canNavigate = slides.length > 1
+  const hasPreciseOrigin = hasDeviceLocation || !origin.isDefaultCity
 
   return (
     <div className="relative">
@@ -225,7 +226,7 @@ export function HeroSalonSlider({
           <div key={salon.id} className="w-full shrink-0 snap-center">
             <HeroSalonSlide
               salon={salon}
-              badge={badgeForSalon(salon, index, showDistance, browseCity)}
+              badge={badgeForSalon(salon, index, hasPreciseOrigin, browseCity)}
               showDistance={showDistance}
               isActive={index === activeIndex}
             />

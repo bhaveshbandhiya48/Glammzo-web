@@ -177,7 +177,7 @@ export function SalonGalleryReviews({
     if (hasTeam) {
       return (
         <div id="team">
-          <SalonTeamPanel team={team} salonName={salonName} />
+          <SalonTeamPanel team={team} salonName={salonName} reviews={reviews} />
         </div>
       )
     }
@@ -216,7 +216,7 @@ export function SalonGalleryReviews({
 
       {hasTeam ? (
         <TabsContent value="team" className="mt-0">
-          <SalonTeamPanel team={team} salonName={salonName} />
+          <SalonTeamPanel team={team} salonName={salonName} reviews={reviews} />
         </TabsContent>
       ) : null}
 

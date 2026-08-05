@@ -18,28 +18,62 @@ export function buildStaffReviewCounts(
   return counts
 }
 
+export function isReviewForTeamMember(
+  review: Pick<SalonReview, "staffId" | "staffMember">,
+  member: Pick<SalonTeamMember, "id" | "name">,
+): boolean {
+  if (review.staffId) {
+    return review.staffId === member.id
+  }
+
+  const reviewStaffName = normalizeStaffName(review.staffMember?.name ?? "")
+  const memberName = normalizeStaffName(member.name)
+  return Boolean(
+    reviewStaffName &&
+      reviewStaffName !== "staff" &&
+      reviewStaffName === memberName,
+  )
+}
+
+export function getTeamMemberReviews(
+  member: Pick<SalonTeamMember, "id" | "name" | "reviewCount">,
+  reviews: SalonReview[],
+): SalonReview[] {
+  return reviews.filter((review) => isReviewForTeamMember(review, member))
+}
+
 export function resolveTeamMemberReviewCount(
   member: SalonTeamMember,
   reviews: Pick<SalonReview, "staffId" | "staffMember">[],
 ): number {
-  if (member.reviewCount > 0) {
-    return member.reviewCount
+  const fromReviews = reviews.filter((review) => isReviewForTeamMember(review, member)).length
+  if (fromReviews > 0) {
+    return fromReviews
+  }
+  return member.reviewCount > 0 ? member.reviewCount : 0
+}
+
+export function resolveTeamMemberRating(
+  member: SalonTeamMember,
+  reviews: SalonReview[],
+): { count: number; average: number | null; latest: SalonReview | null } {
+  const memberReviews = getTeamMemberReviews(member, reviews)
+  const count = memberReviews.length > 0 ? memberReviews.length : resolveTeamMemberReviewCount(member, reviews)
+
+  if (memberReviews.length === 0) {
+    return { count, average: null, latest: null }
   }
 
-  const memberName = normalizeStaffName(member.name)
-  let count = 0
+  const average =
+    memberReviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) / memberReviews.length
 
-  for (const review of reviews) {
-    if (review.staffId === member.id) {
-      count += 1
-      continue
-    }
-    if (!review.staffId && normalizeStaffName(review.staffMember.name) === memberName) {
-      count += 1
-    }
+  const latest = memberReviews[0] ?? null
+
+  return {
+    count,
+    average: Number.isFinite(average) ? average : null,
+    latest,
   }
-
-  return count
 }
 
 export function formatStaffReviewCount(count: number): string | null {

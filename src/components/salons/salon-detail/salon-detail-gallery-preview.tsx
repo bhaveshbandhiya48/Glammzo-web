@@ -8,23 +8,16 @@ import { cn } from "@/lib/utils"
 
 type SalonDetailGalleryPreviewProps = {
   gallery: string[]
-  coverImageUrl: string
   salonName: string
   className?: string
 }
 
 export function SalonDetailGalleryPreview({
   gallery,
-  coverImageUrl,
   salonName,
   className,
 }: SalonDetailGalleryPreviewProps) {
-  const images =
-    gallery.length > 0
-      ? gallery
-      : coverImageUrl
-        ? [coverImageUrl]
-        : []
+  const images = gallery
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)

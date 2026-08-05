@@ -223,25 +223,6 @@ export function BookingAssistantSidebar({
         <OfferEligibilityBanner
           offer={spotlight.offer}
           qualifies={!spotlightEligibility.ineligible}
-          applied={Boolean(
-            appliedOffer &&
-              appliedOffer.id === spotlight.offer.id &&
-              discountResult,
-          )}
-          onApply={() => {
-            const result = applyOfferDiscount(spotlight.offer, offerInput)
-            if ("error" in result) {
-              setAppliedOfferId(null)
-              setApplyError(
-                result.error === "no_eligible_services"
-                  ? offerNotCoveredMessage(spotlight.offer)
-                  : offerValidationMessage(result.error),
-              )
-              return
-            }
-            setApplyError(null)
-            setAppliedOfferId(spotlight.offer.id)
-          }}
           onBrowseEligible={() => onViewEligibleServices?.(spotlight.offer)}
         />
       ) : null}

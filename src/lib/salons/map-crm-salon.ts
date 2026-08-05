@@ -1,5 +1,6 @@
 import { media } from "@/data/media"
 import { parseSalonCoordinate } from "@/lib/salon-coordinates"
+import { resolveAmenityIconId } from "@/lib/salons/amenity-catalog"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
 import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
 import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
@@ -28,17 +29,6 @@ import type {
   SalonAmenityCategory,
   SalonTeamMember,
 } from "@/types/salon"
-
-const LUCIDE_AMENITY_ICON_IDS = new Set([
-  "Wifi",
-  "ParkingCircle",
-  "Coffee",
-  "CreditCard",
-  "Armchair",
-  "Accessibility",
-  "Baby",
-  "Sparkles",
-])
 
 const FALLBACK_IMAGES = Object.values(media.salons)
 
@@ -259,8 +249,8 @@ function parseAmenities(settings: unknown): SalonAmenities | undefined {
       const items = Array.isArray(itemsRaw)
         ? itemsRaw.map((it) => String(it ?? "").trim()).filter(Boolean)
         : undefined
-      // Backwards compatible: older data may have emoji. Keep it, but prefer known lucide ids.
-      const normalizedIcon = LUCIDE_AMENITY_ICON_IDS.has(icon) ? icon : "Sparkles"
+      // Older data may carry emoji or retired ids; fall back to the amenity label.
+      const normalizedIcon = resolveAmenityIconId(icon, name)
       return { icon: normalizedIcon, name, visible, items }
     })
     .filter((c) => c.visible === true)
@@ -423,7 +413,8 @@ export function mapCrmSalonToWeb(
   const listUrl = row.list_image_url?.trim() || null
   const coverUrl = row.cover_image_url?.trim() || null
   const fallback = fallbackImageForSalon(row.id)
-  const imageUrl = listUrl || coverUrl || fallback
+  // Explore/list thumbnail stays separate from the cover hero image.
+  const imageUrl = listUrl || fallback
   const coverImageUrl = coverUrl || listUrl || fallback
 
   const activePackages = packages
@@ -564,18 +555,12 @@ export function mapCrmSalonToWeb(
     packages: activePackages,
     offers: activeOffers,
     gallery: buildSalonGalleryImages({
-      imageUrl,
-      coverImageUrl: coverUrl,
-      listImageUrl: listUrl,
       settings: marketplaceProfile ? null : row.settings,
       gallery: canonicalGallery
         .slice()
         .sort((left, right) => left.sort_order - right.sort_order)
         .map((image) => image.url),
-      serviceImageUrls:
-        marketplaceProfile
-          ? []
-          : activeServices.map((service) => service.imageUrl),
+      excludeUrls: [listUrl, coverUrl, imageUrl, coverImageUrl],
     }),
     customerReviews,
     team: activeStaff,

@@ -104,10 +104,12 @@ export function NearbySalonsSection() {
                       <div className="flex flex-wrap items-center gap-2 text-sm text-white/70">
                         <MapPinIcon className="size-4 shrink-0" />
                         <span>{s.locationLabel}</span>
-                        {s.distanceKm > 0 ? (
+                        {Number.isFinite(s.distanceKm) ? (
                           <>
                             <span>·</span>
-                            <span>{s.distanceKm.toFixed(1)} km</span>
+                            <span className="shrink-0 whitespace-nowrap">
+                              {s.distanceKm < 0.1 ? "Nearby" : `${s.distanceKm.toFixed(1)} km`}
+                            </span>
                           </>
                         ) : null}
                         {s.isOpenNow ? (

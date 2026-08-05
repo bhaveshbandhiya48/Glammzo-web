@@ -1,17 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-  AccessibilityIcon,
-  ArmchairIcon,
-  BabyIcon,
-  CoffeeIcon,
-  CreditCardIcon,
-  ParkingCircleIcon,
-  SparklesIcon,
-  WifiIcon,
-  type LucideIcon,
-} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,21 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { amenityIconIdForName } from "@/lib/salons/amenity-catalog"
+import { getAmenityIcon } from "@/lib/salons/amenity-icons"
 import type { SalonAmenityCategory } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 const PREVIEW_COUNT = 10
-
-const iconMap: Record<string, LucideIcon> = {
-  Wifi: WifiIcon,
-  ParkingCircle: ParkingCircleIcon,
-  Coffee: CoffeeIcon,
-  CreditCard: CreditCardIcon,
-  Armchair: ArmchairIcon,
-  Accessibility: AccessibilityIcon,
-  Baby: BabyIcon,
-  Sparkles: SparklesIcon,
-}
 
 type AmenityRow = {
   id: string
@@ -52,8 +32,9 @@ function flattenAmenityRows(categories: SalonAmenityCategory[]): AmenityRow[] {
       for (const item of items) {
         rows.push({
           id: `${category.name}-${item}`,
+          // Grouped legacy data: prefer the item's own icon over the category's.
+          icon: amenityIconIdForName(item) ?? category.icon,
           label: item,
-          icon: category.icon,
           group: category.name,
         })
       }
@@ -78,7 +59,7 @@ function AmenityListItem({
   iconKey: string
   className?: string
 }) {
-  const Icon = iconMap[iconKey] ?? SparklesIcon
+  const Icon = getAmenityIcon(iconKey, label)
   return (
     <li className={cn("flex items-start gap-4", className)}>
       <Icon

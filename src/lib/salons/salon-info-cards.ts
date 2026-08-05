@@ -1,15 +1,14 @@
 import {
   ClockIcon,
-  CreditCardIcon,
   GlobeIcon,
   LanguagesIcon,
   MapPinIcon,
-  ParkingCircleIcon,
   PhoneIcon,
   type LucideIcon,
 } from "lucide-react"
 
-import { findAmenityByIcon } from "@/lib/salons/salon-detail-utils"
+import { getAmenityIcon } from "@/lib/salons/amenity-icons"
+import { findAmenityByIcons } from "@/lib/salons/salon-detail-utils"
 import type { Salon } from "@/types/salon"
 
 type InfoCard = {
@@ -20,8 +19,8 @@ type InfoCard = {
 
 export function buildSalonInfoCards(salon: Salon): InfoCard[] {
   const amenities = salon.amenities?.categories ?? []
-  const parking = findAmenityByIcon(amenities, "ParkingCircle")
-  const cardPayment = findAmenityByIcon(amenities, "CreditCard")
+  const parking = findAmenityByIcons(amenities, ["CircleParking", "ParkingCircle", "Car"])
+  const cardPayment = findAmenityByIcons(amenities, ["CreditCard", "Smartphone", "Nfc"])
 
   const cards: InfoCard[] = [
     {
@@ -51,7 +50,7 @@ export function buildSalonInfoCards(salon: Salon): InfoCard[] {
 
   if (cardPayment) {
     cards.push({
-      icon: CreditCardIcon,
+      icon: getAmenityIcon(cardPayment.icon, cardPayment.name),
       title: "Payment",
       description: cardPayment.name,
     })
@@ -59,7 +58,7 @@ export function buildSalonInfoCards(salon: Salon): InfoCard[] {
 
   if (parking) {
     cards.push({
-      icon: ParkingCircleIcon,
+      icon: getAmenityIcon(parking.icon, parking.name),
       title: "Parking",
       description: parking.name,
     })

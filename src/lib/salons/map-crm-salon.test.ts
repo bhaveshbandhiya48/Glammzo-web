@@ -123,6 +123,10 @@ describe("mapCrmSalonToWeb", () => {
       "https://example.com/legacy-gallery.jpg",
     )
     expect(mapped.gallery).not.toContain("https://example.com/service.jpg")
+    expect(mapped.gallery).not.toContain("https://example.com/list.jpg")
+    expect(mapped.gallery).not.toContain("https://example.com/cover.jpg")
+    expect(mapped.imageUrl).toBe("https://example.com/list.jpg")
+    expect(mapped.coverImageUrl).toBe("https://example.com/cover.jpg")
     expect(mapped.socialLinks).toEqual({
       instagram: "https://instagram.com/canonical",
       facebook: undefined,

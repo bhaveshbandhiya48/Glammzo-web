@@ -33,8 +33,7 @@ export function SalonDetailView({
   initialFavorited,
   authenticated,
 }: SalonDetailViewProps) {
-  const galleryImages =
-    salon.gallery.length > 0 ? salon.gallery : salon.coverImageUrl ? [salon.coverImageUrl] : []
+  const galleryImages = salon.gallery
 
   useEffect(() => {
     const run = () => {
@@ -89,7 +88,7 @@ export function SalonDetailView({
             id="gallery"
             eyebrow="Gallery"
             title="Inside the salon"
-            subtitle="Real photos from the team—tap any image to browse full screen."
+            subtitle="Real photos from the team. Tap any image to browse full screen."
           >
             <SalonGalleryMasonry gallery={galleryImages} salonName={salon.name} />
           </SalonDetailSection>

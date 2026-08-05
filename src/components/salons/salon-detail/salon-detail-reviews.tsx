@@ -66,6 +66,9 @@ function ReviewCard({ review }: { review: SalonReview }) {
 
       <p className="mt-3 text-sm text-foreground/55">
         {review.serviceName}
+        {review.staffId && review.staffMember?.name && review.staffMember.name !== "Staff" ? (
+          <> · with {review.staffMember.name}</>
+        ) : null}
         {review.verified ? (
           <span className="ml-2 inline-flex items-center gap-1 text-primary">
             <BadgeCheckIcon className="size-3.5" />

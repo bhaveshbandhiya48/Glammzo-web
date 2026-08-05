@@ -37,7 +37,9 @@ export function resolveDistanceOriginFromStored(
     return {
       latitude: stored.latitude,
       longitude: stored.longitude,
-      isDefaultCity: false,
+      // GPS “Near me” and explicit city/area picks are real origins.
+      // Only the silent default fallback stays marked as default-city.
+      isDefaultCity: Boolean(stored.defaultFallback) && !stored.nearMe,
     }
   }
 

@@ -8,6 +8,7 @@ import {
   ClipboardCheckIcon,
   ClockIcon,
   MapPinIcon,
+  MessageCircleIcon,
   SparklesIcon,
   TicketIcon,
   UserIcon,
@@ -140,6 +141,8 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
   const showSalonPaymentLabel =
     hasPayAtSalonNote(booking.notes) || isCompleted || !isNegative || breakdown.hasAdjustments
   const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
+  const showWhatsAppReminder =
+    booking.status === "confirmed" || booking.status === "upcoming"
 
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-col">
@@ -470,6 +473,14 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
                   <p className="mt-3 text-sm leading-relaxed text-foreground/70">
                     {copy.panelBody}
                   </p>
+                ) : null}
+                {showWhatsAppReminder ? (
+                  <div className="mt-4 flex items-center justify-center gap-2 border-t border-emerald-200/60 pt-4 text-sm text-emerald-900/75">
+                    <MessageCircleIcon className="size-4 shrink-0" aria-hidden />
+                    <p>
+                      You’ll receive a WhatsApp reminder 1 hour before your appointment.
+                    </p>
+                  </div>
                 ) : null}
               </section>
             )}

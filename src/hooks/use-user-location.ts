@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import {
+  hasActiveNearMe,
   LOCATION_UPDATED_EVENT,
   readStoredLocation,
   type ParsedStoredLocation,
@@ -54,7 +55,8 @@ export function useUserLocation() {
     label,
     browseCity,
     coords,
-    nearMe: Boolean(coords),
+    /** True only when GPS “Near me” is active — not when city/area centroids were stored. */
+    nearMe: hasActiveNearMe(stored),
     resolvedArea: stored?.resolvedArea,
     refresh,
   }

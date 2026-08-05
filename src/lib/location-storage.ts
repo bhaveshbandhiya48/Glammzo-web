@@ -10,6 +10,7 @@ import {
   type StoredLocation,
 } from "@/lib/location"
 import { resolveBrowseCityFromStored, syncBrowseCityCookie } from "@/lib/location-city-cookie"
+import { resolvePlaceCentroid } from "@/lib/salon-coordinates"
 
 export const LOCATION_UPDATED_EVENT = "glamzzo-location-updated"
 
@@ -65,10 +66,14 @@ export function readStoredLocation(): ParsedStoredLocation | null {
 }
 
 export function buildDefaultFallbackLocation(): StoredLocation {
+  const centroid = resolvePlaceCentroid("Indiranagar", "Bengaluru")
   return {
     id: DEFAULT_FALLBACK_LOCATION_ID,
     areaLabelOverride: DEFAULT_FALLBACK_HERO_AREA,
     defaultFallback: true,
+    ...(centroid
+      ? { latitude: centroid.lat, longitude: centroid.lng }
+      : {}),
   }
 }
 

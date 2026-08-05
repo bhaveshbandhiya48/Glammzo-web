@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button"
 import type { Salon } from "@/types/salon"
 
 export function BookingSalonSummary({ salon }: { salon: Salon }) {
-  const coverImage = salon.coverImageUrl || salon.imageUrl
+  const thumbnail = salon.imageUrl || salon.coverImageUrl
   const hasRating = salon.rating > 0 && salon.reviews > 0
 
   return (
     <article className="mt-6 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm shadow-black/[0.03]">
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
         <Image
-          src={coverImage}
+          src={thumbnail}
           alt={salon.name}
           fill
           className="object-cover"

@@ -42,3 +42,11 @@ export function findAmenityByIcon(
 ) {
   return categories?.find((item) => item.icon === icon)
 }
+
+/** Match any of the icon ids used for one concept, e.g. parking or payments. */
+export function findAmenityByIcons(
+  categories: SalonAmenityCategory[] | undefined,
+  icons: string[],
+) {
+  return categories?.find((item) => icons.includes(item.icon))
+}
