@@ -1,5 +1,6 @@
 "use server"
 
+import { getSession } from "@/lib/auth/session"
 import { getSalonById } from "@/lib/salons"
 import { fetchSalonOfferByCode } from "@/lib/bookings/crm/validate-salon-offer"
 import {
@@ -9,6 +10,7 @@ import {
   LAUNCH_PROMO_ACTIVE,
   LAUNCH_PROMO_CODE,
 } from "@/lib/marketing/launch-promo"
+import { getLaunchPromoEligibility } from "@/lib/marketing/launch-promo-eligibility"
 import {
   applyOfferDiscount,
   computeBookingSubtotal,
@@ -72,6 +74,12 @@ export async function validatePromoCodeAction(input: {
       }
     }
 
+    const session = await getSession()
+    const eligibility = await getLaunchPromoEligibility(session?.phone)
+    if (!eligibility.ok) {
+      return { success: false, error: eligibility.message }
+    }
+
     return {
       success: true,
       kind: "cashback",
@@ -96,6 +104,17 @@ export async function validatePromoCodeAction(input: {
           ? offerNotCoveredMessage(offer)
           : offerValidationMessage(result.error),
     }
+  }
+
+  const session = await getSession()
+  const { getSalonOfferEligibility } = await import("@/lib/bookings/salon-offer-eligibility")
+  const eligibility = await getSalonOfferEligibility({
+    phone: session?.phone,
+    offerId: offer.id,
+    code: offer.code,
+  })
+  if (!eligibility.ok) {
+    return { success: false, error: eligibility.message }
   }
 
   return { success: true, kind: "discount", discount: result }

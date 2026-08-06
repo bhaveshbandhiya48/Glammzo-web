@@ -20,7 +20,9 @@ export async function cancelCrmWebBooking(
 
   const { data: appointment, error: fetchError } = await supabase
     .from("appointments")
-    .select("id, customer_id, status, starts_at, salon_id, customers!inner(phone_normalized)")
+    .select(
+      "id, customer_id, status, starts_at, salon_id, internal_notes, customers!inner(phone_normalized)",
+    )
     .eq("id", appointmentId)
     .is("deleted_at", null)
     .maybeSingle()
@@ -34,6 +36,7 @@ export async function cancelCrmWebBooking(
     status: string
     starts_at: string
     salon_id: string
+    internal_notes: string | null
     customers: { phone_normalized: string } | { phone_normalized: string }[]
   }
 
@@ -70,6 +73,15 @@ export async function cancelCrmWebBooking(
 
   const { restoreBookingWalletLoyalty } = await import("@/lib/wallet/customer-wallet")
   await restoreBookingWalletLoyalty(appointmentId)
+
+  const {
+    decrementSalonOfferRedemption,
+    parseSalonOfferIdFromInternalNotes,
+  } = await import("@/lib/bookings/crm/validate-salon-offer")
+  const offerId = parseSalonOfferIdFromInternalNotes(row.internal_notes)
+  if (offerId) {
+    await decrementSalonOfferRedemption(offerId)
+  }
 
   return { success: true }
 }

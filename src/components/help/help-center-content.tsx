@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { HELP_CENTER, type HelpTopic } from "@/data/help-center-copy"
+import { RaiseSupportTicketButton } from "@/components/help/raise-support-ticket-button"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
 import { Button } from "@/components/ui/button"
@@ -163,12 +164,13 @@ export function HelpCenterContent() {
             Still need help?
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-foreground/60">
-            Email us with your booking reference, salon name, and appointment time so we can
-            assist faster.
+            Raise a ticket with your booking ID, or email us with your booking ID, salon name, and
+            appointment time so we can assist faster.
           </p>
           <p className="mt-3 text-xs text-foreground/45">{HELP_CENTER.supportHours}</p>
-          <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
-            <Button asChild className="rounded-full px-5">
+          <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row sm:flex-wrap">
+            <RaiseSupportTicketButton variant="default" />
+            <Button asChild variant="outline" className="rounded-full px-5">
               <a href={`mailto:${HELP_CENTER.supportEmail}`}>{HELP_CENTER.supportEmail}</a>
             </Button>
             <Button asChild variant="outline" className="rounded-full px-5">

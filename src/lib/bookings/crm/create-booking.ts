@@ -22,7 +22,12 @@ import {
   incrementSalonOfferRedemption,
   resolveBookingOfferDiscount,
 } from "@/lib/bookings/crm/validate-salon-offer"
+import { getSalonOfferEligibility } from "@/lib/bookings/salon-offer-eligibility"
 import { isLaunchPromoCode, LAUNCH_CASHBACK_MIN_RUPEES, LAUNCH_PROMO_CODE } from "@/lib/marketing/launch-promo"
+import {
+  getLaunchPromoEligibility,
+  LAUNCH_CASHBACK_NOTE_MARKER,
+} from "@/lib/marketing/launch-promo-eligibility"
 import { normalizePromoCode } from "@/lib/salons/offer-utils"
 import {
   BOOKING_ENGINE_CONFIG,
@@ -246,6 +251,21 @@ export async function createCrmWebBooking(
 
   const appliedOffer = offerResult.discount
 
+  if (appliedOffer) {
+    const eligibility = await getSalonOfferEligibility({
+      phone: customerPhone,
+      offerId: appliedOffer.offerId,
+      code: appliedOffer.code,
+    })
+    if (!eligibility.ok) {
+      return {
+        success: false,
+        error: eligibility.message,
+        code: "invalid",
+      }
+    }
+  }
+
   const startTime = normalizeTime(input.startTime)
   const endTime = addMinutesToTime(startTime, durationMinutes)
 
@@ -379,6 +399,15 @@ export async function createCrmWebBooking(
         code: "invalid",
       }
     }
+
+    const eligibility = await getLaunchPromoEligibility(customerPhone)
+    if (!eligibility.ok) {
+      return {
+        success: false,
+        error: eligibility.message,
+        code: "invalid",
+      }
+    }
   }
 
   const lineServices = input.serviceIds.map((serviceId) => {
@@ -440,7 +469,7 @@ export async function createCrmWebBooking(
   if (appliedOffer) {
     internalNotes += `|promo:${appliedOffer.code}|offer_id:${appliedOffer.offerId}|discount:${appliedOffer.discountAmount}`
   } else if (input.promoCode?.trim() && isLaunchPromoCode(input.promoCode)) {
-    internalNotes += `|launch_cashback:${normalizePromoCode(input.promoCode)}`
+    internalNotes += `|${LAUNCH_CASHBACK_NOTE_MARKER}${normalizePromoCode(input.promoCode)}`
   }
   if (walletPaise > 0) {
     internalNotes += `|wallet_paise:${walletPaise}`

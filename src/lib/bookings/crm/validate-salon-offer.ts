@@ -137,3 +137,46 @@ export async function incrementSalonOfferRedemption(offerId: string) {
 
   return true
 }
+
+/** Release a global max-use slot when a promo booking is cancelled / expired / declined. */
+export async function decrementSalonOfferRedemption(offerId: string) {
+  const supabase = createAdminClient()
+
+  const { data: offer, error: fetchError } = await supabase
+    .from("salon_offers")
+    .select("id, redemption_count")
+    .eq("id", offerId)
+    .is("deleted_at", null)
+    .maybeSingle()
+
+  if (fetchError || !offer) {
+    console.error("[bookings] Failed to load offer for release:", fetchError?.message)
+    return false
+  }
+
+  const row = offer as { id: string; redemption_count: number }
+  if (row.redemption_count <= 0) {
+    return true
+  }
+
+  const { error: updateError } = await supabase
+    .from("salon_offers")
+    .update({ redemption_count: row.redemption_count - 1 })
+    .eq("id", offerId)
+    .eq("redemption_count", row.redemption_count)
+
+  if (updateError) {
+    console.error("[bookings] Failed to decrement offer redemption:", updateError.message)
+    return false
+  }
+
+  return true
+}
+
+export function parseSalonOfferIdFromInternalNotes(
+  internalNotes: string | null | undefined,
+): string | null {
+  if (!internalNotes) return null
+  const match = internalNotes.match(/(?:^|\|)offer_id:([0-9a-f-]{36})/i)
+  return match?.[1] ?? null
+}

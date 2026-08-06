@@ -5,6 +5,7 @@ import { useState } from "react"
 import { ChevronDownIcon } from "lucide-react"
 
 import { FAQ_PAGE, type FaqCategory } from "@/data/faq-copy"
+import { RaiseSupportTicketButton } from "@/components/help/raise-support-ticket-button"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
 import { Button } from "@/components/ui/button"
@@ -101,10 +102,11 @@ export function FaqPageContent() {
               {FAQ_PAGE.contactPrompt}
             </h2>
             <p className="mt-2 text-sm text-foreground/60">
-              Email us and include your booking reference if you have one.
+              Raise a ticket with your booking ID, or email us and include it from your confirmation.
             </p>
-            <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
-              <Button asChild className="rounded-full px-5">
+            <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row sm:flex-wrap">
+              <RaiseSupportTicketButton variant="default" />
+              <Button asChild variant="outline" className="rounded-full px-5">
                 <a href={`mailto:${FAQ_PAGE.contactEmail}`}>{FAQ_PAGE.contactEmail}</a>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-5">
