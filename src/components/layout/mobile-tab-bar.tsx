@@ -1,12 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
   CalendarDaysIcon,
   CompassIcon,
-  HomeIcon,
   UserRoundIcon,
 } from "lucide-react"
 
@@ -14,8 +13,7 @@ import { useSessionStatus } from "@/hooks/use-session-status"
 import { cn } from "@/lib/utils"
 
 const TABS = [
-  { id: "home", label: "Home", href: "/", icon: HomeIcon },
-  { id: "explore", label: "Explore", href: "/explore", icon: CompassIcon },
+  { id: "home", label: "Home", href: "/explore", icon: CompassIcon },
   {
     id: "bookings",
     label: "Bookings",
@@ -24,9 +22,9 @@ const TABS = [
     requiresAuth: true,
   },
   {
-    id: "account",
-    label: "Account",
-    href: "/dashboard/profile#wallet",
+    id: "profile",
+    label: "Profile",
+    href: "/dashboard/profile#profile",
     icon: UserRoundIcon,
     requiresAuth: true,
   },
@@ -51,22 +49,71 @@ function splitHref(href: string) {
 }
 
 function isTabActive(pathname: string, hash: string, href: string) {
-  if (href === "/") return pathname === "/"
-
   const target = splitHref(href)
+
+  if (target.path === "/explore") {
+    return pathname === "/explore" || pathname.startsWith("/services")
+  }
+
   const pathMatches =
     pathname === target.path || pathname.startsWith(`${target.path}/`)
 
   if (!pathMatches) return false
   if (!target.hash) return true
 
-  // On profile, Bookings vs Account are distinguished by hash.
+  // On profile, Bookings vs Profile are distinguished by hash.
   if (target.path === "/dashboard/profile") {
     const current = hash.replace(/^#/, "") || "bookings"
+    if (target.hash === "bookings") return current === "bookings"
+    if (target.hash === "profile") {
+      return (
+        current === "profile" ||
+        current === "home" ||
+        current === "wallet" ||
+        current === "loyalty" ||
+        current === "activity" ||
+        current === "details"
+      )
+    }
     return current === target.hash
   }
 
   return true
+}
+
+/** Next.js often skips hash-only updates on the same path — force them. */
+function goToTabHref(pathname: string, href: string, router: ReturnType<typeof useRouter>) {
+  const { path, hash: targetHash } = splitHref(href)
+
+  if (pathname === path) {
+    const nextHash = targetHash ? `#${targetHash}` : ""
+    if (window.location.hash === nextHash) {
+      window.dispatchEvent(new Event("hashchange"))
+      return
+    }
+    if (targetHash) {
+      window.location.hash = targetHash
+    } else {
+      history.pushState(null, "", path)
+      window.dispatchEvent(new Event("hashchange"))
+    }
+    return
+  }
+
+  if (targetHash) {
+    router.push(`${path}#${targetHash}`)
+    // App Router can drop the hash on soft nav — re-apply after route settles.
+    window.setTimeout(() => {
+      if (window.location.pathname === path && window.location.hash !== `#${targetHash}`) {
+        window.location.hash = targetHash
+      } else if (window.location.pathname === path) {
+        window.dispatchEvent(new Event("hashchange"))
+      }
+    }, 50)
+    return
+  }
+
+  router.push(path)
 }
 
 /**
@@ -75,6 +122,7 @@ function isTabActive(pathname: string, hash: string, href: string) {
  */
 export function MobileTabBar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { authenticated } = useSessionStatus()
   const hidden = shouldHideTabBar(pathname)
   const [hash, setHash] = useState("")
@@ -108,35 +156,42 @@ export function MobileTabBar() {
         "pb-[env(safe-area-inset-bottom)]",
       )}
     >
-      <ul className="mx-auto flex h-[3.65rem] max-w-lg items-stretch justify-between px-2">
+      <ul className="mx-auto flex h-[4.5rem] max-w-lg items-stretch justify-between px-2">
         {TABS.map((tab) => {
-          const href =
-            "requiresAuth" in tab &&
-            tab.requiresAuth &&
-            authenticated === false
-              ? `/login?next=${encodeURIComponent(tab.href)}`
-              : tab.href
+          const needsAuthRedirect =
+            "requiresAuth" in tab && tab.requiresAuth && authenticated === false
+          const href = needsAuthRedirect
+            ? `/login?next=${encodeURIComponent(tab.href)}`
+            : tab.href
           const active = isTabActive(pathname, hash, tab.href)
           const Icon = tab.icon
+          const tabHash = splitHref(tab.href).hash
 
           return (
             <li key={tab.id} className="flex min-w-0 flex-1">
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
+                scroll={false}
+                onClick={(event) => {
+                  if (needsAuthRedirect) return
+                  event.preventDefault()
+                  goToTabHref(pathname, tab.href, router)
+                  setHash(tabHash ? `#${tabHash}` : "")
+                }}
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors",
+                  "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                   active ? "text-primary" : "text-foreground/45 hover:text-foreground/75",
                 )}
               >
                 <Icon
-                  className={cn("size-5 stroke-[1.75]", active && "stroke-[2.25]")}
+                  className={cn("size-6 stroke-[1.75]", active && "stroke-[2.25]")}
                   aria-hidden
                 />
                 <span
                   className={cn(
-                    "max-w-full truncate text-[10px] leading-none",
+                    "max-w-full truncate text-[11px] leading-none",
                     active ? "font-semibold" : "font-medium",
                   )}
                 >

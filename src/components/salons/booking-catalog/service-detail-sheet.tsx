@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ClockIcon, StarIcon } from "lucide-react"
+import { ClockIcon, StarIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -49,6 +49,7 @@ function ServiceDetailSummaryPanel({
   serviceOffers,
   onToggle,
   onAddOnToggle,
+  onClose,
   compactImage = false,
 }: {
   service: SalonService
@@ -60,6 +61,7 @@ function ServiceDetailSummaryPanel({
   serviceOffers: SalonOffer[]
   onToggle: () => void
   onAddOnToggle: (id: string) => void
+  onClose: () => void
   compactImage?: boolean
 }) {
   return (
@@ -67,7 +69,7 @@ function ServiceDetailSummaryPanel({
       <div
         className={cn(
           "relative w-full shrink-0 overflow-hidden bg-muted/30",
-          compactImage ? "h-[160px]" : "h-[200px]",
+          compactImage ? "h-[160px] rounded-t-3xl" : "h-[200px]",
         )}
       >
         <Image
@@ -79,6 +81,14 @@ function ServiceDetailSummaryPanel({
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close service summary"
+          className="absolute right-3 top-3 z-10 inline-flex size-9 items-center justify-center rounded-full bg-black/45 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        >
+          <XIcon className="size-4" aria-hidden />
+        </button>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-5 py-5 sm:px-6">
@@ -210,10 +220,11 @@ export function ServiceDetailSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isDesktop ? "right" : "bottom"}
+        showCloseButton={false}
         className={
           isDesktop
-            ? "h-full w-[min(92vw,420px)] gap-0 p-0"
-            : "max-h-[92vh] gap-0 rounded-t-3xl p-0"
+            ? "h-full w-[min(92vw,420px)] gap-0 overflow-hidden p-0"
+            : "max-h-[92vh] gap-0 overflow-hidden rounded-t-3xl p-0"
         }
       >
         <ServiceDetailSummaryPanel
@@ -226,6 +237,7 @@ export function ServiceDetailSheet({
           serviceOffers={serviceOffers}
           onToggle={onToggle}
           onAddOnToggle={onAddOnToggle}
+          onClose={() => onOpenChange(false)}
           compactImage={!isDesktop}
         />
       </SheetContent>

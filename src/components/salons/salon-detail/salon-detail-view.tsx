@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import type { Salon } from "@/types/salon"
 
-import { SalonDetailBookingRail } from "@/components/salons/salon-detail/salon-detail-booking-rail"
 import { SalonDetailHero } from "@/components/salons/salon-detail/salon-detail-hero"
 import { SalonDetailSection } from "@/components/salons/salon-detail/salon-detail-section"
 import { SalonGalleryMasonry } from "@/components/salons/salon-gallery-masonry"
@@ -13,12 +12,14 @@ import { SalonDetailAbout } from "@/components/salons/salon-detail/salon-detail-
 import { SalonDetailAmenities } from "@/components/salons/salon-detail/salon-detail-amenities"
 import { SalonDetailReviews } from "@/components/salons/salon-detail/salon-detail-reviews"
 import { SalonDetailSimilar } from "@/components/salons/salon-detail/salon-detail-similar"
+import { SalonOffersSection } from "@/components/salons/salon-offers-section"
 import { SalonTeamPanel } from "@/components/salons/salon-team-panel"
 import { Container } from "@/components/layout/container"
 import {
   SALON_SERVICES_SECTION_ID,
   scrollToSalonServicesSection,
 } from "@/lib/salons/salon-detail-scroll"
+import { filterBookableOffers } from "@/lib/salons/offer-utils"
 
 type SalonDetailViewProps = {
   salon: Salon
@@ -34,6 +35,7 @@ export function SalonDetailView({
   authenticated,
 }: SalonDetailViewProps) {
   const galleryImages = salon.gallery
+  const bookableOffers = filterBookableOffers(salon.offers)
 
   useEffect(() => {
     const run = () => {
@@ -56,19 +58,30 @@ export function SalonDetailView({
         authenticated={authenticated}
       />
 
-      <SalonDetailBookingRail
-        salon={salon}
-        salonName={salon.name}
-        priceFrom={salon.priceFrom}
-      />
+      <Container className="pb-28 md:pb-16">
+        {bookableOffers.length > 0 ? (
+          <SalonDetailSection
+            id="offers"
+            title="Offer for you"
+            className="!pt-6 sm:!pt-8"
+          >
+            <SalonOffersSection
+              offers={bookableOffers}
+              services={salon.services}
+              salonId={salon.id}
+              authenticated={authenticated}
+              embedded
+            />
+          </SalonDetailSection>
+        ) : null}
 
-      <Container className="pb-20 md:pb-16">
         <SalonDetailSection
           id="services"
           eyebrow="Book online"
           title="Services"
           subtitle="Search, filter by category, and add treatments to your visit."
-          className="!pt-6 sm:!pt-8"
+          compactTitleMobile
+          className={bookableOffers.length > 0 ? undefined : "!pt-6 sm:!pt-8"}
         >
           <SalonBookingCatalogSection
             services={salon.services}
@@ -89,6 +102,7 @@ export function SalonDetailView({
             eyebrow="Gallery"
             title="Inside the salon"
             subtitle="Real photos from the team. Tap any image to browse full screen."
+            className="!pt-4 sm:!pt-6"
           >
             <SalonGalleryMasonry gallery={galleryImages} salonName={salon.name} />
           </SalonDetailSection>

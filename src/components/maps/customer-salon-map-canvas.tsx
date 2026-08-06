@@ -32,6 +32,10 @@ type CustomerSalonMapCanvasProps = {
   mapExpanded?: boolean
   onToggleMapExpanded?: () => void
   mapHeightClass?: string
+  /** Overrides the default rounded bordered map frame (e.g. fullscreen overlay). */
+  mapFrameClassName?: string
+  /** Extra classes for the “my location” control. */
+  locateButtonClassName?: string
 }
 
 export function CustomerSalonMapCanvas({
@@ -48,6 +52,8 @@ export function CustomerSalonMapCanvas({
   mapExpanded = false,
   onToggleMapExpanded,
   mapHeightClass = "h-[min(72vh,42rem)]",
+  mapFrameClassName,
+  locateButtonClassName,
 }: CustomerSalonMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -89,16 +95,21 @@ export function CustomerSalonMapCanvas({
   }, [containerSize, markerScreenPos])
 
   useEffect(() => {
-    const element = containerRef.current?.parentElement
+    const element = containerRef.current
     if (!element) return
 
     const updateSize = () => {
-      setContainerSize({ width: element.offsetWidth, height: element.offsetHeight })
+      const parent = element.parentElement
+      setContainerSize({
+        width: parent?.offsetWidth || element.offsetWidth,
+        height: parent?.offsetHeight || element.offsetHeight,
+      })
     }
 
     updateSize()
     const observer = new ResizeObserver(updateSize)
     observer.observe(element)
+    if (element.parentElement) observer.observe(element.parentElement)
     return () => observer.disconnect()
   }, [])
 
@@ -271,75 +282,77 @@ export function CustomerSalonMapCanvas({
       }
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [mapHeightClass, mapInstance, selectedLatLng])
+  }, [mapHeightClass, mapInstance, selectedLatLng, containerSize.width, containerSize.height])
 
   return (
-    <div className="relative">
-      <div className={cn("relative w-full", mapHeightClass)}>
+    <div className={cn("relative w-full", mapHeightClass)}>
+      <div
+        ref={containerRef}
+        className={cn(
+          "h-full w-full overflow-hidden rounded-3xl border border-border/60 bg-[#f5f2ec] shadow-sm",
+          mapFrameClassName,
+        )}
+      />
+
+      {showMapPopover && children && selectedSalonId && popoverPlacement ? (
         <div
-          ref={containerRef}
-          className="h-full w-full overflow-hidden rounded-3xl border border-border/60 bg-[#f5f2ec] shadow-sm"
-        />
-
-        {showMapPopover && children && selectedSalonId && popoverPlacement ? (
-          <div
-            className="pointer-events-none absolute z-20"
-            style={{
-              left: popoverPlacement.left,
-              top: popoverPlacement.top,
-              transform: popoverPlacement.transform,
-            }}
-          >
-            <div className="pointer-events-auto w-[min(300px,calc(100vw-2rem))] sm:w-[320px]">
-              {children}
-            </div>
+          className="pointer-events-none absolute z-20"
+          style={{
+            left: popoverPlacement.left,
+            top: popoverPlacement.top,
+            transform: popoverPlacement.transform,
+          }}
+        >
+          <div className="pointer-events-auto w-[min(300px,calc(100vw-2rem))] sm:w-[320px]">
+            {children}
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        {onToggleMapExpanded ? (
-          <button
-            type="button"
-            onClick={onToggleMapExpanded}
-            aria-label={mapExpanded ? "Exit expanded map view" : "Expand map view"}
-            title={mapExpanded ? "Exit expanded view" : "Expand map"}
-            className={cn(
-              "absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-sm border border-border/70 bg-white text-foreground shadow-md shadow-black/10 transition-colors",
-              "hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            )}
-          >
-            {mapExpanded ? (
-              <Minimize2Icon className="size-4" aria-hidden />
-            ) : (
-              <Maximize2Icon className="size-4" aria-hidden />
-            )}
-          </button>
-        ) : null}
-
+      {onToggleMapExpanded ? (
         <button
           type="button"
-          onClick={() => void handleMyLocation()}
-          disabled={locating}
-          aria-label="Go to my current location"
-          title="My location"
+          onClick={onToggleMapExpanded}
+          aria-label={mapExpanded ? "Exit expanded map view" : "Expand map view"}
+          title={mapExpanded ? "Exit expanded view" : "Expand map"}
           className={cn(
-            "absolute bottom-28 right-3 z-10 flex size-10 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-md shadow-black/10 transition-colors",
+            "absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-sm border border-border/70 bg-white text-foreground shadow-md shadow-black/10 transition-colors",
             "hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            "disabled:cursor-not-allowed disabled:opacity-70",
           )}
         >
-          {locating ? (
-            <Loader2Icon className="size-4 animate-spin" aria-hidden />
+          {mapExpanded ? (
+            <Minimize2Icon className="size-4" aria-hidden />
           ) : (
-            <LocateFixedIcon className="size-4" aria-hidden />
+            <Maximize2Icon className="size-4" aria-hidden />
           )}
         </button>
+      ) : null}
 
-        {locationError ? (
-          <div className="pointer-events-none absolute bottom-4 left-4 right-20 z-10 rounded-2xl border border-destructive/30 bg-white/95 px-3 py-2 text-xs text-destructive shadow-sm">
-            {locationError}
-          </div>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        onClick={() => void handleMyLocation()}
+        disabled={locating}
+        aria-label="Go to my current location"
+        title="My location"
+        className={cn(
+          "absolute bottom-28 right-3 z-10 flex size-10 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-md shadow-black/10 transition-colors",
+          "hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "disabled:cursor-not-allowed disabled:opacity-70",
+          locateButtonClassName,
+        )}
+      >
+        {locating ? (
+          <Loader2Icon className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <LocateFixedIcon className="size-4" aria-hidden />
+        )}
+      </button>
+
+      {locationError ? (
+        <div className="pointer-events-none absolute bottom-4 left-4 right-20 z-10 rounded-2xl border border-destructive/30 bg-white/95 px-3 py-2 text-xs text-destructive shadow-sm">
+          {locationError}
+        </div>
+      ) : null}
     </div>
   )
 }

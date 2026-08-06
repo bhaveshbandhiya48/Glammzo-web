@@ -8,35 +8,11 @@ export function ExplorePageTitle() {
   return <>Salons in {browseCity}</>
 }
 
-type ExploreResultsSubtitleProps = {
-  activeFilterLabel: string
-  area: string
-  nearMode: boolean
-}
-
-export function ExploreResultsSubtitle({
-  activeFilterLabel,
-  area,
-  nearMode,
-}: ExploreResultsSubtitleProps) {
-  const { browseCity } = useUserLocation()
-
-  if (nearMode) {
-    return <>{activeFilterLabel} services · Sorted by distance from you</>
-  }
-
-  return (
-    <>
-      {activeFilterLabel} services{area ? ` · ${area}` : ` · ${browseCity}`}
-    </>
-  )
-}
-
 export function ExplorePartnerSubtitle() {
   const { browseCity } = useUserLocation()
   return (
     <>
-      List your services, accept online bookings, and reach clients searching by area and category
+      List your business, accept online bookings, and reach clients searching by area and type
       in {browseCity}.
     </>
   )

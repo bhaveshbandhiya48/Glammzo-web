@@ -1,16 +1,21 @@
-import Link from "next/link"
+"use client"
+
 import { ArrowRightIcon, PercentIcon, TagIcon } from "lucide-react"
 
+import { EligibleServicesList } from "@/components/salons/offers/eligible-services-list"
 import { Button } from "@/components/ui/button"
 import {
+  eligibleServicesForOffer,
   formatOfferDiscountLabel,
   formatOfferExpiry,
 } from "@/lib/salons/offer-utils"
-import type { SalonOffer } from "@/types/salon"
+import { scrollToSalonServicesSection } from "@/lib/salons/salon-detail-scroll"
+import type { SalonOffer, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type SalonOffersSectionProps = {
   offers: SalonOffer[]
+  services?: SalonService[]
   salonId: string
   authenticated: boolean
   className?: string
@@ -18,15 +23,9 @@ type SalonOffersSectionProps = {
   embedded?: boolean
 }
 
-function buildOfferBookHref(salonId: string, code: string, authenticated: boolean) {
-  const target = `/book/${salonId}?promo=${encodeURIComponent(code)}`
-  return authenticated ? target : `/login?next=${encodeURIComponent(target)}`
-}
-
 export function SalonOffersSection({
   offers,
-  salonId,
-  authenticated,
+  services = [],
   className,
   embedded = false,
 }: SalonOffersSectionProps) {
@@ -46,10 +45,12 @@ export function SalonOffersSection({
               cashback.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href={buildOfferBookHref(salonId, offers[0]!.code, authenticated)}>
-              Book to redeem
-            </Link>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => scrollToSalonServicesSection()}
+          >
+            Book to redeem
           </Button>
         </div>
       )}
@@ -63,15 +64,15 @@ export function SalonOffersSection({
         {offers.map((offer) => {
           const expiry = formatOfferExpiry(offer.endsAt)
           const discountLabel = formatOfferDiscountLabel(offer)
-          const href = buildOfferBookHref(salonId, offer.code, authenticated)
+          const eligibleServices = eligibleServicesForOffer(offer, services)
 
           return (
             <article
               key={offer.id}
               className={cn(
                 "group relative overflow-hidden rounded-2xl border border-primary/20",
-                "bg-gradient-to-r from-primary/[0.09] via-primary/[0.04] to-card",
-                "px-4 py-4 sm:px-5 sm:py-4",
+                "bg-gradient-to-br from-primary/[0.09] via-primary/[0.04] to-card",
+                "p-4 sm:p-5",
                 "transition duration-200 hover:border-primary/35 hover:shadow-md hover:shadow-primary/5",
               )}
             >
@@ -80,8 +81,8 @@ export function SalonOffersSection({
                 aria-hidden
               />
 
-              <div className="relative flex flex-wrap items-center gap-3 sm:gap-4">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+                <div className="flex min-w-0 flex-1 gap-3">
                   <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/25">
                     {offer.discountType === "percent" ? (
                       <PercentIcon className="size-5" aria-hidden />
@@ -90,7 +91,7 @@ export function SalonOffersSection({
                     )}
                   </span>
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-heading text-xl font-semibold tracking-tight text-primary sm:text-2xl">
                         {discountLabel}
@@ -99,34 +100,36 @@ export function SalonOffersSection({
                         Instant off
                       </span>
                     </div>
-                    <p className="mt-0.5 truncate text-sm font-medium text-foreground">
-                      {offer.title}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/55">
+                    <p className="mt-0.5 text-sm font-medium text-foreground">{offer.title}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs text-foreground/55">
                       <code className="rounded-md border border-dashed border-primary/35 bg-background/80 px-2 py-0.5 font-semibold tracking-wide text-primary">
                         {offer.code}
                       </code>
                       {expiry ? <span>Until {expiry}</span> : null}
-                      {offer.appliesTo === "selected_services" ? (
-                        <span>Selected services</span>
-                      ) : null}
                     </div>
+
+                    <EligibleServicesList
+                      className="mt-3"
+                      appliesToAll={offer.appliesTo === "all_services"}
+                      services={eligibleServices}
+                    />
+
                     <p className="mt-2 text-xs leading-relaxed text-foreground/55">
-                      Apply this code in <span className="font-medium text-foreground/70">Promo code</span> at
-                      checkout — instant discount on your total, not cashback.
+                      Apply this code in{" "}
+                      <span className="font-medium text-foreground/70">Promo code</span> at checkout —
+                      instant discount on your total, not cashback.
                     </p>
                   </div>
                 </div>
 
                 <Button
-                  asChild
+                  type="button"
                   size="sm"
-                  className="ml-auto shrink-0 rounded-full px-4"
+                  className="h-10 w-full shrink-0 rounded-full px-4 sm:h-9 sm:w-auto"
+                  onClick={() => scrollToSalonServicesSection()}
                 >
-                  <Link href={href}>
-                    Book with code
-                    <ArrowRightIcon className="size-3.5" aria-hidden />
-                  </Link>
+                  Book with code
+                  <ArrowRightIcon className="size-3.5" aria-hidden />
                 </Button>
               </div>
             </article>

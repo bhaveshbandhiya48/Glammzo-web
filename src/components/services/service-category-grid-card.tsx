@@ -6,16 +6,25 @@ import { CategoryImage } from "@/components/shared/category-image"
 
 type ServiceCategoryGridCardProps = {
   category: Category
+  city?: string | null
   priority?: boolean
 }
 
-export function ServiceCategoryGridCard({ category, priority }: ServiceCategoryGridCardProps) {
+export function ServiceCategoryGridCard({
+  category,
+  city,
+  priority,
+}: ServiceCategoryGridCardProps) {
+  const browseHref = city
+    ? `/explore?category=${category.id}&city=${encodeURIComponent(city)}`
+    : `/explore?category=${category.id}`
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/[0.08]">
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <CategoryImage
           src={category.imageUrl}
-          alt={`${category.eyebrow} services at Glammzo`}
+          alt={`${category.eyebrow} on Glammzo`}
           priority={priority}
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
@@ -43,7 +52,7 @@ export function ServiceCategoryGridCard({ category, priority }: ServiceCategoryG
           {category.description}
         </p>
         <Button asChild className="mt-6 w-full">
-          <Link href={`/explore?category=${category.id}`}>Browse {category.eyebrow}</Link>
+          <Link href={browseHref}>Browse {category.eyebrow}</Link>
         </Button>
       </div>
     </article>

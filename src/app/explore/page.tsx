@@ -8,9 +8,9 @@ import { getConsumerFavoriteSalonIds } from "@/lib/favorites/server"
 import { getSession } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
 import { Navbar } from "@/components/layout/navbar"
+import { Container } from "@/components/layout/container"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
-import { SectionHeader } from "@/components/shared/section-header"
 import { ExploreFeaturedGrid } from "@/components/explore/explore-featured-grid"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreResultsSection } from "@/components/explore/explore-results-section"
@@ -18,7 +18,6 @@ import { ExploreCityComingSoon } from "@/components/explore/explore-city-coming-
 import {
   ExplorePageTitle,
   ExplorePartnerSubtitle,
-  ExploreResultsSubtitle,
 } from "@/components/explore/explore-location-copy"
 import { PartnerDiscoverCta } from "@/components/sections/parts/partner-discover-cta"
 import { Footer } from "@/components/sections/parts/footer"
@@ -110,7 +109,7 @@ export default async function ExplorePage({
 
   const [byCategory, browseCategories, allSalons] = await Promise.all([
     getSalonsByCategory(active),
-    getBrowseDefaultCategories(),
+    getBrowseDefaultCategories(city),
     getSalons(),
   ])
   const categoryFilters = [
@@ -147,15 +146,22 @@ export default async function ExplorePage({
     <>
       <Navbar />
       <main className="page-main">
-        <PageSection tone="base" className="!py-6 sm:!py-8">
+        <PageSection tone="base" className="!border-b-0 !pt-4 !pb-12 sm:!pt-20 sm:!pb-28">
           <PageHeader
             eyebrow="Explore"
             title={<ExplorePageTitle />}
-            subtitle="Filter by service, compare ratings and prices, and book when you're ready, with no calls required."
-            className="[&_h1]:mt-2 [&_p]:mt-2"
+            subtitle="Filter by business type, compare ratings and prices, and book when you're ready, with no calls required."
+            className="mb-4 max-w-none sm:mb-10 [&_h1]:mt-2 [&_p]:mt-2 max-sm:[&>p:last-of-type]:hidden md:[&>p:last-of-type]:truncate md:[&>p:last-of-type]:whitespace-nowrap"
           />
-          {(query || area || city || nearMode || sort !== "recommended" || price !== "any" || rating !== "any" || openOnly) && (
-            <p className="mt-3 text-sm text-foreground/55">
+          {(query ||
+            area ||
+            nearMode ||
+            active !== "all" ||
+            sort !== "recommended" ||
+            price !== "any" ||
+            rating !== "any" ||
+            openOnly) && (
+            <p className="mb-6 text-sm text-foreground/55 sm:mb-8">
               Showing results
               {nearMode ? (
                 <>
@@ -175,10 +181,16 @@ export default async function ExplorePage({
                   for <span className="font-medium text-foreground">&ldquo;{query}&rdquo;</span>
                 </>
               ) : null}
-              {!nearMode && (city || area) ? (
+              {active !== "all" ? (
+                <>
+                  {" · "}
+                  <span className="font-medium text-foreground">{activeFilterLabel}</span>
+                </>
+              ) : null}
+              {!nearMode && area ? (
                 <>
                   {" "}
-                  in <span className="font-medium text-foreground">{city || area}</span>
+                  in <span className="font-medium text-foreground">{area}</span>
                 </>
               ) : null}
               {sort !== "recommended" ? (
@@ -211,32 +223,16 @@ export default async function ExplorePage({
               </Link>
             </p>
           )}
-        </PageSection>
 
-        <PageSection tone="statement" separated className="!py-8 sm:!py-10">
+          <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top,0px))] z-40 -mx-4 mb-6 border-y border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 md:hidden">
+            <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
+          </div>
+
           {list.length === 0 ? (
             <>
-              <SectionHeader
-                eyebrow="Results"
-                title={
-                  awaitingPublish
-                    ? "No matches right now"
-                    : city
-                      ? `Salons in ${city}`
-                      : "Salons near you"
-                }
-                subtitle={
-                  <ExploreResultsSubtitle
-                    activeFilterLabel={activeFilterLabel}
-                    area={area}
-                    nearMode={nearMode}
-                  />
-                }
-                className="mb-5 sm:mb-6"
-              />
-
-              <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
-
+              <div className="mb-4 hidden md:block">
+                <ExploreFilters state={searchState} categoryFilters={categoryFilters} />
+              </div>
               {awaitingPublish ? (
                 <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border/70 bg-card px-8 py-10 text-center shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
                   <p className="font-heading text-lg font-semibold">No salons match yet</p>
@@ -258,14 +254,6 @@ export default async function ExplorePage({
             </>
           ) : (
             <ExploreResultsSection
-              title={`${list.length} salon${list.length === 1 ? "" : "s"} available`}
-              subtitle={
-                <ExploreResultsSubtitle
-                  activeFilterLabel={activeFilterLabel}
-                  area={area}
-                  nearMode={nearMode}
-                />
-              }
               searchState={searchState}
               categoryFilters={categoryFilters}
               salons={list}
@@ -278,26 +266,27 @@ export default async function ExplorePage({
               authenticated={Boolean(session)}
               featured={
                 showFeatured ? (
-                  <>
-                    <SectionHeader
-                      eyebrow="Featured"
-                      title="Featured partners"
-                      subtitle="Salons highlighted on Glammzo this week."
-                      className="mb-4"
-                    />
+                  <div>
+                    <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-foreground/45 uppercase">
+                      Featured
+                    </p>
                     <ExploreFeaturedGrid
                       salons={featuredSalons}
                       favoriteSalonIds={favoriteSalonIds}
                       authenticated={Boolean(session)}
                     />
-                  </>
+                  </div>
                 ) : null
               }
             />
           )}
         </PageSection>
 
-        <PageSection tone="featured" separated>
+        <PageSection
+          tone="featured"
+          separated
+          className="!border-t-0 max-md:!py-6"
+        >
           <PartnerDiscoverCta
             subtitle={<ExplorePartnerSubtitle />}
             salonCount={allSalons.length}

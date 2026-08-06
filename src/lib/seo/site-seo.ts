@@ -42,9 +42,9 @@ export const SEO_SALONS_NEAR_ME = {
 } as const
 
 export const SEO_SERVICES = {
-  title: "Salon Services Near Me · Hair, Spa, Nails & More",
+  title: "Browse by Business Type · Salon, Spa, Barber & More",
   description:
-    "Browse salon services near you — hair, spa, nails, makeup, and grooming. See fixed prices and book a nearby salon appointment on Glammzo.",
+    "Find salons, spas, barber shops, nail studios, and more near you. Compare ratings and fixed prices, then book on Glammzo.",
 } as const
 
 export const SEO_ORGANIZATION = {

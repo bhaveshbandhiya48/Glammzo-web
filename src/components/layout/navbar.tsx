@@ -1,10 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { UserIcon } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { ArrowLeftIcon, UserIcon } from "lucide-react"
 
 import { navItems } from "@/data/site-copy"
+import {
+  isProfileHubChild,
+  profileMobileNavTitle,
+  profileSectionFromHash,
+} from "@/lib/account/profile-nav"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -16,9 +22,49 @@ import { MobileTabBar } from "@/components/layout/mobile-tab-bar"
 import { LogoutMenuButton } from "@/components/auth/logout-form-button"
 import { useSessionStatus } from "@/hooks/use-session-status"
 
-export function Navbar() {
+type NavbarProps = {
+  /** When set on `/salons/[id]`, replaces logo + location with back + title. */
+  salonName?: string
+}
+
+function isSalonDetailPath(pathname: string | null) {
+  return Boolean(pathname && /^\/salons\/[^/]+$/.test(pathname))
+}
+
+function isProfilePath(pathname: string | null) {
+  return Boolean(pathname && (pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/")))
+}
+
+export function Navbar({ salonName }: NavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { authenticated, welcomeName } = useSessionStatus()
+  const salonDetail = isSalonDetailPath(pathname)
+  const profilePage = isProfilePath(pathname)
+  const [profileHash, setProfileHash] = useState("")
+
+  useEffect(() => {
+    if (!profilePage) {
+      setProfileHash("")
+      return
+    }
+    const sync = () => setProfileHash(window.location.hash)
+    sync()
+    window.addEventListener("hashchange", sync)
+    window.addEventListener("popstate", sync)
+    return () => {
+      window.removeEventListener("hashchange", sync)
+      window.removeEventListener("popstate", sync)
+    }
+  }, [profilePage, pathname])
+
+  const profileSection = profileSectionFromHash(profileHash)
+  /** Mobile-only compact header (back + title); desktop keeps full chrome. */
+  const mobileCompact = salonDetail || profilePage
+  const mobileTitle = profilePage
+    ? profileMobileNavTitle(profileSection)
+    : salonName?.trim() || "Salon"
+  const backFallbackHref = profilePage ? "/" : "/explore"
 
   const scrollToTopIfCurrentPage = (href: string) => {
     const path = href.split("#")[0] || href
@@ -33,11 +79,45 @@ export function Navbar() {
     return pathname === path || pathname.startsWith(`${path}/`)
   }
 
+  const onCompactBack = () => {
+    if (profilePage && isProfileHubChild(profileSection)) {
+      window.history.replaceState(null, "", `${pathname}#profile`)
+      window.dispatchEvent(new Event("hashchange"))
+      return
+    }
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back()
+      return
+    }
+    router.push(backFallbackHref)
+  }
+
   return (
     <>
       <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
         <Container className="flex h-[4.25rem] items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 pl-0.5 sm:gap-3">
+          {mobileCompact ? (
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 pl-0.5 lg:hidden">
+              <button
+                type="button"
+                onClick={onCompactBack}
+                aria-label="Go back"
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-foreground/80 transition hover:bg-muted/70 active:scale-[0.97]"
+              >
+                <ArrowLeftIcon className="size-5" aria-hidden />
+              </button>
+              <h1 className="min-w-0 truncate font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                {mobileTitle}
+              </h1>
+            </div>
+          ) : null}
+
+          <div
+            className={cn(
+              "min-w-0 items-center gap-2 pl-0.5 sm:gap-3",
+              mobileCompact ? "hidden lg:flex" : "flex",
+            )}
+          >
             <Logo size="lg" className="shrink-0 px-1.5 py-0.5" />
             <LocationSwitcher
               size="xs"
@@ -45,7 +125,6 @@ export function Navbar() {
             />
           </div>
 
-          {/* Desktop primary nav */}
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
             {navItems.map((item) => {
               const active = isActiveNav(item.href)
@@ -69,10 +148,12 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <CartNavButton />
+          <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+            <div className={cn(profilePage && "max-lg:hidden")}>
+              <CartNavButton />
+            </div>
 
-            {/* Desktop account */}
+            {/* Desktop account — mobile uses bottom Profile tab */}
             <div className="hidden items-center gap-2 md:flex">
               {authenticated ? (
                 <Popover>
@@ -114,25 +195,6 @@ export function Navbar() {
                 </Button>
               )}
             </div>
-
-            {/* Mobile: compact account shortcut (tabs handle primary nav) */}
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              aria-label={authenticated ? "Account" : "Login"}
-            >
-              <Link
-                href={
-                  authenticated
-                    ? "/dashboard/profile"
-                    : `/login?next=${encodeURIComponent(pathname || "/")}`
-                }
-              >
-                <UserIcon className="size-5" />
-              </Link>
-            </Button>
           </div>
         </Container>
       </header>

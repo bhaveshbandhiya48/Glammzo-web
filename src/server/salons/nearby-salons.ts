@@ -12,8 +12,11 @@ import {
 import { boundingBoxDeltas, haversineKm } from "@/lib/maps/haversine"
 import type { NearbySalonRecord, NearbySalonsRequest, NearbySalonsResponse } from "@/lib/maps/nearby-salon.types"
 import { isSalonOpenNow } from "@/lib/salons/business-hours"
+import { parseBusinessTypeFromSettings } from "@/lib/salons/map-crm-salon"
 import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
-import type { CrmSalonRow, CrmServiceRow } from "@/lib/salons/crm-types"
+import type { CrmOfferRow, CrmSalonRow, CrmServiceRow } from "@/lib/salons/crm-types"
+import { pickBestSalonOffer } from "@/lib/salons/offer-utils"
+import type { SalonOffer } from "@/types/salon"
 
 const SALON_SELECT =
   "id, name, slug, phone, address_line1, address_line2, city, state, postal_code, country, latitude, longitude, list_image_url, cover_image_url, logo_url, settings, timezone, listing_status"
@@ -123,11 +126,58 @@ async function fetchActiveServices(salonIds: string[]) {
   return bySalon
 }
 
+async function fetchActiveOffers(salonIds: string[]) {
+  if (salonIds.length === 0) {
+    return new Map<string, SalonOffer[]>()
+  }
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("salon_offers")
+    .select(
+      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, salon_offer_services(service_id)",
+    )
+    .in("salon_id", salonIds)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+
+  if (error) {
+    console.error("[nearby-salons] offers fetch failed:", error.message)
+    return new Map<string, SalonOffer[]>()
+  }
+
+  const bySalon = new Map<string, SalonOffer[]>()
+
+  for (const row of (data ?? []) as CrmOfferRow[]) {
+    const offer: SalonOffer = {
+      id: row.id,
+      code: row.code.trim().toUpperCase(),
+      title: row.title,
+      description: row.description?.trim() || null,
+      discountType: row.discount_type,
+      discountValue: Number.parseFloat(String(row.discount_value)) || 0,
+      appliesTo: row.applies_to,
+      serviceIds: (row.salon_offer_services ?? []).map((link) => link.service_id),
+      startsAt: row.starts_at,
+      endsAt: row.ends_at,
+      maxRedemptions: row.max_redemptions,
+      redemptionCount: row.redemption_count ?? 0,
+      isActive: row.is_active,
+    }
+    const list = bySalon.get(row.salon_id) ?? []
+    list.push(offer)
+    bySalon.set(row.salon_id, list)
+  }
+
+  return bySalon
+}
+
 function mapNearbySalon(
   row: CrmSalonRow,
   distanceKm: number,
   reviewStats: { rating: number; count: number },
   services: CrmServiceRow[],
+  offers: SalonOffer[],
 ): NearbySalonRecord {
   const area = resolveSalonArea(row, "")
   const timezone = row.timezone || "Asia/Kolkata"
@@ -144,6 +194,7 @@ function mapNearbySalon(
   const priceFrom = topServices.length
     ? Math.min(...topServices.map((service) => service.price))
     : 0
+  const bestOffer = pickBestSalonOffer(offers)
 
   return {
     id: row.id,
@@ -170,6 +221,13 @@ function mapNearbySalon(
     priceFrom,
     isOpenNow: openNow,
     distanceKm,
+    businessType: parseBusinessTypeFromSettings(row.settings),
+    offerBadge: bestOffer
+      ? {
+          discountType: bestOffer.discountType,
+          discountValue: bestOffer.discountValue,
+        }
+      : null,
     services: topServices,
   }
 }
@@ -249,9 +307,10 @@ export const fetchNearbySalons = cache(async (
     .sort((a, b) => a.distanceKm - b.distanceKm)
 
   const salonIds = withinRadius.map((item) => item.row.id)
-  const [reviewStats, servicesBySalon] = await Promise.all([
+  const [reviewStats, servicesBySalon, offersBySalon] = await Promise.all([
     fetchReviewStats(salonIds),
     fetchActiveServices(salonIds),
+    fetchActiveOffers(salonIds),
   ])
 
   const salons = withinRadius
@@ -269,6 +328,7 @@ export const fetchNearbySalons = cache(async (
         distanceKm,
         reviewStats.get(row.id) ?? { rating: 0, count: 0 },
         services,
+        offersBySalon.get(row.id) ?? [],
       )
     })
     .filter((salon): salon is NearbySalonRecord => salon !== null)

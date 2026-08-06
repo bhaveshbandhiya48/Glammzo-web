@@ -148,7 +148,7 @@
   /* Mobile app shell: reserve space for the bottom tab bar */
   @media (max-width: 767px) {
     html.has-mobile-tabs .page-main {
-      padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
   }
 

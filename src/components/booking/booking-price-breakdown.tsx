@@ -72,7 +72,7 @@ export function BookingPriceBreakdownCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/60 bg-muted/25",
+        "rounded-xl border border-border/60 bg-muted/25",
         compact ? "space-y-2 px-3.5 py-3" : "space-y-2.5 px-4 py-3.5",
         className,
       )}

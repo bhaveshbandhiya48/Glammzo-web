@@ -7,12 +7,16 @@ import { MapPinIcon, StarIcon } from "lucide-react"
 import type { Salon } from "@/types/salon"
 import { FavoriteSalonButton } from "@/components/favorites/favorite-salon-button"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
+import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SalonOfferDiscountBadge } from "@/components/salons/offers/service-offer-badge"
 import { SalonCardImageSlider } from "@/components/salons/salon-card-image-slider"
 import { computeSalonDistanceKm } from "@/lib/explore-distance"
 import { formatDistanceKmShort } from "@/lib/maps/haversine"
+import { resolveMostBookedSalonIds } from "@/lib/salons/most-booked"
 import { getSalonCardImages } from "@/lib/salons/salon-card-images"
+import { pickBestSalonOffer } from "@/lib/salons/offer-utils"
 import { cn } from "@/lib/utils"
 
 export function SalonCard({
@@ -37,6 +41,7 @@ export function SalonCard({
   density?: "default" | "compact"
 }) {
   const origin = useExploreDistanceOrigin({})
+  const { salons: catalogSalons } = useSalonCatalog()
 
   // Always measure from the live origin (GPS / selected place), not a stale salon.distanceKm.
   const distanceKm = useMemo(
@@ -48,6 +53,14 @@ export function SalonCard({
     distanceKm != null && Number.isFinite(distanceKm) ? formatDistanceKmShort(distanceKm) : null
   const compact = density === "compact"
   const cardImages = useMemo(() => getSalonCardImages(salon), [salon])
+  const bestOffer = useMemo(
+    () => pickBestSalonOffer(salon.offers ?? []),
+    [salon.offers],
+  )
+  const isMostBooked = useMemo(() => {
+    const peers = catalogSalons.length > 0 ? catalogSalons : [salon]
+    return resolveMostBookedSalonIds(peers, origin).has(salon.id)
+  }, [catalogSalons, origin, salon])
 
   return (
     <article
@@ -76,17 +89,40 @@ export function SalonCard({
         images={cardImages}
         distanceLabel={distanceLabel}
         compact={compact}
+        isMostBooked={isMostBooked}
         href={onSelect ? undefined : `/salons/${salon.id}`}
         onActivate={onSelect}
       />
       <div className={cn("border-t border-border/60", compact ? "p-3" : "p-5")}>
-        <p className={cn("text-foreground/60", compact ? "text-xs" : "text-sm")}>
-          From <span className="font-heading font-semibold text-foreground">₹{salon.priceFrom}</span>
-          {" · "}
-          {salon.reviews > 0
-            ? `${salon.reviews.toLocaleString()} reviews`
-            : "New on Glammzo"}
-        </p>
+        {salon.businessType ? (
+          <p
+            className={cn(
+              "font-semibold uppercase tracking-[0.14em] text-foreground/45",
+              compact ? "mb-1.5 text-[10px]" : "mb-2 text-[11px]",
+            )}
+          >
+            {salon.businessType}
+          </p>
+        ) : null}
+        <div
+          className={cn(
+            "flex items-center justify-between gap-2",
+            compact ? "text-xs" : "text-sm",
+          )}
+        >
+          <p className="min-w-0 text-foreground/60">
+            From{" "}
+            <span className="font-heading font-semibold text-foreground">
+              ₹{salon.priceFrom}
+            </span>
+          </p>
+          {bestOffer ? (
+            <SalonOfferDiscountBadge
+              offer={bestOffer}
+              className={cn("shrink-0", compact && "px-1.5 py-0 text-[10px]")}
+            />
+          ) : null}
+        </div>
         <Button
           asChild
           size={compact ? "sm" : "md"}
@@ -104,6 +140,7 @@ function SalonCardImage({
   images,
   distanceLabel,
   compact = false,
+  isMostBooked = false,
   href,
   onActivate,
 }: {
@@ -111,6 +148,7 @@ function SalonCardImage({
   images: string[]
   distanceLabel: string | null
   compact?: boolean
+  isMostBooked?: boolean
   href?: string
   onActivate?: () => void
 }) {
@@ -132,8 +170,10 @@ function SalonCardImage({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
       <div
         className={cn(
-          "pointer-events-none absolute flex items-center gap-2",
-          compact ? "left-2 top-2" : "left-4 top-4",
+          "pointer-events-none absolute flex flex-wrap items-center gap-1.5",
+          compact
+            ? "left-2 top-2 max-w-[calc(100%-2.5rem)]"
+            : "left-4 top-4 max-w-[calc(100%-4rem)]",
         )}
       >
         <Badge
@@ -142,6 +182,17 @@ function SalonCardImage({
         >
           {salon.isOpenNow ? "Open now" : "Closed"}
         </Badge>
+        {isMostBooked ? (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "rounded-full border-0 bg-[#F5E6A8] text-foreground shadow-sm hover:bg-[#F5E6A8]",
+              compact && "px-2 py-0 text-[10px]",
+            )}
+          >
+            Most booked
+          </Badge>
+        ) : null}
       </div>
       <div
         className={cn(
@@ -188,6 +239,9 @@ function SalonCardImage({
             >
               <StarIcon className={cn("fill-current", compact ? "size-3" : "size-3.5")} />
               {salon.rating > 0 ? salon.rating.toFixed(1) : "New"}
+              {salon.reviews > 0 ? (
+                <span className="text-white/75">({salon.reviews.toLocaleString()})</span>
+              ) : null}
             </span>
           </div>
         </div>

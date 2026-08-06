@@ -9,9 +9,14 @@ type CategoryStackCardProps = {
   category: Category
   index: number
   total: number
+  city?: string | null
 }
 
-export function CategoryStackCard({ category, index, total }: CategoryStackCardProps) {
+export function CategoryStackCard({ category, index, total, city }: CategoryStackCardProps) {
+  const browseHref = city
+    ? `/explore?category=${category.id}&city=${encodeURIComponent(city)}`
+    : `/explore?category=${category.id}`
+
   return (
     <article
       className={cn(
@@ -38,7 +43,7 @@ export function CategoryStackCard({ category, index, total }: CategoryStackCardP
             </p>
           </div>
           <Button asChild className="mt-8 w-fit px-6">
-            <Link href={`/explore?category=${category.id}`}>Browse {category.eyebrow}</Link>
+            <Link href={browseHref}>Browse {category.eyebrow}</Link>
           </Button>
         </div>
 
@@ -46,7 +51,7 @@ export function CategoryStackCard({ category, index, total }: CategoryStackCardP
           <div className="absolute inset-0">
             <CategoryImage
               src={category.imageUrl}
-              alt={`${category.eyebrow} services at Glammzo`}
+              alt={`${category.eyebrow} on Glammzo`}
               priority={index === 0}
             />
           </div>

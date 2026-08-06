@@ -11,7 +11,7 @@ const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboardIcon, exact: true },
   { href: "/dashboard/profile#bookings", label: "Bookings", icon: CalendarDaysIcon },
   { href: "/dashboard/favorites", label: "Favorites", icon: HeartIcon },
-  { href: "/dashboard/profile#wallet", label: "Profile", icon: UserRoundIcon },
+  { href: "/dashboard/profile#profile", label: "Profile", icon: UserRoundIcon },
 ]
 
 function isNavActive(pathname: string, hash: string, item: (typeof nav)[number]) {

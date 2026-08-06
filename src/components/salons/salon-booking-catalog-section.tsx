@@ -372,15 +372,17 @@ export function SalonBookingCatalogSection({
 
   return (
     <>
-      <div className="grid items-start gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:gap-8 lg:pb-0">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:gap-8">
         <div className="order-1 min-w-0 space-y-6">
-          <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
+          <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top,0px))] z-30 -mx-5 space-y-2.5 border-b border-border/60 bg-background/95 px-5 pb-3 pt-0 backdrop-blur-xl sm:-mx-7 sm:px-7 lg:static lg:mx-0 lg:space-y-6 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
+            <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
 
-          <CategoryFilterChips
-            value={activeFilter}
-            onChange={handleFilterChange}
-            chips={catalogFilterChips}
-          />
+            <CategoryFilterChips
+              value={activeFilter}
+              onChange={handleFilterChange}
+              chips={catalogFilterChips}
+            />
+          </div>
 
           {showPackages ? (
             <section className="space-y-4">
@@ -424,8 +426,8 @@ export function SalonBookingCatalogSection({
                 <h3 className="font-heading text-xl font-semibold text-foreground">
                   Most Booked Services
                 </h3>
-                <p className="mt-1 text-sm text-foreground/60">
-                  Top picks to help you decide faster. Tap + to add or open a card for details.
+                <p className="mt-1 hidden text-sm text-foreground/60 md:block">
+                  Top picks to help you decide faster. Use Add on a card, or open it for details.
                 </p>
               </div>
 
@@ -450,8 +452,8 @@ export function SalonBookingCatalogSection({
                 <h3 className="font-heading text-xl font-semibold text-foreground">
                   Browse All Services
                 </h3>
-                <p className="mt-1 text-sm text-foreground/60">
-                  Explore by category. Tap + to add a service or open a row for details.
+                <p className="mt-1 hidden text-sm text-foreground/60 md:block">
+                  Explore by category. Use Add to select a service, or open a row for details.
                 </p>
               </div>
 

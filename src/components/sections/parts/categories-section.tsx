@@ -17,9 +17,10 @@ const STACK_TOP_STEP = "0.4rem"
 
 type CategoriesSectionProps = {
   categories: Category[]
+  city?: string | null
 }
 
-export function CategoriesSection({ categories }: CategoriesSectionProps) {
+export function CategoriesSection({ categories, city }: CategoriesSectionProps) {
   if (categories.length === 0) {
     return null
   }
@@ -44,14 +45,14 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                 href="/services"
                 className="inline-flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-primary"
               >
-                View all services
+                View all types
                 <ArrowRightIcon className="size-4" />
               </Link>
             }
           />
         </MotionDiv>
 
-        <div className="services-stack mt-10" aria-label="Service categories">
+        <div className="services-stack mt-10" aria-label="Business types">
           {categories.map((category, index) => (
             <div
               key={category.id}
@@ -61,7 +62,12 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                 ["--stack-top" as string]: `calc(${STACK_TOP_BASE} + ${index} * ${STACK_TOP_STEP})`,
               }}
             >
-              <CategoryStackCard category={category} index={index} total={categories.length} />
+              <CategoryStackCard
+                category={category}
+                index={index}
+                total={categories.length}
+                city={city}
+              />
             </div>
           ))}
         </div>
@@ -69,7 +75,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
         <div className="mt-6 flex justify-center sm:mt-8">
           <Button asChild variant="outline" className="px-8">
             <Link href="/services">
-              View all services
+              View all types
               <ArrowRightIcon className="size-4" />
             </Link>
           </Button>

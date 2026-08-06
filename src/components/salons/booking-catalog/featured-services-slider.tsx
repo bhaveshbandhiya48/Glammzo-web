@@ -19,8 +19,9 @@ type FeaturedServicesSliderProps = {
   className?: string
 }
 
-/** ~2 full cards + half of the next, signals horizontal scroll. */
-const PEEK_CARD_WIDTH = "w-[calc((100%-1.5rem)/2.5)]"
+/** Mobile: ~75% so next card peeks. Desktop: ~2.5 cards (2 full + half). */
+const CARD_WIDTH = "w-[75%] lg:w-[calc((100%-1.5rem)/2.5)]"
+const CARD_GAP_PX = 12
 
 export function FeaturedServicesSlider({
   services,
@@ -33,24 +34,17 @@ export function FeaturedServicesSlider({
 }: FeaturedServicesSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const usePeekSlider = services.length > 2
-  const canScroll = usePeekSlider
+  const canScroll = services.length > 1
 
   const syncActiveIndex = useCallback(() => {
     const container = scrollRef.current
-    if (!container || services.length === 0) {
-      return
-    }
+    if (!container || services.length === 0) return
 
     const firstCard = container.querySelector<HTMLElement>("[data-featured-card]")
-    if (!firstCard) {
-      return
-    }
+    if (!firstCard) return
 
-    const stride = firstCard.offsetWidth + 12
-    if (stride <= 0) {
-      return
-    }
+    const stride = firstCard.offsetWidth + CARD_GAP_PX
+    if (stride <= 0) return
 
     const index = Math.round(container.scrollLeft / stride)
     setActiveIndex(Math.min(Math.max(index, 0), services.length - 1))
@@ -58,9 +52,7 @@ export function FeaturedServicesSlider({
 
   useEffect(() => {
     const container = scrollRef.current
-    if (!container) {
-      return
-    }
+    if (!container) return
 
     container.addEventListener("scroll", syncActiveIndex, { passive: true })
     return () => container.removeEventListener("scroll", syncActiveIndex)
@@ -71,37 +63,32 @@ export function FeaturedServicesSlider({
     scrollRef.current?.scrollTo({ left: 0, behavior: "instant" })
   }, [services])
 
-  const scrollByCard = (direction: -1 | 1) => {
+  const scrollToIndex = (index: number) => {
     const container = scrollRef.current
-    if (!container) {
-      return
-    }
+    if (!container) return
 
     const firstCard = container.querySelector<HTMLElement>("[data-featured-card]")
-    const stride = (firstCard?.offsetWidth ?? container.clientWidth) + 12
-    const nextIndex = Math.min(
-      Math.max(activeIndex + direction, 0),
-      services.length - 1,
-    )
+    const stride = (firstCard?.offsetWidth ?? container.clientWidth * 0.75) + CARD_GAP_PX
+    const nextIndex = Math.min(Math.max(index, 0), services.length - 1)
 
     container.scrollTo({ left: nextIndex * stride, behavior: "smooth" })
     setActiveIndex(nextIndex)
   }
 
-  if (!usePeekSlider) {
+  if (services.length === 0) return null
+
+  if (services.length === 1) {
+    const service = services[0]!
     return (
-      <div className={cn("grid gap-3 sm:grid-cols-2", className)}>
-        {services.map((service) => (
-          <FeaturedServiceCard
-            key={service.id}
-            service={service}
-            badge={badges.get(service.id)}
-            offer={bestOfferForService(offers, service.id, service.price)}
-            selected={selectedIds.includes(service.id)}
-            onOpenDetails={() => onOpenDetails(service)}
-            onToggle={() => onToggleService(service.id)}
-          />
-        ))}
+      <div className={cn("max-w-md", className)}>
+        <FeaturedServiceCard
+          service={service}
+          badge={badges.get(service.id)}
+          offer={bestOfferForService(offers, service.id, service.price)}
+          selected={selectedIds.includes(service.id)}
+          onOpenDetails={() => onOpenDetails(service)}
+          onToggle={() => onToggleService(service.id)}
+        />
       </div>
     )
   }
@@ -122,7 +109,7 @@ export function FeaturedServicesSlider({
           <div
             key={service.id}
             data-featured-card
-            className={cn("shrink-0 snap-start", PEEK_CARD_WIDTH)}
+            className={cn("shrink-0 snap-start", CARD_WIDTH)}
           >
             <FeaturedServiceCard
               service={service}
@@ -141,13 +128,13 @@ export function FeaturedServicesSlider({
           <button
             type="button"
             aria-label="Previous services"
-            onClick={() => scrollByCard(-1)}
+            onClick={() => scrollToIndex(activeIndex - 1)}
             disabled={activeIndex === 0}
             className={cn(
               "absolute left-0 top-[calc(50%-1.5rem)] z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-sm backdrop-blur-sm transition-opacity",
               activeIndex === 0
                 ? "pointer-events-none opacity-0"
-                : "opacity-100 hover:bg-muted/80 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+                : "opacity-100 hover:bg-muted/80",
             )}
           >
             <ChevronLeftIcon className="size-4" />
@@ -155,13 +142,13 @@ export function FeaturedServicesSlider({
           <button
             type="button"
             aria-label="Next services"
-            onClick={() => scrollByCard(1)}
+            onClick={() => scrollToIndex(activeIndex + 1)}
             disabled={activeIndex >= services.length - 1}
             className={cn(
               "absolute right-0 top-[calc(50%-1.5rem)] z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-sm backdrop-blur-sm transition-opacity",
               activeIndex >= services.length - 1
                 ? "pointer-events-none opacity-0"
-                : "opacity-100 hover:bg-muted/80 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+                : "opacity-100 hover:bg-muted/80",
             )}
           >
             <ChevronRightIcon className="size-4" />
@@ -174,13 +161,7 @@ export function FeaturedServicesSlider({
                 type="button"
                 aria-label={`Go to ${service.name}`}
                 aria-current={index === activeIndex ? "true" : undefined}
-                onClick={() => {
-                  const container = scrollRef.current
-                  const firstCard = container?.querySelector<HTMLElement>("[data-featured-card]")
-                  const stride = (firstCard?.offsetWidth ?? 0) + 12
-                  container?.scrollTo({ left: index * stride, behavior: "smooth" })
-                  setActiveIndex(index)
-                }}
+                onClick={() => scrollToIndex(index)}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
                   index === activeIndex

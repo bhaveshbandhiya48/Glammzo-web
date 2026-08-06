@@ -57,9 +57,9 @@ export const siteCopy = {
   },
   categories: {
     eyebrow: "Services",
-    title: "Everything you book in one place",
+    title: "Find the right kind of place",
     subtitle:
-      "From everyday grooming to special occasion glam, explore by category and book with clear pricing.",
+      "Browse by salon, spa, barber shop, and more — then book with clear pricing.",
   },
   salons: {
     eyebrow: "Featured partners",
@@ -117,9 +117,9 @@ export const stats: Stat[] = [
     description: "Verified listings live on Glammzo",
   },
   {
-    value: "5",
-    label: "Service categories",
-    description: "Hair, skin, nails & more",
+    value: "7",
+    label: "Business types",
+    description: "Salon, spa, barber & more",
   },
   {
     value: "<2 min",

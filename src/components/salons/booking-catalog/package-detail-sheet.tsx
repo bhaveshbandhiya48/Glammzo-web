@@ -91,8 +91,8 @@ export function PackageDetailSheet({
         side={isDesktop ? "right" : "bottom"}
         className={
           isDesktop
-            ? "w-[min(92vw,520px)] gap-0 p-0"
-            : "max-h-[92vh] gap-0 rounded-t-3xl p-0"
+            ? "w-[min(92vw,520px)] gap-0 overflow-hidden p-0"
+            : "max-h-[92vh] gap-0 overflow-hidden rounded-t-3xl p-0"
         }
       >
         <div className="flex h-full flex-col">

@@ -162,6 +162,18 @@ export type Salon = {
   longitude?: number
   /** Platform-promoted listing (Phase 4). */
   isFeatured?: boolean
+  /**
+   * Soft ranking from CRM web-booking response rate (0–100).
+   * Null = not enough history; treated as neutral (full credit) in recommended sort.
+   */
+  marketplaceResponseScore?: number | null
+  /** Signup business type from CRM settings (Salon, Barber Shop, …). */
+  businessType?: string | null
+  /**
+   * Completed Glammzo-web bookings in the popularity window.
+   * Used for local “Most booked” badges (10 km radius).
+   */
+  completedBookingCount?: number
   isOpenNow: boolean
   priceFrom: number
   /** Concise marketplace copy used on listing cards. */

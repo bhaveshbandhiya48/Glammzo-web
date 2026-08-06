@@ -2,149 +2,72 @@ import "server-only"
 
 import { cache } from "react"
 
-import { categories as fallbackCategories } from "@/data/landing"
-import { media } from "@/data/media"
+import {
+  BUSINESS_TYPE_CATALOG,
+  businessTypeSlugFromLabel,
+  type BusinessTypePresentation,
+} from "@/lib/categories/business-types"
+import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import { getSalons } from "@/lib/salons"
-import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
 import type { Category } from "@/types/landing"
-import type { SalonService } from "@/types/salon"
+import type { Salon } from "@/types/salon"
 
-type DefaultCategoryTemplateRow = {
-  name: string
-  slug: string
-  sort_order: number
-}
-
-function normalizeSlug(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
-
-function categoryImage(slug: string) {
-  // Most specific matches first so categories don't fall back to hair by mistake.
-  if (/(kid)/.test(slug)) return media.categories.kids
-  if (/(wax)/.test(slug)) return media.categories.waxing
-  if (/(thread)/.test(slug)) return media.categories.threading
-  if (/(cleanup|clean-up)/.test(slug)) return media.categories.cleanup
-  if (/(extension)/.test(slug)) return media.categories.extensions
-  if (/(bridal)/.test(slug)) return media.categories.bridal
-  if (/(facial|skin|cleanup)/.test(slug)) return media.categories.facial
-  if (/(yoga|meditation|wellness)/.test(slug)) return media.categories.yoga
-  if (/(fitness|nutrition|physio|healing)/.test(slug)) return media.categories.fitness
-  if (/(nail|manicure|pedicure|gel)/.test(slug)) return media.categories.nails
-  if (/(makeup|brow|lash)/.test(slug)) return media.categories.makeup
-  if (/(groom|beard|barber|haircut)/.test(slug)) return media.categories.grooming
-  if (/(spa|massage|body|steam|therapy)/.test(slug)) return media.categories.spa
-  if (/(hair|styling)/.test(slug)) return media.categories.hair
-  return media.categories.hair
-}
-
-function categoryIcon(slug: string): Category["icon"] {
-  if (/(nail|manicure|pedicure|gel)/.test(slug)) return "hand"
-  if (/(makeup|bridal|brow|lash)/.test(slug)) return "brush"
-  if (/(groom|beard|barber)/.test(slug)) return "user"
-  if (/(spa|massage|facial|skin|body|wellness|yoga|therapy)/.test(slug)) {
-    return "sparkles"
-  }
-  return "scissors"
-}
-
-function buildCategory(
-  template: DefaultCategoryTemplateRow,
-  services: SalonService[],
+function buildBusinessTypeCategory(
+  presentation: BusinessTypePresentation,
+  salons: Salon[],
 ): Category {
-  const existingPresentation = fallbackCategories.find(
-    (category) => category.id === template.slug,
-  )
-  const sortedServices = [...services].sort((left, right) => left.price - right.price)
-  const featured = sortedServices[0]
-  const serviceNames = Array.from(new Set(services.map((service) => service.name))).slice(0, 4)
+  const prices = salons
+    .map((salon) => salon.priceFrom)
+    .filter((price) => Number.isFinite(price) && price > 0)
+  const fromPrice = prices.length > 0 ? Math.min(...prices) : null
 
   return {
-    id: template.slug,
-    title: existingPresentation?.title ?? `${template.name}, from trusted professionals`,
-    subtitle: serviceNames.slice(0, 2).join(", ") || template.name,
-    icon: existingPresentation?.icon ?? categoryIcon(template.slug),
-    services: serviceNames,
-    eyebrow: template.name,
-    description:
-      existingPresentation?.description ??
-      `Discover published salons offering ${template.name.toLowerCase()} services with transparent pricing and online booking.`,
-    imageUrl: existingPresentation?.imageUrl ?? categoryImage(template.slug),
+    id: presentation.slug,
+    title: presentation.title,
+    subtitle: presentation.label,
+    icon: presentation.icon,
+    services: [],
+    eyebrow: presentation.label,
+    description: presentation.description,
+    imageUrl: presentation.imageUrl,
     overlay: {
-      badge: existingPresentation?.overlay.badge,
-      title: template.name,
-      subtitle: featured
-        ? `${services.length} service${services.length === 1 ? "" : "s"} · From ₹${Math.round(featured.price).toLocaleString("en-IN")}`
-        : undefined,
+      badge: presentation.overlayBadge,
+      title: presentation.label,
+      subtitle: fromPrice
+        ? `${salons.length} salon${salons.length === 1 ? "" : "s"} · From ₹${Math.round(fromPrice).toLocaleString("en-IN")}`
+        : `${salons.length} salon${salons.length === 1 ? "" : "s"}`,
     },
-    variant: existingPresentation?.variant ?? (template.sort_order % 2 === 0 ? "sand" : "light"),
+    variant: presentation.variant,
   }
-}
-
-async function loadDefaultTemplates(): Promise<DefaultCategoryTemplateRow[]> {
-  if (!isSupabaseConfigured()) {
-    return fallbackCategories.map((category, index) => ({
-      name: category.eyebrow,
-      slug: category.id,
-      sort_order: index + 1,
-    }))
-  }
-
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from("default_category_templates")
-    .select("name, slug, sort_order")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true })
-
-  if (error) {
-    console.error("[categories] Failed to load default templates:", error.message)
-    return []
-  }
-
-  const unique = new Map<string, DefaultCategoryTemplateRow>()
-  for (const row of (data ?? []) as DefaultCategoryTemplateRow[]) {
-    const slug = normalizeSlug(row.slug || row.name)
-    const existing = unique.get(slug)
-    if (!existing || row.sort_order < existing.sort_order) {
-      unique.set(slug, { ...row, slug })
-    }
-  }
-
-  return Array.from(unique.values()).sort(
-    (left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name),
-  )
 }
 
 /**
- * Returns only global default-template categories that are currently offered
- * by at least one published salon. Custom salon categories never create cards.
- * Packages are excluded — they are a separate catalog product, not a category.
+ * Business-type browse cards (home stack + /services).
+ * Only types with at least one published salon in scope are returned.
+ * When `city` is set, only salons in that city count.
  */
-export const getBrowseDefaultCategories = cache(async (): Promise<Category[]> => {
-  const [templates, salons] = await Promise.all([loadDefaultTemplates(), getSalons()])
-  const servicesByCategory = new Map<string, SalonService[]>()
+export const getBrowseBusinessTypes = cache(
+  async (city?: string | null): Promise<Category[]> => {
+    const allSalons = await getSalons()
+    const salons = city?.trim() ? filterSalonsByCity(allSalons, city) : allSalons
 
-  for (const salon of salons) {
-    for (const service of salon.services) {
-      const slug = normalizeSlug(service.category)
-      if (slug === "packages") continue
-      const list = servicesByCategory.get(slug) ?? []
-      list.push(service)
-      servicesByCategory.set(slug, list)
+    const salonsByType = new Map<string, Salon[]>()
+    for (const salon of salons) {
+      const slug = businessTypeSlugFromLabel(salon.businessType)
+      if (!slug) continue
+      const list = salonsByType.get(slug) ?? []
+      list.push(salon)
+      salonsByType.set(slug, list)
     }
-  }
 
-  return templates
-    .filter((template) => template.slug !== "packages")
-    .map((template) => {
-      const services = servicesByCategory.get(template.slug) ?? []
-      return services.length > 0 ? buildCategory(template, services) : null
-    })
-    .filter((category): category is Category => category !== null)
-})
+    return BUSINESS_TYPE_CATALOG.map((presentation) => {
+      const matched = salonsByType.get(presentation.slug) ?? []
+      return matched.length > 0
+        ? buildBusinessTypeCategory(presentation, matched)
+        : null
+    }).filter((category): category is Category => category !== null)
+  },
+)
+
+/** @deprecated Prefer getBrowseBusinessTypes — kept for existing imports. */
+export const getBrowseDefaultCategories = getBrowseBusinessTypes

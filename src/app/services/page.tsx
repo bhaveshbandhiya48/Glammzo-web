@@ -5,11 +5,11 @@ import { ArrowRightIcon, CheckIcon } from "lucide-react"
 
 import { media } from "@/data/media"
 import { siteCopy } from "@/data/site-copy"
-import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
+import { getBrowseCityFromCookies } from "@/lib/categories/browse-city"
+import { getBrowseBusinessTypes } from "@/lib/categories/default-service-categories"
 import { Navbar } from "@/components/layout/navbar"
 import { PageHeader } from "@/components/layout/page-header"
 import { PageSection } from "@/components/layout/page-section"
-import { SectionHeader } from "@/components/shared/section-header"
 import { ServiceCategoryGridCard } from "@/components/services/service-category-grid-card"
 import { Button } from "@/components/ui/button"
 import { Footer } from "@/components/sections/parts/footer"
@@ -27,10 +27,11 @@ export const metadata: Metadata = {
   title: SEO_SERVICES.title,
   description: SEO_SERVICES.description,
   keywords: [
-    "salon services near me",
-    "hair salon near me",
+    "salon near me",
     "spa near me",
+    "barber shop near me",
     "nail salon near me",
+    "beauty parlour near me",
   ],
   alternates: {
     canonical: `${SITE_URL}/services`,
@@ -38,44 +39,42 @@ export const metadata: Metadata = {
 }
 
 export default async function ServicesPage() {
-  const categories = await getBrowseDefaultCategories()
+  const city = await getBrowseCityFromCookies()
+  const businessTypes = await getBrowseBusinessTypes(city)
 
   return (
     <>
       <Navbar />
       <main className="page-main">
-        <PageSection tone="base">
+        <PageSection tone="base" className="!border-b-0">
           <PageHeader
             eyebrow={categoriesCopy.eyebrow}
             title={categoriesCopy.title}
             subtitle={categoriesCopy.subtitle}
-          />
-        </PageSection>
-
-        <PageSection tone="statement" separated>
-          <SectionHeader
-            eyebrow="Categories"
-            title="Browse by what you need"
-            subtitle="Each category includes popular treatments with upfront pricing on salon pages."
             className="mb-8 sm:mb-10"
           />
-          {categories.length > 0 ? (
+          {businessTypes.length > 0 ? (
             <ul
               className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-              aria-label="Service categories"
+              aria-label="Business types"
             >
-              {categories.map((category, index) => (
+              {businessTypes.map((category, index) => (
                 <li key={category.id} className="min-h-0">
-                  <ServiceCategoryGridCard category={category} priority={index < 3} />
+                  <ServiceCategoryGridCard
+                    category={category}
+                    city={city}
+                    priority={index < 3}
+                  />
                 </li>
               ))}
             </ul>
           ) : (
             <div className="rounded-3xl border border-border/70 bg-card px-6 py-12 text-center">
-              <p className="font-heading text-lg font-semibold">Browse salons for services</p>
+              <p className="font-heading text-lg font-semibold">Browse salons nearby</p>
               <p className="mt-2 text-sm text-foreground/60">
-                Category filters will appear here as partners publish more treatments. In the
-                meantime, explore salons to compare services and book.
+                {city
+                  ? `No published business types in ${city} yet. Switch location or explore salons to compare what’s available nearby.`
+                  : "Business types will appear here as partners publish. In the meantime, explore salons to compare and book."}
               </p>
               <Button asChild className="mt-6">
                 <Link href="/explore">
@@ -87,7 +86,7 @@ export default async function ServicesPage() {
           )}
         </PageSection>
 
-        <PageSection tone="featured" separated>
+        <PageSection tone="featured" separated className="!border-t-0">
           <div className="overflow-hidden rounded-[1.5rem] bg-foreground text-background shadow-[0_28px_70px_-32px_rgba(0,0,0,0.45)] ring-1 ring-black/10">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
               <div className="relative min-h-[220px] sm:min-h-[280px] lg:min-h-full">
@@ -106,7 +105,7 @@ export default async function ServicesPage() {
                   Ready to book?
                 </p>
                 <h2 className="mt-3 font-heading text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-                  Find salons for the service you want
+                  Find the right place for your visit
                 </h2>
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-white/70 sm:text-base">
                   Compare ratings, prices, and availability, then confirm your appointment without

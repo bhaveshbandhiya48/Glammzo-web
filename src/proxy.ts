@@ -3,8 +3,29 @@ import { NextResponse } from "next/server"
 
 const protectedPrefixes = ["/dashboard", "/book"]
 
-export function middleware(req: NextRequest) {
+/** Phones only — iPad / Android tablets without "Mobile" keep the marketing homepage. */
+function isMobilePhoneUserAgent(ua: string): boolean {
+  if (/ipad/i.test(ua)) return false
+  if (/iphone|ipod/i.test(ua)) return true
+  if (/android/i.test(ua) && /mobile/i.test(ua)) return true
+  if (/windows phone/i.test(ua)) return true
+  return false
+}
+
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
+
+  // Mobile phones land on Explore (filter / browse / book) instead of marketing home.
+  if (pathname === "/") {
+    const ua = req.headers.get("user-agent") ?? ""
+    if (isMobilePhoneUserAgent(ua)) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/explore"
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   const isProtected = protectedPrefixes.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   )
@@ -31,5 +52,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/book/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/book/:path*"],
 }

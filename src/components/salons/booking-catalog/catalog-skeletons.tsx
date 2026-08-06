@@ -46,22 +46,11 @@ export function PackageCardSkeleton() {
 
 export function FeaturedServicesSkeleton({ count = 4 }: { count?: number }) {
   const items = Math.min(count, 4)
-  const usePeek = items > 2
-
-  if (!usePeek) {
-    return (
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: items }).map((_, index) => (
-          <FeaturedServiceCardSkeleton key={index} />
-        ))}
-      </div>
-    )
-  }
 
   return (
     <div className="flex gap-3 overflow-hidden">
       {Array.from({ length: items }).map((_, index) => (
-        <div key={index} className="w-[calc((100%-1.5rem)/2.5)] shrink-0">
+        <div key={index} className="w-[75%] shrink-0 lg:w-[calc((100%-1.5rem)/2.5)]">
           <FeaturedServiceCardSkeleton />
         </div>
       ))}

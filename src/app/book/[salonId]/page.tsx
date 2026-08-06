@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
+import { ArrowLeftIcon } from "lucide-react"
 
 import { BookingSalonSummary } from "@/components/booking/booking-salon-summary"
 import { BookingForm } from "@/components/booking/booking-form"
@@ -55,6 +57,13 @@ export default async function BookPage({ params, searchParams }: Props) {
     <SitePageShell>
       <div className="grid items-start gap-6 lg:gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <div className="xl:sticky xl:top-24 xl:self-start">
+          <Link
+            href={`/salons/${encodeURIComponent(salon.id)}`}
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/65 transition-colors hover:text-foreground"
+          >
+            <ArrowLeftIcon className="size-4" aria-hidden />
+            Back to {salon.name}
+          </Link>
           <p className="section-eyebrow">Booking</p>
           <h1 className="display-section mt-2">Reserve your visit</h1>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">

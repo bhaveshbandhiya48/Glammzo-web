@@ -228,6 +228,15 @@ function mapStaff(row: CrmStaffRow, reviewCount: number): SalonTeamMember {
   }
 }
 
+/** Business type chosen at CRM signup (`settings.businessType`). */
+export function parseBusinessTypeFromSettings(settings: unknown): string | null {
+  if (!settings || typeof settings !== "object") return null
+  const value = (settings as { businessType?: unknown }).businessType
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
 function parseAmenities(settings: unknown): SalonAmenities | undefined {
   if (!settings || typeof settings !== "object") return undefined
   const raw = settings as {
@@ -390,6 +399,7 @@ export function mapCrmSalonToWeb(
   marketplaceProfile: CrmMarketplaceProfileRow | null = null,
   canonicalGallery: CrmSalonGalleryImageRow[] = [],
   serviceBookingCounts: Map<string, number> = new Map(),
+  salonBookingCount = 0,
 ): Salon {
   const activeServices = services
     .filter(isMarketplaceReadyService)
@@ -527,6 +537,12 @@ export function mapCrmSalonToWeb(
   const isFeatured =
     row.is_featured === true && (featuredUntil == null || featuredUntil > Date.now())
 
+  const rawResponseScore = row.marketplace_response_score
+  const marketplaceResponseScore =
+    rawResponseScore == null || Number.isNaN(Number(rawResponseScore))
+      ? null
+      : Math.min(100, Math.max(0, Number(rawResponseScore)))
+
   const salonId = row.slug || row.id
 
   return {
@@ -543,6 +559,9 @@ export function mapCrmSalonToWeb(
     latitude,
     longitude,
     isFeatured,
+    marketplaceResponseScore,
+    businessType: parseBusinessTypeFromSettings(row.settings),
+    completedBookingCount: salonBookingCount > 0 ? salonBookingCount : undefined,
     isOpenNow: isSalonOpenNow(row.settings, row.timezone || "Asia/Kolkata"),
     priceFrom,
     shortDescription: shortDescription || undefined,

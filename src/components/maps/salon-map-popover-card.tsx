@@ -8,6 +8,7 @@ import { formatDistanceKm } from "@/lib/maps/haversine"
 import { formatMapPriceLabel } from "@/lib/maps/price-marker-icon"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
 import { salonServicesSectionHref } from "@/lib/salons/salon-detail-scroll"
+import { SalonOfferDiscountBadge } from "@/components/salons/offers/service-offer-badge"
 import { cn } from "@/lib/utils"
 
 type SalonMapPopoverCardProps = {
@@ -57,6 +58,11 @@ export function SalonMapPopoverCard({ salon, onClose, className }: SalonMapPopov
         >
           <XIcon className="size-4" />
         </button>
+        {salon.offerBadge ? (
+          <div className="pointer-events-none absolute left-3 top-3">
+            <SalonOfferDiscountBadge offer={salon.offerBadge} />
+          </div>
+        ) : null}
       </div>
 
       <Link href={salonHref} className="block p-4 transition-colors hover:bg-stone-50/80">

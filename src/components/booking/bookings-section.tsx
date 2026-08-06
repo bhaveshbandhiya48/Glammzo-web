@@ -46,7 +46,7 @@ function EmptyState({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="flex flex-col items-center rounded-2xl border border-border/65 bg-card px-6 py-12 text-center shadow-sm shadow-black/[0.03]"
+      className="flex flex-col items-center rounded-xl border border-border/65 bg-card px-6 py-12 text-center shadow-sm shadow-black/[0.03]"
     >
       <div
         className="flex size-14 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-foreground/45"

@@ -2,6 +2,7 @@ import "server-only"
 
 import { cache } from "react"
 
+import { businessTypeSlugFromLabel } from "@/lib/categories/business-types"
 import { demoSalons } from "@/data/demo-salons"
 import { fetchCrmSalonById, fetchCrmSalons } from "@/lib/salons/fetch-crm-salons"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -29,20 +30,15 @@ export const getSalonById = cache(
   },
 )
 
+/** Filter published salons by signup business type slug (or “all”). */
 export async function getSalonsByCategory(category: string): Promise<Salon[]> {
   const salons = await getSalons()
   if (category === "all") return salons
 
-  const normalizeCategory = (value: string) =>
-    value
-      .toLowerCase()
-      .trim()
-      .replace(/&/g, "and")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
+  const needle = businessTypeSlugFromLabel(category)
+  if (!needle) return salons
 
-  const needle = normalizeCategory(category)
-  return salons.filter((s) =>
-    s.services.some((svc) => normalizeCategory(svc.category) === needle)
+  return salons.filter(
+    (salon) => businessTypeSlugFromLabel(salon.businessType) === needle,
   )
 }

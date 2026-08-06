@@ -6,14 +6,16 @@ import { cn } from "@/lib/utils"
 export function SitePageShell({
   children,
   className,
+  mainClassName,
 }: {
   children: React.ReactNode
   className?: string
+  mainClassName?: string
 }) {
   return (
     <>
       <Navbar />
-      <main className="page-main section-y">
+      <main className={cn("page-main section-y", mainClassName)}>
         <Container className={cn(className)}>{children}</Container>
       </main>
       <Footer />

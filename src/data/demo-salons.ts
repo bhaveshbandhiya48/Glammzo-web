@@ -37,6 +37,7 @@ export const demoSalons: Salon[] = [
     distanceKm: 1.2,
     isOpenNow: true,
     priceFrom: 799,
+    businessType: "Salon",
     description:
       "A calm, design-forward studio for cuts, color, and styling. Transparent pricing and experienced stylists.",
     address: "12th Main, Indiranagar, Bengaluru",
@@ -94,6 +95,7 @@ export const demoSalons: Salon[] = [
     distanceKm: 2.6,
     isOpenNow: true,
     priceFrom: 999,
+    businessType: "Spa",
     description:
       "Spa rituals and facials in a serene space. Perfect for reset days and special occasions.",
     address: "5th Block, Koramangala, Bengaluru",
@@ -143,6 +145,7 @@ export const demoSalons: Salon[] = [
     distanceKm: 3.1,
     isOpenNow: false,
     priceFrom: 699,
+    businessType: "Nail Art Studio",
     description:
       "Nail art, gel extensions, and classic mani-pedis with a minimalist, premium finish.",
     address: "Sector 2, HSR Layout, Bengaluru",
@@ -192,6 +195,7 @@ export const demoSalons: Salon[] = [
     distanceKm: 4.4,
     isOpenNow: true,
     priceFrom: 1199,
+    businessType: "Beauty Parlour",
     description:
       "Full-service beauty studio for hair, makeup, and grooming with editorial-quality results.",
     address: "MG Road, Bengaluru",
@@ -245,7 +249,12 @@ export function getDemoSalonById(id: string) {
 
 export function getDemoSalonsByCategory(category: string) {
   if (category === "all") return demoSalons
-  return demoSalons.filter((s) =>
-    s.services.some((svc) => svc.category.toLowerCase() === category.toLowerCase())
-  )
+  const needle = category.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+  return demoSalons.filter((s) => {
+    const slug = (s.businessType ?? "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+    return slug === needle
+  })
 }

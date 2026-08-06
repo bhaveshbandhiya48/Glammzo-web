@@ -9,6 +9,8 @@ import {
   isOfferBookableNow,
   isServiceEligibleForOffer,
   offersForService,
+  pickBestSalonOffer,
+  salonOfferBadgeLabel,
 } from "@/lib/salons/offer-utils"
 import type { SalonOffer, SalonService } from "@/types/salon"
 
@@ -151,5 +153,27 @@ describe("offer eligibility helpers", () => {
     expect(result.discountAmount).toBe(200)
     expect(result.subtotal).toBe(1800)
     expect(result.finalTotal).toBe(1600)
+  })
+
+  it("picks the strongest bookable salon offer for explore badges", () => {
+    const offers = [
+      makeOffer({ id: "ten", discountType: "percent", discountValue: 10 }),
+      makeOffer({ id: "flat", discountType: "fixed", discountValue: 200 }),
+      makeOffer({ id: "twenty", discountType: "percent", discountValue: 20 }),
+      makeOffer({
+        id: "expired",
+        discountType: "percent",
+        discountValue: 50,
+        endsAt: "2020-01-01T00:00:00.000Z",
+      }),
+    ]
+
+    expect(pickBestSalonOffer(offers)?.id).toBe("twenty")
+    expect(salonOfferBadgeLabel(offers)).toBe("20% OFF")
+    expect(
+      salonOfferBadgeLabel([
+        makeOffer({ id: "cash", discountType: "fixed", discountValue: 200 }),
+      ]),
+    ).toBe("₹200 OFF")
   })
 })

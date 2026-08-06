@@ -34,8 +34,8 @@ export function StatementSection({
     },
     {
       value: formatCount(categoryCount),
-      label: "Service categories",
-      detail: "Browse and book by need",
+      label: "Business types",
+      detail: "Browse by salon, spa, barber & more",
     },
     {
       value: "<2 min",

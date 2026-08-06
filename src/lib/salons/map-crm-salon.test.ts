@@ -27,6 +27,7 @@ const salon: CrmSalonRow = {
   latitude: 12.9,
   longitude: 77.6,
   settings: {
+    businessType: "Unisex Salon",
     amenities: {
       enabled: true,
       categories: [
@@ -137,6 +138,7 @@ describe("mapCrmSalonToWeb", () => {
   it("retains legacy settings fallbacks when canonical rows are absent", () => {
     const mapped = mapCrmSalonToWeb(salon, [service], [])
 
+    expect(mapped.businessType).toBe("Unisex Salon")
     expect(mapped.amenities?.categories[0]?.name).toBe("Legacy amenity")
     expect(mapped.cancellationPolicy?.freeCancelHours).toBe(2)
     expect(mapped.gallery).toContain(

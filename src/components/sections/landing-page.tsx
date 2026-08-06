@@ -15,12 +15,14 @@ import { TestimonialsSection } from "@/components/sections/parts/testimonials-se
 import { WhyChooseSection } from "@/components/sections/parts/why-choose-section"
 import { LaunchOfferCtaSection } from "@/components/sections/parts/launch-offer-cta-section"
 import { First200CashbackBanner } from "@/components/marketing/first-200-cashback-banner"
+import { getBrowseCityFromCookies } from "@/lib/categories/browse-city"
 import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { getSalons } from "@/lib/salons"
 
 export async function LandingPage() {
+  const city = await getBrowseCityFromCookies()
   const [categories, salons] = await Promise.all([
-    getBrowseDefaultCategories(),
+    getBrowseDefaultCategories(city),
     getSalons(),
   ])
 
@@ -35,7 +37,7 @@ export async function LandingPage() {
         <HowItWorksSection />
         <WhyChooseSection />
         <LaunchOfferCtaSection />
-        <CategoriesSection categories={categories} />
+        <CategoriesSection categories={categories} city={city} />
         <NearbySalonsSection />
         <StatementSection
           salonCount={salons.length}

@@ -7,6 +7,7 @@ import { MapPinIcon, StarIcon, XIcon } from "lucide-react"
 import { formatDistanceKm } from "@/lib/maps/haversine"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
 import { salonServicesSectionHref } from "@/lib/salons/salon-detail-scroll"
+import { SalonOfferDiscountBadge } from "@/components/salons/offers/service-offer-badge"
 import { Button } from "@/components/ui/button"
 
 type SalonMapCardProps = {
@@ -34,6 +35,11 @@ export function SalonMapCard({ salon, onClose }: SalonMapCardProps) {
             No photo yet
           </div>
         )}
+        {salon.offerBadge ? (
+          <div className="pointer-events-none absolute left-3 top-3">
+            <SalonOfferDiscountBadge offer={salon.offerBadge} />
+          </div>
+        ) : null}
         <button
           type="button"
           onClick={onClose}

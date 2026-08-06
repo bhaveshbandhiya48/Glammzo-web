@@ -307,6 +307,34 @@ export function formatOfferDiscountBadge(
   return `₹${offer.discountValue} OFF`
 }
 
+/**
+ * Best currently bookable salon offer for explore / profile badges.
+ * Prefers larger percent discounts; fixed amounts compare by rupee value.
+ */
+export function pickBestSalonOffer(
+  offers: SalonOffer[] | null | undefined,
+  now = new Date(),
+): SalonOffer | null {
+  const bookable = filterBookableOffers(offers ?? [], now)
+  if (bookable.length === 0) return null
+
+  return [...bookable].sort((a, b) => {
+    const score = (offer: SalonOffer) =>
+      offer.discountType === "percent"
+        ? offer.discountValue * 1000
+        : offer.discountValue
+    return score(b) - score(a) || a.title.localeCompare(b.title)
+  })[0] ?? null
+}
+
+export function salonOfferBadgeLabel(
+  offers: SalonOffer[],
+  now = new Date(),
+): string | null {
+  const best = pickBestSalonOffer(offers, now)
+  return best ? formatOfferDiscountBadge(best) : null
+}
+
 /** Count distinct bookable offers that touch any service in the list. */
 export function countOffersForServices(
   offers: SalonOffer[],

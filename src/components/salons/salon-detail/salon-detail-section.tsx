@@ -10,6 +10,8 @@ type SalonDetailSectionProps = {
   subtitle?: string
   children: ReactNode
   className?: string
+  /** Mobile: hide eyebrow + subtitle, keep title only. Desktop unchanged. */
+  compactTitleMobile?: boolean
 }
 
 export function SalonDetailSection({
@@ -19,6 +21,7 @@ export function SalonDetailSection({
   subtitle,
   children,
   className,
+  compactTitleMobile = false,
 }: SalonDetailSectionProps) {
   return (
     <MotionSection
@@ -28,9 +31,19 @@ export function SalonDetailSection({
       variants={undefined}
       className={cn("py-8 sm:py-10", id && "scroll-mt-24", className)}
     >
-      <header className="mb-5 max-w-2xl sm:mb-6">
+      <header
+        className={cn(
+          "mb-5 max-w-2xl sm:mb-6",
+          compactTitleMobile && "mb-2 lg:mb-6",
+        )}
+      >
         {eyebrow ? (
-          <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">
+          <p
+            className={cn(
+              "text-xs font-semibold tracking-[0.2em] text-primary uppercase",
+              compactTitleMobile && "hidden lg:block",
+            )}
+          >
             {eyebrow}
           </p>
         ) : null}
@@ -38,7 +51,12 @@ export function SalonDetailSection({
           {title}
         </h2>
         {subtitle ? (
-          <p className="mt-3 text-[15px] leading-relaxed text-foreground/65 sm:text-base">
+          <p
+            className={cn(
+              "mt-3 text-[15px] leading-relaxed text-foreground/65 sm:text-base",
+              compactTitleMobile && "hidden lg:block",
+            )}
+          >
             {subtitle}
           </p>
         ) : null}

@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from "framer-motion"
 import { BookingSummaryCard } from "@/components/salons/booking-assistant/booking-summary-card"
 import { RecommendationCard } from "@/components/salons/booking-assistant/recommendation-card"
 import { SavingsCard } from "@/components/salons/booking-assistant/savings-card"
-import { TrustCard } from "@/components/salons/booking-assistant/trust-card"
 import { OfferEligibilityBanner } from "@/components/salons/offers/offer-eligibility-banner"
 import {
   buildBookingLineItems,
@@ -205,6 +204,7 @@ export function BookingAssistantSidebar({
   return (
     <aside className={cn("space-y-4", className)}>
       <BookingSummaryCard
+        className={lines.length === 0 ? "hidden lg:block" : undefined}
         lines={lines}
         subtotal={subtotal}
         discount={discount}
@@ -228,6 +228,7 @@ export function BookingAssistantSidebar({
       ) : null}
 
       <SavingsCard
+        className="hidden lg:block"
         spotlight={
           spotlight
             ? {
@@ -300,8 +301,6 @@ export function BookingAssistantSidebar({
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      <TrustCard />
 
       {showMobileBar && hasSelection ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/98 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md lg:hidden">

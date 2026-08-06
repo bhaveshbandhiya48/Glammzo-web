@@ -1,6 +1,6 @@
 export function AppointmentCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/65 bg-card shadow-sm shadow-black/[0.03]">
+    <div className="overflow-hidden rounded-xl border border-border/65 bg-card shadow-sm shadow-black/[0.03]">
       <div className="flex items-start justify-between gap-3 border-b border-border/55 px-4 py-3.5 sm:px-5">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -15,7 +15,7 @@ export function AppointmentCardSkeleton() {
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            className="h-[3.75rem] animate-pulse rounded-xl border border-border/50 bg-muted/40"
+            className="h-[3.75rem] animate-pulse rounded-lg border border-border/50 bg-muted/40"
           />
         ))}
       </div>

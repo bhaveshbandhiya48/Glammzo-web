@@ -18,6 +18,13 @@ export type NearbySalonRecord = {
   priceFrom: number
   isOpenNow: boolean
   distanceKm: number
+  /** Signup business type from CRM settings. */
+  businessType: string | null
+  /** Best active salon promo for map cards (“20% OFF” / “₹200 OFF”). */
+  offerBadge: {
+    discountType: "percent" | "fixed"
+    discountValue: number
+  } | null
   services: Array<Pick<SalonService, "id" | "name" | "price" | "durationMin" | "category">>
 }
 

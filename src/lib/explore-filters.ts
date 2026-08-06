@@ -1,14 +1,14 @@
+import { BUSINESS_TYPE_CATALOG } from "@/lib/categories/business-types"
 import { getSearchParam } from "@/lib/search-params"
 import { filterSalonsByCity } from "@/lib/salons/city-filter"
 import type { Salon } from "@/types/salon"
 
 export const EXPLORE_CATEGORY_FILTERS = [
   { id: "all", label: "All" },
-  { id: "hair", label: "Hair" },
-  { id: "spa", label: "Spa" },
-  { id: "nails", label: "Nails" },
-  { id: "makeup", label: "Makeup" },
-  { id: "grooming", label: "Grooming" },
+  ...BUSINESS_TYPE_CATALOG.map((entry) => ({
+    id: entry.slug,
+    label: entry.label,
+  })),
 ] as const
 
 export const EXPLORE_SORT_FILTERS = [
@@ -200,6 +200,7 @@ export function filterExploreSalons(
       (salon) =>
         salon.name.toLowerCase().includes(q) ||
         salon.area.toLowerCase().includes(q) ||
+        (salon.businessType?.toLowerCase().includes(q) ?? false) ||
         salon.services.some(
           (service) =>
             service.name.toLowerCase().includes(q) ||
@@ -238,12 +239,18 @@ export function filterExploreSalons(
   return result
 }
 
+/** Soft boost from booking response rate (0–100). Missing history = full credit. */
+const RESPONSE_SCORE_WEIGHT = 150
+
 function recommendScore(salon: Salon): number {
   let score = 0
   if (salon.isFeatured) score += 1_000
   if (salon.rating > 0) score += salon.rating * 100
   score += Math.min(salon.reviews, 200)
   if (salon.isOpenNow) score += 10
+  const responseScore =
+    salon.marketplaceResponseScore == null ? 100 : salon.marketplaceResponseScore
+  score += (responseScore / 100) * RESPONSE_SCORE_WEIGHT
   return score
 }
 

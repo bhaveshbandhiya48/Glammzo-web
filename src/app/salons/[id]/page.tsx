@@ -102,7 +102,7 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Navbar />
+      <Navbar salonName={salon.name} />
       {isPreview ? <SalonListingPreviewBanner /> : null}
       <main className="page-main bg-background">
         <SalonDetailView

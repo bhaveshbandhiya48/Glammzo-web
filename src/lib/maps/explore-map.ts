@@ -3,7 +3,8 @@ import { haversineKm } from "@/lib/geo"
 import { DEFAULT_MAP_CENTER } from "@/lib/maps/config"
 import { resolveSalonCoordinates } from "@/lib/salon-coordinates"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
-import type { Salon } from "@/types/salon"
+import { pickBestSalonOffer } from "@/lib/salons/offer-utils"
+import type { Salon, SalonOffer } from "@/types/salon"
 
 export function mapSalonToNearbyRecord(
   salon: Salon,
@@ -23,6 +24,8 @@ export function mapSalonToNearbyRecord(
           isDefaultCity: true,
         }) ?? 0
 
+  const bestOffer = pickBestSalonOffer(salon.offers)
+
   return {
     id: salon.id,
     slug: salon.id,
@@ -41,6 +44,13 @@ export function mapSalonToNearbyRecord(
     priceFrom: salon.priceFrom,
     isOpenNow: salon.isOpenNow,
     distanceKm,
+    businessType: salon.businessType?.trim() || null,
+    offerBadge: bestOffer
+      ? {
+          discountType: bestOffer.discountType,
+          discountValue: bestOffer.discountValue,
+        }
+      : null,
     services: salon.services.map((service) => ({
       id: service.id,
       name: service.name,
@@ -68,6 +78,26 @@ export function getExploreMapCenter(origin: { latitude: number; longitude: numbe
   }
 }
 
+function previewOfferFromBadge(
+  badge: NonNullable<NearbySalonRecord["offerBadge"]>,
+): SalonOffer {
+  return {
+    id: "preview-offer",
+    code: "OFFER",
+    title: "Salon offer",
+    description: null,
+    discountType: badge.discountType,
+    discountValue: badge.discountValue,
+    appliesTo: "all_services",
+    serviceIds: [],
+    startsAt: null,
+    endsAt: null,
+    maxRedemptions: null,
+    redemptionCount: 0,
+    isActive: true,
+  }
+}
+
 /** Minimal Salon shape for reusing SalonCard outside the explore list grid. */
 export function nearbyRecordToSalonPreview(record: NearbySalonRecord): Salon {
   return {
@@ -83,12 +113,13 @@ export function nearbyRecordToSalonPreview(record: NearbySalonRecord): Salon {
     longitude: record.longitude,
     isOpenNow: record.isOpenNow,
     priceFrom: record.priceFrom,
+    businessType: record.businessType,
     description: "",
     address: record.fullAddress,
     phone: "",
     hours: "",
     packages: [],
-    offers: [],
+    offers: record.offerBadge ? [previewOfferFromBadge(record.offerBadge)] : [],
     services: [],
     gallery: [],
     customerReviews: [],
