@@ -26,7 +26,7 @@ export function HowItWorksSection() {
           />
         </MotionDiv>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+        <div className="mt-10 grid gap-6 sm:mt-12 lg:grid-cols-3">
           {howItWorksSteps.map((step) => (
             <MotionDiv
               key={step.num}

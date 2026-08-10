@@ -1,0 +1,7 @@
+# Keep Cursor from indexing build artifacts (can hang the IDE on huge caches).
+.next/
+node_modules/
+out/
+coverage/
+*.tsbuildinfo
+.vercel/

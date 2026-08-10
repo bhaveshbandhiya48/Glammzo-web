@@ -2,7 +2,8 @@ import { media } from "@/data/media"
 import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { resolveAmenityIconId } from "@/lib/salons/amenity-catalog"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
-import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
+import { resolveServicePayablePrice, resolveCategoryStockImage } from "@/lib/salons/catalog-utils"
+import { sanitizeSalonImageUrl } from "@/lib/salons/image-url"
 import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
 import type {
   CrmMarketplaceProfileRow,
@@ -123,17 +124,19 @@ function parseServiceIncludes(description: string | null): string[] {
   return lines
 }
 
+function normalizeWhatsIncluded(items: string[] | null | undefined): string[] {
+  return (items ?? [])
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 12)
+}
+
 function relationName(
   relation: { name: string } | { name: string }[] | null | undefined
 ): string | undefined {
   if (!relation) return undefined
   if (Array.isArray(relation)) return relation[0]?.name
   return relation.name
-}
-
-function fallbackServiceImage(serviceId: string): string {
-  const pool = Object.values(media.categories)
-  return pool[hashString(serviceId) % pool.length] ?? media.categories.spa
 }
 
 function relationCategory(
@@ -158,12 +161,19 @@ function relationCategory(
   }
 }
 
-function mapService(row: CrmServiceRow, completedBookingCount = 0): SalonService | null {
+function mapService(
+  row: CrmServiceRow,
+  completedBookingCount = 0,
+): SalonService | null {
   const category = relationCategory(row.service_categories)
   if (!category) {
     return null
   }
-  const imageUrl = row.image_url?.trim() || fallbackServiceImage(row.id)
+  // Never reuse salon list/cover/gallery photos for services — those belong to
+  // the venue. Missing service photos use category stock art only.
+  const imageUrl =
+    sanitizeSalonImageUrl(row.image_url) ||
+    resolveCategoryStockImage(row.name, category.name)
   const addOnIds = [...(row.service_add_ons ?? [])]
     .sort((left, right) => left.sort_order - right.sort_order)
     .map((entry) => entry.add_on_service_id)
@@ -182,7 +192,11 @@ function mapService(row: CrmServiceRow, completedBookingCount = 0): SalonService
     categorySortOrder: category.sortOrder,
     imageUrl,
     description: row.description?.trim() || undefined,
-    includes: parseServiceIncludes(row.description),
+    includes: (() => {
+      const fromColumn = normalizeWhatsIncluded(row.whats_included)
+      if (fromColumn.length > 0) return fromColumn
+      return parseServiceIncludes(row.description)
+    })(),
     recommendedFor: row.recommended_for?.length ? row.recommended_for : undefined,
     beforeCare: row.before_care?.trim() || undefined,
     afterCare: row.after_care?.trim() || undefined,
@@ -198,7 +212,6 @@ function isMarketplaceReadyService(row: CrmServiceRow) {
     Number(row.price) > 0 &&
     Number(row.duration_minutes) > 0 &&
     (row.description?.trim().length ?? 0) >= 20 &&
-    Boolean(row.image_url?.trim()) &&
     Boolean(relationCategory(row.service_categories))
   )
 }
@@ -221,7 +234,7 @@ function mapStaff(row: CrmStaffRow, reviewCount: number): SalonTeamMember {
     id: row.id,
     name: row.full_name,
     role: row.designation?.trim() || relationName(row.staff_roles) || "Specialist",
-    imageUrl: row.avatar_url ?? media.testimonials.t1,
+    imageUrl: sanitizeSalonImageUrl(row.avatar_url) ?? media.testimonials.t1,
     bio,
     specialties,
     reviewCount,
@@ -354,7 +367,7 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
     description: shortDescription,
     shortDescription,
     detailedDescription: row.detailed_description?.trim() || row.description?.trim() || "",
-    imageUrl: row.image_url?.trim() || fallbackImage,
+    imageUrl: sanitizeSalonImageUrl(row.image_url) || fallbackImage,
     packagePrice,
     comparePrice,
     amountSaved,
@@ -401,9 +414,14 @@ export function mapCrmSalonToWeb(
   serviceBookingCounts: Map<string, number> = new Map(),
   salonBookingCount = 0,
 ): Salon {
+  const listUrl = sanitizeSalonImageUrl(row.list_image_url)
+  const coverUrl = sanitizeSalonImageUrl(row.cover_image_url)
+
   const activeServices = services
     .filter(isMarketplaceReadyService)
-    .map((row) => mapService(row, serviceBookingCounts.get(row.id) ?? 0))
+    .map((serviceRow) =>
+      mapService(serviceRow, serviceBookingCounts.get(serviceRow.id) ?? 0),
+    )
     .filter((service): service is SalonService => service !== null)
     .sort((a, b) => a.price - b.price)
 
@@ -411,7 +429,7 @@ export function mapCrmSalonToWeb(
 
   const activeStaff = staff
     .filter(isMarketplaceReadyStaff)
-    .map((row) => mapStaff(row, staffReviewCounts.get(row.id) ?? 0))
+    .map((staffRow) => mapStaff(staffRow, staffReviewCounts.get(staffRow.id) ?? 0))
 
   const area = resolveSalonArea(row)
   const city = row.city?.trim() || ""
@@ -420,8 +438,6 @@ export function mapCrmSalonToWeb(
       ? Math.min(...activeServices.map((s) => s.price))
       : 0
 
-  const listUrl = row.list_image_url?.trim() || null
-  const coverUrl = row.cover_image_url?.trim() || null
   const fallback = fallbackImageForSalon(row.id)
   // Explore/list thumbnail stays separate from the cover hero image.
   const imageUrl = listUrl || fallback

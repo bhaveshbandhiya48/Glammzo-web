@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ClockIcon, StarIcon, XIcon } from "lucide-react"
+import { CheckIcon, ClockIcon, StarIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -137,6 +137,36 @@ function ServiceDetailSummaryPanel({
         </div>
 
         <ServiceDetailOffers offers={serviceOffers} className="mt-5" />
+
+        {content.includedSteps.length > 0 ? (
+          <div className="mt-5 space-y-3">
+            <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
+              What&apos;s included
+            </p>
+            <ul className="space-y-2.5 rounded-xl border border-border/60 bg-background/70 px-4 py-3.5">
+              {content.includedSteps.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground/80"
+                >
+                  <CheckIcon
+                    className="mt-0.5 size-4 shrink-0 text-primary"
+                    strokeWidth={2.5}
+                    aria-hidden
+                  />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : content.about ? (
+          <div className="mt-5 space-y-2">
+            <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
+              About
+            </p>
+            <p className="text-sm leading-relaxed text-foreground/70">{content.about}</p>
+          </div>
+        ) : null}
 
         {content.addOns.length > 0 ? (
           <div className="mt-5 space-y-3">

@@ -30,7 +30,7 @@ export type SalonOnboardingProgress = {
   createdAt: number
   updatedAt: number
   salonId?: string
-  /** Plan selected from marketplace /pricing (optional). */
+  /** Plan selected during onboarding (optional). */
   intendedPlan?: IntendedSalonPlan
 }
 

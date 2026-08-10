@@ -54,12 +54,12 @@ export function RaiseSupportTicketButton({
       </Button>
 
       <Dialog open={open} onOpenChange={resetAndClose}>
-        <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-5 overflow-y-auto sm:max-w-lg">
+          <DialogHeader className="gap-2.5">
             <DialogTitle className="font-heading text-xl font-semibold tracking-tight">
               Raise a support ticket
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="leading-relaxed">
               Include your booking ID from the confirmation so we can assist faster. Our team will
               reply by email.
             </DialogDescription>
@@ -71,7 +71,7 @@ export function RaiseSupportTicketButton({
             </div>
           ) : (
             <form
-              className="grid gap-4"
+              className="grid gap-5"
               onSubmit={(event) => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
@@ -81,8 +81,10 @@ export function RaiseSupportTicketButton({
                 })
               }}
             >
-              <div className="grid gap-2">
-                <Label htmlFor="support-name">Your name</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="support-name" className="leading-snug">
+                  Your name
+                </Label>
                 <Input
                   id="support-name"
                   name="name"
@@ -96,9 +98,11 @@ export function RaiseSupportTicketButton({
                 ) : null}
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="support-email">Email</Label>
+              <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
+                <div className="grid gap-2.5">
+                  <Label htmlFor="support-email" className="leading-snug">
+                    Email
+                  </Label>
                   <Input
                     id="support-email"
                     name="email"
@@ -112,8 +116,10 @@ export function RaiseSupportTicketButton({
                     <p className="text-sm text-destructive">{state.fieldErrors.email}</p>
                   ) : null}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="support-phone">Mobile (optional)</Label>
+                <div className="grid gap-2.5">
+                  <Label htmlFor="support-phone" className="leading-snug">
+                    Mobile (optional)
+                  </Label>
                   <Input
                     id="support-phone"
                     name="phone"
@@ -129,9 +135,11 @@ export function RaiseSupportTicketButton({
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="support-booking">Booking ID</Label>
+              <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
+                <div className="grid gap-2.5">
+                  <Label htmlFor="support-booking" className="leading-snug">
+                    Booking ID
+                  </Label>
                   <Input
                     id="support-booking"
                     name="bookingReference"
@@ -144,8 +152,10 @@ export function RaiseSupportTicketButton({
                     <p className="text-sm text-destructive">{state.fieldErrors.bookingReference}</p>
                   ) : null}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="support-salon">Salon name (optional)</Label>
+                <div className="grid gap-2.5">
+                  <Label htmlFor="support-salon" className="leading-snug">
+                    Salon name (optional)
+                  </Label>
                   <Input
                     id="support-salon"
                     name="salonName"
@@ -155,8 +165,10 @@ export function RaiseSupportTicketButton({
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="support-message">How can we help?</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="support-message" className="leading-snug">
+                  How can we help?
+                </Label>
                 <textarea
                   id="support-message"
                   name="message"

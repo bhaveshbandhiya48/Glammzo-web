@@ -101,7 +101,9 @@ export async function requestOtpAction(
     if (!smsResult.success && process.env.SMS_PROVIDER !== "mock") {
       return {
         ok: false,
-        message: "We couldn't send a verification code. Please try again shortly.",
+        message:
+          smsResult.error ||
+          "We couldn't send a verification code. Please try again shortly.",
         step: "phone",
       }
     }

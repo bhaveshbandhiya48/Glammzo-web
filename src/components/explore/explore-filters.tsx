@@ -24,6 +24,11 @@ import {
 } from "@/lib/explore-filters"
 import { Button } from "@/components/ui/button"
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -128,16 +133,17 @@ function OptionRow({
 export function ExploreFilters({ state, categoryFilters }: ExploreFiltersProps) {
   const router = useRouter()
   const isDesktop = useMediaQuery("(min-width: 768px)")
-  const [sortOpen, setSortOpen] = useState(false)
+  const [mobileSortOpen, setMobileSortOpen] = useState(false)
+  const [desktopSortOpen, setDesktopSortOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const [activeSection, setActiveSection] = useState<FilterSectionId>("category")
   const [draft, setDraft] = useState<DraftFilters>(() => toDraft(state))
 
   useEffect(() => {
-    if (filterOpen || sortOpen) {
+    if (filterOpen || mobileSortOpen || desktopSortOpen) {
       setDraft(toDraft(state))
     }
-  }, [filterOpen, sortOpen, state])
+  }, [filterOpen, mobileSortOpen, desktopSortOpen, state])
 
   const activeFilterCount = countActiveFilters(toDraft(state))
   const draftFilterCount = countActiveFilters(draft)
@@ -229,8 +235,12 @@ export function ExploreFilters({ state, categoryFilters }: ExploreFiltersProps) 
 
   const applySort = (sort: ExploreSortId) => {
     router.push(buildExploreHref(state, { sort }))
-    setSortOpen(false)
+    setMobileSortOpen(false)
+    setDesktopSortOpen(false)
   }
+
+  const sortTriggerClassName =
+    "inline-flex h-11 w-full items-center justify-center gap-2 px-3 text-sm font-semibold text-foreground md:h-10 md:w-auto md:justify-start md:rounded-full md:border md:border-border/70 md:bg-card md:px-4 md:hover:border-primary/25"
 
   return (
     <>
@@ -255,12 +265,57 @@ export function ExploreFilters({ state, categoryFilters }: ExploreFiltersProps) 
         <div className="grid grid-cols-2 divide-x divide-border/70 md:flex md:gap-2 md:divide-x-0">
           <button
             type="button"
-            onClick={() => setSortOpen(true)}
-            className="inline-flex h-11 items-center justify-center gap-2 px-3 text-sm font-semibold text-foreground md:h-10 md:justify-start md:rounded-full md:border md:border-border/70 md:bg-card md:px-4 md:hover:border-primary/25"
+            onClick={() => setMobileSortOpen(true)}
+            className={cn(sortTriggerClassName, "md:hidden")}
           >
             <ArrowUpDownIcon className="size-4 text-foreground/55" aria-hidden />
             <span className="truncate">{sortLabel}</span>
           </button>
+
+          <Popover open={desktopSortOpen} onOpenChange={setDesktopSortOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(sortTriggerClassName, "hidden md:inline-flex")}
+                aria-haspopup="listbox"
+                aria-expanded={desktopSortOpen}
+              >
+                <ArrowUpDownIcon className="size-4 text-foreground/55" aria-hidden />
+                <span className="truncate">{sortLabel}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-1.5">
+              <p className="px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.12em] text-foreground/45 uppercase">
+                Sort by
+              </p>
+              <div role="listbox" aria-label="Sort by">
+                {EXPLORE_SORT_FILTERS.map((filter) => {
+                  const active = state.sort === filter.id
+                  return (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      onClick={() => applySort(filter.id)}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                        active
+                          ? "bg-primary/10 font-medium text-foreground"
+                          : "text-foreground/80 hover:bg-muted/50",
+                      )}
+                    >
+                      <span>{filter.label}</span>
+                      {active ? (
+                        <CheckIcon className="size-3.5 shrink-0 text-primary" aria-hidden />
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <button
             type="button"
             onClick={() => setFilterOpen(true)}
@@ -280,11 +335,11 @@ export function ExploreFilters({ state, categoryFilters }: ExploreFiltersProps) 
         </div>
       </div>
 
-      <Sheet open={sortOpen} onOpenChange={setSortOpen}>
+      <Sheet open={mobileSortOpen} onOpenChange={setMobileSortOpen}>
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="max-h-[75vh] gap-0 rounded-t-2xl p-0"
+          className="max-h-[75vh] gap-0 rounded-t-2xl p-0 md:hidden"
         >
           <SheetHeader className="border-b border-border/60 p-4 pb-3">
             <SheetTitle>Sort by</SheetTitle>

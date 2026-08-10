@@ -1,6 +1,13 @@
 import type { MetadataRoute } from "next"
 
 import { getSalons } from "@/lib/salons"
+import {
+  SEO_CITY_LANDINGS,
+  buildAreaLandingPath,
+  buildCityLandingPath,
+  getAreasForSeoCity,
+  slugifyLocalLabel,
+} from "@/lib/seo/local-landing"
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://glammzo.com"
 
@@ -13,6 +20,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "weekly",
     priority: 0.8,
   }))
+
+  const localLandingEntries: MetadataRoute.Sitemap = []
+  for (const city of SEO_CITY_LANDINGS) {
+    localLandingEntries.push({
+      url: `${BASE_URL}${buildCityLandingPath(city.slug)}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.92,
+    })
+
+    for (const area of getAreasForSeoCity(salons, city)) {
+      localLandingEntries.push({
+        url: `${BASE_URL}${buildAreaLandingPath(city.slug, slugifyLocalLabel(area))}`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.88,
+      })
+    }
+  }
 
   return [
     {
@@ -33,6 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.95,
     },
+    ...localLandingEntries,
     {
       url: `${BASE_URL}/services`,
       lastModified: new Date(),
@@ -86,12 +113,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
-    },
-    {
-      url: `${BASE_URL}/pricing`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
     },
     ...salonEntries,
   ]

@@ -63,6 +63,7 @@ export type CrmServiceRow = {
   recommended_for?: string[] | null
   before_care?: string | null
   after_care?: string | null
+  whats_included?: string[] | null
   service_add_ons?: CrmServiceAddOnRow[] | null
   service_categories:
     | { name: string; is_active?: boolean; sort_order?: number }

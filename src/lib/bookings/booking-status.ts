@@ -1,4 +1,5 @@
 import type { BookingStatus } from "@/types/booking"
+import { canCancelWithNotice } from "@/lib/bookings/cancel-policy"
 
 export const BOOKING_SOURCE_GLAMZZO_WEB = "glamzzo_web" as const
 export const WEB_BOOKING_SOURCE_TAG = "source:glamzzo_web" as const
@@ -169,8 +170,28 @@ export function extractDeclineReasonForDisplay(input: {
   return null
 }
 
-export function canConsumerCancelBooking(status: BookingStatus) {
-  return status === "pending" || status === "confirmed" || status === "upcoming"
+export function canConsumerCancelBooking(
+  status: BookingStatus,
+  startsAtIso?: string | null,
+) {
+  if (status !== "pending" && status !== "confirmed" && status !== "upcoming") {
+    return false
+  }
+  if (startsAtIso === undefined) {
+    // Legacy callers without start time keep status-only check.
+    return true
+  }
+  return canCancelWithNotice(startsAtIso).allowed
+}
+
+export function getConsumerCancelBlockedReason(startsAtIso?: string | null) {
+  if (startsAtIso == null) return null
+  const result = canCancelWithNotice(startsAtIso)
+  if (result.allowed) return null
+  if (result.reason === "too_soon") {
+    return "Cancellations must be made at least 2 hours before your appointment. Please contact the salon if you need help."
+  }
+  return "This booking can no longer be cancelled online."
 }
 
 export function canConsumerRescheduleBooking(status: BookingStatus) {

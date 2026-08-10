@@ -71,6 +71,7 @@ function HeroSalonSlide({
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
           sizes="(max-width: 1024px) 100vw, 480px"
           priority={isActive}
+          loading={isActive ? "eager" : "lazy"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
         {isActive ? <MirrorShine /> : null}

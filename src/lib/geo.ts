@@ -172,7 +172,7 @@ export function requestUserLocation(): Promise<GeoPosition> {
                 : "Could not detect your location."
         reject(new GeolocationRequestError(code, message))
       },
-      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 }
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 120_000 }
     )
   })
 }

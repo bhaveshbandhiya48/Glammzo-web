@@ -21,9 +21,9 @@ const salon: CrmSalonRow = {
   postal_code: "560001",
   country: "IN",
   timezone: "Asia/Kolkata",
-  logo_url: "https://example.com/logo.jpg",
-  list_image_url: "https://example.com/list.jpg",
-  cover_image_url: "https://example.com/cover.jpg",
+  logo_url: "https://images.unsplash.com/logo.jpg",
+  list_image_url: "https://images.unsplash.com/list.jpg",
+  cover_image_url: "https://images.unsplash.com/cover.jpg",
   latitude: 12.9,
   longitude: 77.6,
   settings: {
@@ -37,7 +37,7 @@ const salon: CrmSalonRow = {
     policies: {
       cancellation: { active: true, freeCancelHours: 2 },
     },
-    gallery: ["https://example.com/legacy-gallery.jpg"],
+    gallery: ["https://images.unsplash.com/legacy-gallery.jpg"],
   },
   is_active: true,
   status: "active",
@@ -49,7 +49,7 @@ const service: CrmServiceRow = {
   salon_id: salon.id,
   name: "Haircut",
   description: "A complete haircut service",
-  image_url: "https://example.com/service.jpg",
+  image_url: "https://images.unsplash.com/service.jpg",
   duration_minutes: 45,
   price: "500",
   is_active: true,
@@ -97,7 +97,7 @@ describe("mapCrmSalonToWeb", () => {
         {
           id: "gallery-1",
           salon_id: salon.id,
-          url: "https://example.com/canonical-gallery.jpg",
+          url: "https://images.unsplash.com/canonical-gallery.jpg",
           sort_order: 0,
           alt: null,
         },
@@ -118,16 +118,16 @@ describe("mapCrmSalonToWeb", () => {
       depositPercent: 10,
     })
     expect(mapped.gallery).toContain(
-      "https://example.com/canonical-gallery.jpg",
+      "https://images.unsplash.com/canonical-gallery.jpg",
     )
     expect(mapped.gallery).not.toContain(
-      "https://example.com/legacy-gallery.jpg",
+      "https://images.unsplash.com/legacy-gallery.jpg",
     )
-    expect(mapped.gallery).not.toContain("https://example.com/service.jpg")
-    expect(mapped.gallery).not.toContain("https://example.com/list.jpg")
-    expect(mapped.gallery).not.toContain("https://example.com/cover.jpg")
-    expect(mapped.imageUrl).toBe("https://example.com/list.jpg")
-    expect(mapped.coverImageUrl).toBe("https://example.com/cover.jpg")
+    expect(mapped.gallery).not.toContain("https://images.unsplash.com/service.jpg")
+    expect(mapped.gallery).not.toContain("https://images.unsplash.com/list.jpg")
+    expect(mapped.gallery).not.toContain("https://images.unsplash.com/cover.jpg")
+    expect(mapped.imageUrl).toBe("https://images.unsplash.com/list.jpg")
+    expect(mapped.coverImageUrl).toBe("https://images.unsplash.com/cover.jpg")
     expect(mapped.socialLinks).toEqual({
       instagram: "https://instagram.com/canonical",
       facebook: undefined,
@@ -142,7 +142,7 @@ describe("mapCrmSalonToWeb", () => {
     expect(mapped.amenities?.categories[0]?.name).toBe("Legacy amenity")
     expect(mapped.cancellationPolicy?.freeCancelHours).toBe(2)
     expect(mapped.gallery).toContain(
-      "https://example.com/legacy-gallery.jpg",
+      "https://images.unsplash.com/legacy-gallery.jpg",
     )
   })
 
@@ -179,7 +179,7 @@ describe("mapCrmSalonToWeb", () => {
     expect(mapped.amenities).toBeUndefined()
     expect(mapped.cancellationPolicy).toBeUndefined()
     expect(mapped.gallery).not.toContain(
-      "https://example.com/legacy-gallery.jpg",
+      "https://images.unsplash.com/legacy-gallery.jpg",
     )
   })
 
@@ -195,7 +195,7 @@ describe("mapCrmSalonToWeb", () => {
       full_name: "A Stylist",
       designation: "Stylist",
       bio: null,
-      avatar_url: "https://example.com/staff.jpg",
+      avatar_url: "https://images.unsplash.com/staff.jpg",
       specialties: [],
       is_active: true,
       is_bookable: true,
@@ -215,5 +215,27 @@ describe("mapCrmSalonToWeb", () => {
 
     expect(mapped.services).toEqual([])
     expect(mapped.team).toEqual([])
+  })
+
+  it("keeps services without images and uses category stock (not salon list/cover)", () => {
+    const mapped = mapCrmSalonToWeb(
+      salon,
+      [{ ...service, image_url: null }],
+      [],
+    )
+
+    expect(mapped.services).toHaveLength(1)
+    expect(mapped.services[0]?.imageUrl).toBe("/images/categories/hair.png")
+  })
+
+  it("does not reuse salon cover for services without photos", () => {
+    const mapped = mapCrmSalonToWeb(
+      { ...salon, list_image_url: null },
+      [{ ...service, image_url: null }],
+      [],
+    )
+
+    expect(mapped.services[0]?.imageUrl).toBe("/images/categories/hair.png")
+    expect(mapped.services[0]?.imageUrl).not.toBe("https://images.unsplash.com/cover.jpg")
   })
 })

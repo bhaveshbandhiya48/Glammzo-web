@@ -3,12 +3,20 @@ import "server-only"
 import { getGlamzzoCrmUrl } from "@/lib/crm/glamzzo-crm-url"
 
 /**
- * Ask glamzzo-crm to flip past-deadline pending web bookings to expired
- * (and send customer WhatsApp). Uses the same CRON_SECRET as CRM.
+ * Ask glamzzo-crm to:
+ * - expire past-deadline pending web bookings
+ * - send pending-owner / auto-confirmed WhatsApp via Meta
+ *
+ * Uses the same CRON_SECRET as CRM. No-ops if secret is missing.
  */
 export async function triggerCrmExpiredWebBookingsCron(): Promise<void> {
   const secret = process.env.CRON_SECRET?.trim()
-  if (!secret) return
+  if (!secret) {
+    console.warn(
+      "[bookings] CRM WhatsApp/expire cron skipped: CRON_SECRET is not set",
+    )
+    return
+  }
 
   const url = `${getGlamzzoCrmUrl()}/api/cron/expired-web-bookings`
 
@@ -25,8 +33,25 @@ export async function triggerCrmExpiredWebBookingsCron(): Promise<void> {
         response.status,
         await response.text().catch(() => ""),
       )
+      return
+    }
+
+    const body = (await response.json().catch(() => null)) as {
+      autoConfirmedNotifies?: number
+      ownerPendingNotifies?: number
+    } | null
+
+    if (body) {
+      console.info(
+        "[bookings] CRM expire cron ok:",
+        `autoConfirmed=${body.autoConfirmedNotifies ?? "?"}`,
+        `ownerPending=${body.ownerPendingNotifies ?? "?"}`,
+      )
     }
   } catch (error) {
-    console.error("[bookings] CRM expire cron request error:", error)
+    console.error(
+      "[bookings] CRM expire cron request error (is glamzzo-crm running?):",
+      error,
+    )
   }
 }

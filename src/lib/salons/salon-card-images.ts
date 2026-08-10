@@ -1,9 +1,10 @@
 import type { Salon } from "@/types/salon"
+import { sanitizeSalonImageUrl } from "@/lib/salons/image-url"
 
 const EXPLORE_CARD_GALLERY_LIMIT = 3
 
 function addUniqueUrl(urls: string[], url: string | null | undefined) {
-  const trimmed = url?.trim()
+  const trimmed = sanitizeSalonImageUrl(url)
   if (!trimmed || urls.includes(trimmed)) {
     return
   }
@@ -13,8 +14,8 @@ function addUniqueUrl(urls: string[], url: string | null | undefined) {
 
 function extractGalleryUrls(value: unknown): string[] {
   if (typeof value === "string") {
-    const trimmed = value.trim()
-    return trimmed.startsWith("http") ? [trimmed] : []
+    const sanitized = sanitizeSalonImageUrl(value)
+    return sanitized ? [sanitized] : []
   }
 
   if (Array.isArray(value)) {
@@ -69,7 +70,7 @@ export function parseGalleryUrlsFromSettings(settings: unknown): string[] {
 function normalizeUrlSet(urls: Array<string | null | undefined>): Set<string> {
   return new Set(
     urls
-      .map((url) => url?.trim())
+      .map((url) => sanitizeSalonImageUrl(url))
       .filter((url): url is string => Boolean(url)),
   )
 }
@@ -88,7 +89,7 @@ export function buildSalonGalleryImages(options: {
   const urls: string[] = []
 
   for (const url of options.gallery ?? []) {
-    const trimmed = url?.trim()
+    const trimmed = sanitizeSalonImageUrl(url)
     if (!trimmed || excluded.has(trimmed)) continue
     addUniqueUrl(urls, trimmed)
   }
@@ -108,8 +109,8 @@ export function buildSalonGalleryImages(options: {
 export function getSalonCardImages(
   salon: Pick<Salon, "imageUrl" | "coverImageUrl" | "gallery">,
 ): string[] {
-  const exploreUrl = salon.imageUrl?.trim() || null
-  const coverUrl = salon.coverImageUrl?.trim() || null
+  const exploreUrl = sanitizeSalonImageUrl(salon.imageUrl)
+  const coverUrl = sanitizeSalonImageUrl(salon.coverImageUrl)
   const urls: string[] = []
 
   if (exploreUrl) {
@@ -118,7 +119,7 @@ export function getSalonCardImages(
 
   for (const url of salon.gallery ?? []) {
     if (urls.length >= 1 + EXPLORE_CARD_GALLERY_LIMIT) break
-    const trimmed = url?.trim()
+    const trimmed = sanitizeSalonImageUrl(url)
     if (!trimmed) continue
     if (coverUrl && trimmed === coverUrl) continue
     if (exploreUrl && trimmed === exploreUrl) continue

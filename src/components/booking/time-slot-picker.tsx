@@ -63,6 +63,10 @@ export function TimeSlotPicker({
       : emptyMessage
 
   const hasSelectableSlot = slots.some((slot) => !slot.disabled)
+  const allDisabledLookBooked =
+    slots.length > 0 &&
+    !hasSelectableSlot &&
+    slots.every((slot) => slot.disabled && slot.hint === "Already booked")
 
   const selectSlot = (slot: TimeSlotOption) => {
     if (slot.disabled) return
@@ -94,7 +98,9 @@ export function TimeSlotPicker({
                 ? unavailableMessage
                 : hasSelectableSlot
                   ? placeholder
-                  : "All slots booked")}
+                  : allDisabledLookBooked
+                    ? "All slots booked"
+                    : "No times available")}
           </span>
           <span
             className="pointer-events-none absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground"

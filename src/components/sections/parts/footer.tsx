@@ -35,6 +35,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Explore Salons", href: "/explore" },
       { label: "Salon Near Me", href: "/salons-near-me" },
+      { label: "Salons in Bengaluru", href: "/salons-in/bengaluru" },
       { label: "Services", href: "/services" },
       { label: "How It Works", href: "/#how" },
     ],
@@ -53,7 +54,6 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Partner with Glammzo", href: "/for-salons" },
       { label: "Free Salon CRM", href: "/for-salons/start" },
-      { label: "Pricing", href: "/pricing" },
     ],
   },
   {

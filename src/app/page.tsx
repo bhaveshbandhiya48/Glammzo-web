@@ -4,6 +4,7 @@ import { LandingPage } from "@/components/sections/landing-page"
 import { JsonLd } from "@/components/seo/json-ld"
 import {
   buildFaqJsonLd,
+  buildHowToBookJsonLd,
   buildOrganizationJsonLd,
   buildSalonBookingServiceJsonLd,
   buildWebsiteJsonLd,
@@ -53,6 +54,7 @@ export default function HomePage() {
           buildOrganizationJsonLd(),
           buildWebsiteJsonLd(),
           buildSalonBookingServiceJsonLd(),
+          buildHowToBookJsonLd(),
           buildFaqJsonLd([...SALON_NEAR_ME_FAQS]),
         ]}
       />

@@ -29,7 +29,7 @@ export function WhyChooseSection() {
       whileInView="show"
       viewport={{ once: true, margin: "-80px" }}
       variants={stagger}
-      className="section-y section-y-separated"
+      className="section-y"
     >
       <Container>
         <MotionDiv variants={fadeUp}>
@@ -40,7 +40,7 @@ export function WhyChooseSection() {
           />
         </MotionDiv>
 
-        <div className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-x-8 gap-y-10 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
           {whyChooseReasons.map((reason, index) => {
             const Icon = ICONS[reason.id as keyof typeof ICONS]
             return (

@@ -29,7 +29,7 @@ export function TestimonialsSection() {
           />
         </MotionDiv>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="mt-10 grid gap-8 sm:mt-12 lg:grid-cols-[1.2fr_0.8fr]">
           <MotionDiv variants={fadeUp}>
             <figure className="rounded-3xl border border-border/80 bg-card p-8 sm:p-12">
               <blockquote className="font-heading text-2xl font-medium leading-snug tracking-tight text-foreground/90 sm:text-[1.65rem]">

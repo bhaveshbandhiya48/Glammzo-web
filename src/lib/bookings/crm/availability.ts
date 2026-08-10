@@ -145,24 +145,6 @@ export function slotStatusHint(status: TimeSlotStatus): string | undefined {
   }
 }
 
-function isStaffWorkingSlot(
-  context: SalonBookingContext,
-  staffId: string,
-  appointmentDate: string,
-  startTime: string,
-  endTime: string,
-) {
-  const weekday = getWeekdayFromDateKey(appointmentDate) as Weekday
-  const schedule = resolveStaffDaySchedule(
-    context.staffSchedules,
-    context.businessHours,
-    staffId,
-    weekday,
-  )
-
-  return isStaffWorkingDuringSlot(schedule, startTime, endTime)
-}
-
 export function isStaffAvailableForSlot(
   context: SalonBookingContext,
   booked: BookedAppointment[],
@@ -308,14 +290,6 @@ function resolveSlotStatus(
     return "booked"
   }
 
-  const workingStaff = staffPool.filter((staffId) =>
-    isStaffWorkingSlot(context, staffId, appointmentDate, startTime, endTime),
-  )
-
-  if (workingStaff.length > 0) {
-    return "booked"
-  }
-
   return "unavailable"
 }
 
@@ -434,6 +408,16 @@ export function getTimeSlotOptionsForDate(
     options,
   )
 
+  if (staffPool.length === 0) {
+    return {
+      slots: [],
+      closed: true,
+      closedMessage: preferredStaffId
+        ? "This team member can’t take the selected services. Choose another person or clear the preference."
+        : "No team member is assigned to these services for online booking.",
+    }
+  }
+
   const slots = rawSlots.map((slot) => {
     const startTime = `${slot}:00`
     const endTime = addMinutesToEnd(slot, durationMinutes)
@@ -508,10 +492,13 @@ export function getAvailableSlotsForDate(
     .map((entry) => entry.slot)
 
   if (available.length === 0) {
+    const anyBooked = result.slots.some((entry) => entry.status === "booked")
     return {
       slots: [] as string[],
       closed: true,
-      closedMessage: "All time slots are booked for this day.",
+      closedMessage: anyBooked
+        ? "All time slots are booked for this day."
+        : "No bookable times left for this day. Try another date.",
     }
   }
 

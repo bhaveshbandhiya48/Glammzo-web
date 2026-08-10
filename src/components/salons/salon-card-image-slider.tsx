@@ -13,6 +13,8 @@ type SalonCardImageSliderProps = {
   compact?: boolean
   href?: string
   onActivate?: () => void
+  /** Prefer for the first above-the-fold card only (LCP). */
+  priority?: boolean
 }
 
 export function SalonCardImageSlider({
@@ -21,6 +23,7 @@ export function SalonCardImageSlider({
   compact = false,
   href,
   onActivate,
+  priority = false,
 }: SalonCardImageSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -70,6 +73,7 @@ export function SalonCardImageSlider({
   const imageSizes = compact ? "(max-width: 1024px) 50vw, 25vw" : "(max-width: 768px) 100vw, 33vw"
 
   const renderSlide = (src: string, index: number) => {
+    const isPriority = priority && index === 0
     const image = (
       <Image
         src={src}
@@ -77,7 +81,8 @@ export function SalonCardImageSlider({
         fill
         className="object-cover transition-transform duration-700 group-hover:scale-105"
         sizes={imageSizes}
-        priority={index === 0}
+        priority={isPriority}
+        loading={isPriority ? "eager" : "lazy"}
       />
     )
 
@@ -109,7 +114,7 @@ export function SalonCardImageSlider({
       <div
         ref={scrollRef}
         className={cn(
-          "flex h-full snap-x snap-mandatory overflow-x-auto",
+          "flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x",
           hasMultiple &&
             "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
         )}

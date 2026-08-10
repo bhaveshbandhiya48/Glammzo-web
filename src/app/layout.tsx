@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Bricolage_Grotesque, Inter, Sora } from "next/font/google"
 
+import { Analytics } from "@/components/analytics/google-analytics"
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
 import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
 import { getSalons } from "@/lib/salons"
@@ -90,6 +91,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${sora.variable} ${logoFont.variable} h-full antialiased`}
       suppressHydrationWarning
     >
@@ -104,6 +106,7 @@ export default async function RootLayout({
             {children}
           </SalonCatalogProvider>
         </ExploreDistanceOriginProvider>
+        <Analytics />
       </body>
     </html>
   )

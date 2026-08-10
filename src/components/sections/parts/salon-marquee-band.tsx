@@ -42,9 +42,13 @@ export function SalonMarqueeBand({ salons, className }: SalonMarqueeBandProps) {
             className="flex flex-wrap items-stretch justify-start gap-5 sm:gap-6"
             aria-label="Nearby salon listings"
           >
-            {salons.map((salon) => (
+            {salons.map((salon, index) => (
               <div key={salon.id} className={cn("shrink-0", MARQUEE_CARD_WIDTH)}>
-                <SalonCard salon={salon} className="h-full" />
+                <SalonCard
+                  salon={salon}
+                  className="h-full"
+                  imagePriority={index === 0}
+                />
               </div>
             ))}
           </div>
@@ -71,7 +75,11 @@ export function SalonMarqueeBand({ salons, className }: SalonMarqueeBandProps) {
         >
           {track.map((salon, index) => (
             <div key={`${salon.id}-${index}`} className={cn("shrink-0", MARQUEE_CARD_WIDTH)}>
-              <SalonCard salon={salon} className="h-full" />
+              <SalonCard
+                salon={salon}
+                className="h-full"
+                imagePriority={index === 0}
+              />
             </div>
           ))}
         </div>

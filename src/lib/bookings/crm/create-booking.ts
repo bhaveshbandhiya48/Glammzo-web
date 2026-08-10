@@ -1,5 +1,7 @@
 import "server-only"
 
+import { after } from "next/server"
+
 import { pickStaffForSlot, uniqueServiceIds } from "@/lib/bookings/crm/availability"
 import { validateAppointmentBusinessHours } from "@/lib/bookings/crm/business-hours"
 import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
@@ -18,6 +20,7 @@ import { getConsumerProfile } from "@/lib/auth/consumer-profile"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { notifySalonNewWebBooking } from "@/lib/bookings/crm/notify-salon-web-booking"
 import { notifyCustomerWebBookingPending } from "@/lib/bookings/crm/notify-customer-web-booking-pending"
+import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
 import {
   incrementSalonOfferRedemption,
   resolveBookingOfferDiscount,
@@ -585,6 +588,12 @@ export async function createCrmWebBooking(
 
   if (servicesError) {
     console.error("[bookings] appointment_services insert failed:", servicesError.message)
+    await supabase.from("appointments").delete().eq("id", appointmentId)
+    return {
+      success: false,
+      error: "Could not create your booking. Please try again.",
+      code: "invalid",
+    }
   }
 
   if (loyaltyPick.service) {
@@ -618,36 +627,42 @@ export async function createCrmWebBooking(
     await incrementSalonOfferRedemption(appliedOffer.offerId)
   }
 
-  try {
-    await notifySalonNewWebBooking({
-      salonId: input.crmSalonId,
-      appointmentId,
-      customerId,
-      customerName,
-      serviceNames,
-      appointmentDate: input.appointmentDate,
-      startTime,
-      variant: autoConfirm ? "confirmed" : "pending",
-    })
-    await notifyCustomerWebBookingPending({
-      salonId: input.crmSalonId,
-      appointmentId,
-      customerId,
-      customerName,
-      customerPhone,
-      serviceNames,
-      appointmentDate: input.appointmentDate,
-      startTime,
-      salonName: context.salonName,
-      pendingConfirmation: !autoConfirm,
-      nearResponseMinutes: autoConfirm
-        ? undefined
-        : BOOKING_ENGINE_CONFIG.nearResponseMinutes,
-      expiresAt,
-    })
-  } catch (error) {
-    console.error("[bookings] salon notify failed:", error)
-  }
+  // Notifications / WhatsApp must not delay the confirmation redirect.
+  // In-app + message_logs stubs run here; real Meta WhatsApp is sent by glamzzo-crm
+  // (processAutoConfirmed / pending owner notifies) via the expire cron endpoint.
+  after(() =>
+    Promise.all([
+      notifySalonNewWebBooking({
+        salonId: input.crmSalonId,
+        appointmentId,
+        customerId,
+        customerName,
+        serviceNames,
+        appointmentDate: input.appointmentDate,
+        startTime,
+        variant: autoConfirm ? "confirmed" : "pending",
+      }),
+      notifyCustomerWebBookingPending({
+        salonId: input.crmSalonId,
+        appointmentId,
+        customerId,
+        customerName,
+        customerPhone,
+        serviceNames,
+        appointmentDate: input.appointmentDate,
+        startTime,
+        salonName: context.salonName,
+        pendingConfirmation: !autoConfirm,
+        nearResponseMinutes: autoConfirm
+          ? undefined
+          : BOOKING_ENGINE_CONFIG.nearResponseMinutes,
+        expiresAt,
+      }),
+      triggerCrmExpiredWebBookingsCron(),
+    ]).catch((error) => {
+      console.error("[bookings] salon notify failed:", error)
+    }),
+  )
 
   return {
     success: true,

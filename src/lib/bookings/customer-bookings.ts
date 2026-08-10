@@ -1,6 +1,8 @@
 import "server-only"
 
-import { fetchCrmCustomerBookings } from "@/lib/bookings/crm/fetch-customer-bookings"
+import { after } from "next/server"
+
+import { fetchCrmCustomerBookingById, fetchCrmCustomerBookings } from "@/lib/bookings/crm/fetch-customer-bookings"
 import { processConsumerBookingReminders } from "@/lib/bookings/crm/process-booking-reminders"
 import { processConsumerBookingOutcomeNotices } from "@/lib/bookings/crm/process-booking-outcome-notices"
 import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
@@ -30,6 +32,24 @@ function mergeBookings(crmBookings: Booking[], cookieBookings: Booking[]): Booki
   })
 }
 
+function scheduleBookingMaintenance() {
+  after(() =>
+    triggerCrmExpiredWebBookingsCron().catch((error) => {
+      console.error("[bookings] expire trigger failed:", error)
+    }),
+  )
+  after(() =>
+    processConsumerBookingReminders().catch((error) => {
+      console.error("[reminders] lazy process failed:", error)
+    }),
+  )
+  after(() =>
+    processConsumerBookingOutcomeNotices().catch((error) => {
+      console.error("[outcome-notices] lazy process failed:", error)
+    }),
+  )
+}
+
 export async function getCustomerBookings(): Promise<Booking[]> {
   const session = await getSession()
   const cookieBookings = await getBookings()
@@ -38,22 +58,27 @@ export async function getCustomerBookings(): Promise<Booking[]> {
     return cookieBookings
   }
 
-  // Flip past-deadline pending → expired in CRM (WhatsApp) before we map UI status.
-  await triggerCrmExpiredWebBookingsCron().catch((error) => {
-    console.error("[bookings] expire trigger failed:", error)
-  })
+  // Expire + notice side effects must not block the bookings UI.
+  // UI status already maps past-deadline pending via expiresAt.
+  scheduleBookingMaintenance()
 
   const crmBookings = await fetchCrmCustomerBookings(session.phone)
-  void processConsumerBookingReminders().catch((error) => {
-    console.error("[reminders] lazy process failed:", error)
-  })
-  void processConsumerBookingOutcomeNotices().catch((error) => {
-    console.error("[outcome-notices] lazy process failed:", error)
-  })
   return mergeBookings(crmBookings, cookieBookings)
 }
 
 export async function getCustomerBookingById(id: string): Promise<Booking | undefined> {
-  const bookings = await getCustomerBookings()
-  return bookings.find((booking) => booking.id === id || booking.crmAppointmentId === id)
+  const cookieBookings = await getBookings()
+  const fromCookie = cookieBookings.find(
+    (booking) => booking.id === id || booking.crmAppointmentId === id,
+  )
+  if (fromCookie) {
+    return fromCookie
+  }
+
+  const session = await getSession()
+  if (!session?.phone || !isSupabaseConfigured()) {
+    return undefined
+  }
+
+  return fetchCrmCustomerBookingById(session.phone, id)
 }

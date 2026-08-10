@@ -57,6 +57,17 @@ import { Label } from "@/components/ui/label"
 import { DATE_INPUT_PLACEHOLDER, toIsoDate } from "@/lib/date-utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null
+  return (
+    <p id={id} role="alert" className="text-sm text-destructive">
+      {message}
+    </p>
+  )
+}
+
 const DEMO_TIME_SLOTS = [
   "10:00 AM",
   "11:30 AM",
@@ -133,6 +144,18 @@ export function BookingForm({
   const [cashbackClaim, setCashbackClaim] = useState<CashbackClaim | null>(null)
   const [useWallet, setUseWallet] = useState(walletBalanceRupees > 0)
   const [useFreeService, setUseFreeService] = useState(false)
+  const [showValidation, setShowValidation] = useState(false)
+  const [touched, setTouched] = useState({
+    customerName: false,
+    customerEmail: false,
+    customerPhone: false,
+    date: false,
+    time: false,
+  })
+
+  const markTouched = (field: keyof typeof touched) => {
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }))
+  }
 
   useEffect(() => {
     setAppliedOffer(null)
@@ -363,21 +386,102 @@ export function BookingForm({
     }))
   }, [crmSlotResult?.slots, date, unavailableSlots, useCrmSlots])
 
+  const phoneDigits = customerPhone.replace(/\D/g, "")
   const canSubmit = Boolean(
     selectedServices.length > 0 &&
       date &&
       time &&
-      customerName.trim().length > 0 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
-      customerPhone.trim().length >= 8 &&
+      customerName.trim().length >= 2 &&
+      EMAIL_RE.test(customerEmail.trim()) &&
+      phoneDigits.length >= 10 &&
       (!useCrmSlots ||
         Boolean(
           crmSlotResult?.slots.some(
             (entry) => entry.slot === time && entry.status === "available",
           ),
         )) &&
-      (!staffId || packageMode || bookableStaff.some((member) => member.id === staffId)),
+      (!staffId || packageMode || bookableStaff.some((member) => member.id === staffId)) &&
+      !(multiServiceNoSingleStaff && !staffId),
   )
+
+  const fieldErrors = useMemo(() => {
+    const name = customerName.trim()
+    const email = customerEmail.trim()
+    const phone = customerPhone.trim()
+    const phoneDigits = phone.replace(/\D/g, "")
+
+    return {
+      customerName:
+        name.length === 0 ? "Enter your name." : name.length < 2 ? "Enter your full name." : undefined,
+      customerEmail:
+        email.length === 0
+          ? "Enter your email."
+          : EMAIL_RE.test(email)
+            ? undefined
+            : "Enter a valid email (e.g. you@example.com).",
+      customerPhone:
+        phone.length === 0
+          ? "Enter your mobile number."
+          : phoneDigits.length < 10
+            ? "Enter a valid 10-digit mobile number."
+            : undefined,
+      date: date ? undefined : "Select a date.",
+      time: time ? undefined : "Select a time.",
+      services: selectedServices.length > 0 ? undefined : "Add at least one service.",
+      staff:
+        multiServiceNoSingleStaff && !staffId
+          ? "Adjust services or pick a team member who can do all of them."
+          : undefined,
+      slot:
+        useCrmSlots &&
+        time &&
+        !crmSlotResult?.slots.some((entry) => entry.slot === time && entry.status === "available")
+          ? "That time is no longer available. Pick another slot."
+          : undefined,
+    }
+  }, [
+    crmSlotResult?.slots,
+    customerEmail,
+    customerName,
+    customerPhone,
+    date,
+    multiServiceNoSingleStaff,
+    selectedServices.length,
+    staffId,
+    time,
+    useCrmSlots,
+  ])
+
+  const blockingReasons = useMemo(() => {
+    const reasons: string[] = []
+    if (fieldErrors.services) reasons.push(fieldErrors.services)
+    if (fieldErrors.customerName) reasons.push(fieldErrors.customerName)
+    if (fieldErrors.customerEmail) reasons.push(fieldErrors.customerEmail)
+    if (fieldErrors.customerPhone) reasons.push(fieldErrors.customerPhone)
+    if (fieldErrors.date) reasons.push(fieldErrors.date)
+    if (fieldErrors.time) reasons.push(fieldErrors.time)
+    if (fieldErrors.staff) reasons.push(fieldErrors.staff)
+    if (fieldErrors.slot) reasons.push(fieldErrors.slot)
+    return reasons
+  }, [fieldErrors])
+
+  const showFieldError = (field: keyof typeof touched) =>
+    Boolean((showValidation || touched[field]) && fieldErrors[field])
+
+  const scrollToFirstError = () => {
+    const order = [
+      fieldErrors.services ? "booking-services" : null,
+      fieldErrors.customerName ? "customerName" : null,
+      fieldErrors.customerEmail ? "customerEmail" : null,
+      fieldErrors.customerPhone ? "customerPhone" : null,
+      fieldErrors.date ? "date" : null,
+      fieldErrors.time ? "time" : null,
+    ].filter(Boolean) as string[]
+
+    const targetId = order[0]
+    if (!targetId) return
+    document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
 
   const payableTotal = useMemo(
     () =>
@@ -433,7 +537,24 @@ export function BookingForm({
   }
 
   return (
-    <form action={createBookingAction} className="space-y-4 pb-24 md:space-y-5 md:pb-6">
+    <form
+      action={createBookingAction}
+      noValidate
+      className="space-y-4 pb-24 md:space-y-5 md:pb-6"
+      onSubmit={(event) => {
+        if (canSubmit) return
+        event.preventDefault()
+        setShowValidation(true)
+        setTouched({
+          customerName: true,
+          customerEmail: true,
+          customerPhone: true,
+          date: true,
+          time: true,
+        })
+        window.setTimeout(scrollToFirstError, 50)
+      }}
+    >
       <input type="hidden" name="salonId" value={salon.id} />
       <input type="hidden" name="serviceIds" value={selectedIds.join(",")} />
       {selectedPackage ? <input type="hidden" name="packageId" value={selectedPackage.id} /> : null}
@@ -460,7 +581,14 @@ export function BookingForm({
         contentClassName="space-y-3"
       >
         {selectedServices.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center">
+          <div
+            id="booking-services"
+            className={
+              showValidation && fieldErrors.services
+                ? "rounded-xl border border-dashed border-destructive/40 bg-destructive/[0.04] px-4 py-8 text-center"
+                : "rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center"
+            }
+          >
             <p className="text-sm font-medium text-foreground">
               {packageMode ? "No package in your cart" : "No services selected"}
             </p>
@@ -469,6 +597,11 @@ export function BookingForm({
                 ? "Add a package from the salon page."
                 : "Add at least one service to continue."}
             </p>
+            {showValidation && fieldErrors.services ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {fieldErrors.services}
+              </p>
+            ) : null}
             <Button
               type="button"
               size="sm"
@@ -564,9 +697,20 @@ export function BookingForm({
               required
               value={customerName}
               onChange={(event) => setCustomerName(event.target.value)}
+              onBlur={() => markTouched("customerName")}
               placeholder="Full name"
               autoComplete="name"
-              className="h-10"
+              aria-invalid={showFieldError("customerName") || undefined}
+              aria-describedby={showFieldError("customerName") ? "customerName-error" : undefined}
+              className={
+                showFieldError("customerName")
+                  ? "h-10 border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                  : "h-10"
+              }
+            />
+            <FieldError
+              id="customerName-error"
+              message={showFieldError("customerName") ? fieldErrors.customerName : undefined}
             />
           </div>
           <div className="space-y-1.5">
@@ -580,9 +724,20 @@ export function BookingForm({
               required
               value={customerEmail}
               onChange={(event) => setCustomerEmail(event.target.value)}
+              onBlur={() => markTouched("customerEmail")}
               placeholder="you@example.com"
               autoComplete="email"
-              className="h-10"
+              aria-invalid={showFieldError("customerEmail") || undefined}
+              aria-describedby={showFieldError("customerEmail") ? "customerEmail-error" : undefined}
+              className={
+                showFieldError("customerEmail")
+                  ? "h-10 border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                  : "h-10"
+              }
+            />
+            <FieldError
+              id="customerEmail-error"
+              message={showFieldError("customerEmail") ? fieldErrors.customerEmail : undefined}
             />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
@@ -596,10 +751,21 @@ export function BookingForm({
               required
               value={customerPhone}
               onChange={(event) => setCustomerPhone(event.target.value)}
+              onBlur={() => markTouched("customerPhone")}
               placeholder="10-digit mobile"
               autoComplete="tel"
               inputMode="numeric"
-              className="h-10"
+              aria-invalid={showFieldError("customerPhone") || undefined}
+              aria-describedby={showFieldError("customerPhone") ? "customerPhone-error" : undefined}
+              className={
+                showFieldError("customerPhone")
+                  ? "h-10 border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+                  : "h-10"
+              }
+            />
+            <FieldError
+              id="customerPhone-error"
+              message={showFieldError("customerPhone") ? fieldErrors.customerPhone : undefined}
             />
           </div>
           <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 px-3 py-3 sm:col-span-2">
@@ -650,9 +816,17 @@ export function BookingForm({
               }
             />
             {multiServiceNoSingleStaff && !staffId ? (
-              <p className="text-xs leading-relaxed text-foreground/55">
-                No team member is assigned to every selected service category. Adjust your service
-                selection to continue.
+              <p
+                className={
+                  showValidation
+                    ? "text-sm leading-relaxed text-destructive"
+                    : "text-xs leading-relaxed text-foreground/55"
+                }
+                role={showValidation ? "alert" : undefined}
+              >
+                {showValidation && fieldErrors.staff
+                  ? fieldErrors.staff
+                  : "No team member is assigned to every selected service category. Adjust your service selection to continue."}
               </p>
             ) : null}
           </div>
@@ -674,8 +848,13 @@ export function BookingForm({
               onChange={(next) => {
                 setDate(next)
                 setTime("")
+                markTouched("date")
               }}
               placeholder={DATE_INPUT_PLACEHOLDER}
+            />
+            <FieldError
+              id="date-error"
+              message={showFieldError("date") ? fieldErrors.date : undefined}
             />
           </div>
           <div className="space-y-1.5">
@@ -685,7 +864,10 @@ export function BookingForm({
             <TimeSlotPicker
               id="time"
               value={time}
-              onChange={setTime}
+              onChange={(next) => {
+                setTime(next)
+                markTouched("time")
+              }}
               hasDate={Boolean(date)}
               closed={useCrmSlots ? Boolean(crmSlotResult?.closed) : false}
               closedMessage={crmSlotResult?.closedMessage}
@@ -694,6 +876,16 @@ export function BookingForm({
               placeholder="Select time"
             />
             <input type="hidden" name="time" value={time} required />
+            <FieldError
+              id="time-error"
+              message={
+                showFieldError("time")
+                  ? fieldErrors.time
+                  : showValidation
+                    ? fieldErrors.slot
+                    : undefined
+              }
+            />
           </div>
         </div>
 
@@ -757,7 +949,12 @@ export function BookingForm({
           payAtSalonRupees={payAtSalonRupees}
         />
 
-        <BookingFormSubmitButtons canSubmit={canSubmit} submitLabel={submitLabel} />
+        <BookingFormSubmitButtons
+          canSubmit={canSubmit}
+          submitLabel={submitLabel}
+          blockingReasons={blockingReasons}
+          showValidation={showValidation}
+        />
       </BookingFormCard>
     </form>
   )

@@ -130,7 +130,7 @@ export const forSalonsCopy = {
     subtitle:
       "Start your 30 day Pro trial today. Publish when you are ready, then get your flange sign.",
     primaryCta: "Start 30-day Pro trial",
-    secondaryCta: "Compare plans",
+    secondaryCta: "See how it works",
     highlights: [
       "30 days of Pro included",
       "No credit card required",

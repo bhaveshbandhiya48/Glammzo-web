@@ -351,7 +351,7 @@ export function ForSalonsLanding() {
                       variant="ghost"
                       className="border border-white/25 bg-white/5 px-8 text-white hover:bg-white/12 hover:text-white"
                     >
-                      <Link href="/pricing">{closing.secondaryCta}</Link>
+                      <Link href="#how-it-works">{closing.secondaryCta}</Link>
                     </Button>
                   </div>
 

@@ -69,10 +69,11 @@ export function ExploreSalonGrid({
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {displaySalons.map((salon) => (
+      {displaySalons.map((salon, index) => (
         <SalonCard
           key={salon.id}
           salon={salon}
+          imagePriority={index < 3}
           favorite={
             salon.crmSalonId
               ? {

@@ -27,10 +27,11 @@ export function ExploreFeaturedGrid({
 
   return (
     <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {displaySalons.map((salon) => (
+      {displaySalons.map((salon, index) => (
         <li key={`featured-${salon.id}`}>
           <SalonCard
             salon={salon}
+            imagePriority={index === 0}
             favorite={
               salon.crmSalonId
                 ? {

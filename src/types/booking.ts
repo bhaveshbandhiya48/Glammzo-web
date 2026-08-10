@@ -47,6 +47,8 @@ export type Booking = {
   durationMin: number
   notes?: string
   status: BookingStatus
+  /** CRM `starts_at` ISO — used for cancel notice window. */
+  startsAt?: string
   /** Shown when salon declined the booking request. */
   declineReason?: string
   /** ISO deadline for Manual confirmation (when pending). */

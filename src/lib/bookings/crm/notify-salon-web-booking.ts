@@ -47,13 +47,19 @@ export async function notifySalonNewWebBooking(input: NotifySalonInput) {
 
   const { data: salon } = await supabase
     .from("salons")
-    .select("name, phone")
+    .select("name, phone, whatsapp_phone")
     .eq("id", input.salonId)
     .is("deleted_at", null)
     .maybeSingle()
 
   const salonName = (salon as { name?: string } | null)?.name?.trim() || "Your salon"
-  const salonPhone = (salon as { phone?: string | null } | null)?.phone?.trim() || ""
+  const salonRow = salon as {
+    phone?: string | null
+    whatsapp_phone?: string | null
+  } | null
+  // Prefer WhatsApp number (CRM source of truth), then business phone.
+  const salonPhone =
+    salonRow?.whatsapp_phone?.trim() || salonRow?.phone?.trim() || ""
 
   const timeLabel = formatSlotLabel(input.startTime)
   const notificationMessage =
@@ -61,12 +67,13 @@ export async function notifySalonNewWebBooking(input: NotifySalonInput) {
       ? `${input.customerName} booked ${input.serviceNames} on ${input.appointmentDate} at ${timeLabel}. Booking is confirmed.`
       : `${input.customerName} booked ${input.serviceNames} on ${input.appointmentDate} at ${timeLabel}. Accept or decline this appointment.`
 
+  // DB check: priority must be high | medium | low (not "normal").
   const { error: notificationError } = await supabase
     .from("notifications")
     .insert({
       salon_id: input.salonId,
       type: "system_notification",
-      priority: variant === "confirmed" ? "normal" : "high",
+      priority: variant === "confirmed" ? "medium" : "high",
       title: variant === "confirmed" ? "New confirmed booking" : "New web booking",
       message: notificationMessage,
       entity_id: input.appointmentId,

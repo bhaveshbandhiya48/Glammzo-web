@@ -77,21 +77,89 @@ export function buildDefaultFallbackLocation(): StoredLocation {
   }
 }
 
+type GeolocationPermission = PermissionState | "unsupported"
+
+async function queryGeolocationPermission(): Promise<GeolocationPermission> {
+  if (typeof navigator === "undefined" || !navigator.permissions?.query) {
+    return "unsupported"
+  }
+  try {
+    const status = await navigator.permissions.query({
+      name: "geolocation" as PermissionName,
+    })
+    return status.state
+  } catch {
+    return "unsupported"
+  }
+}
+
+async function applyGpsPosition(latitude: number, longitude: number): Promise<ParsedStoredLocation> {
+  const resolved = await resolveLocationFromGps(latitude, longitude)
+  const stored = buildStoredFromNearMe(resolved)
+  writeStoredLocation(stored)
+  return { location: getLocationById(resolved.locationId), stored }
+}
+
 /** Ask for location on first visit; falls back to Indiranagar, Bangalore when denied. */
 export async function resolveInitialLocation(): Promise<ParsedStoredLocation> {
+  await bootstrapBrowseLocation()
+  return readStoredLocation() ?? {
+    location: getLocationById(DEFAULT_FALLBACK_LOCATION_ID),
+    stored: buildDefaultFallbackLocation(),
+  }
+}
+
+/**
+ * On every landing: request GPS when we don't already have a live “Near me” fix,
+ * unless the user already denied permission or manually picked a city.
+ * Updates the header via writeStoredLocation → LOCATION_UPDATED_EVENT.
+ */
+export async function bootstrapBrowseLocation(): Promise<void> {
+  if (typeof window === "undefined") return
+
   const existing = readStoredLocation()
-  if (existing) return existing
+  const hasGps = hasActiveNearMe(existing?.stored)
+  const permission = await queryGeolocationPermission()
+
+  // Respect an explicit city/area choice (not the auto Bengaluru fallback).
+  const manualChoice =
+    Boolean(existing) &&
+    !hasGps &&
+    existing!.stored.defaultFallback !== true
+
+  if (manualChoice && permission !== "granted") {
+    syncBrowseCityCookie(resolveBrowseCityFromStored(existing!.stored))
+    return
+  }
+
+  if (permission === "denied") {
+    if (!existing) {
+      writeStoredLocation(buildDefaultFallbackLocation())
+    }
+    return
+  }
+
+  // Already have GPS — refresh quietly when the browser still allows it.
+  if (hasGps && permission !== "prompt") {
+    try {
+      const position = await requestUserLocation()
+      await applyGpsPosition(position.latitude, position.longitude)
+    } catch {
+      // Keep the existing Near me fix.
+    }
+    return
+  }
+
+  // No GPS yet (first visit or default fallback) — ask the browser.
+  if (hasGps) return
 
   try {
     const position = await requestUserLocation()
-    const resolved = await resolveLocationFromGps(position.latitude, position.longitude)
-    const stored = buildStoredFromNearMe(resolved)
-    writeStoredLocation(stored)
-    return { location: getLocationById(resolved.locationId), stored }
+    await applyGpsPosition(position.latitude, position.longitude)
   } catch {
-    const stored = buildDefaultFallbackLocation()
-    writeStoredLocation(stored)
-    return { location: getLocationById(stored.id), stored }
+    if (!existing) {
+      writeStoredLocation(buildDefaultFallbackLocation())
+    }
   }
 }
 

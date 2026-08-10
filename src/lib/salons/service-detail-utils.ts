@@ -80,13 +80,9 @@ export function getServiceAbout(service: SalonService) {
 }
 
 export function getServiceBenefits(service: SalonService) {
-  // Multi-line descriptions are shown under "What's included" instead.
-  if (service.includes.length > 1) {
+  // Explicit "What's included" items are shown in their own section.
+  if (service.includes.length > 0) {
     return []
-  }
-
-  if (service.includes.length === 1) {
-    return service.includes
   }
 
   const about = getServiceAbout(service)
@@ -100,11 +96,7 @@ export function getServiceBenefits(service: SalonService) {
 }
 
 export function getServiceIncludedSteps(service: SalonService) {
-  if (service.includes.length > 1) {
-    return service.includes
-  }
-
-  return []
+  return service.includes.length > 0 ? service.includes : []
 }
 
 export function getServiceRecommendedFor(service: SalonService) {

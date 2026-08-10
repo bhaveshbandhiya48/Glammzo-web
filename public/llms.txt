@@ -1,0 +1,25 @@
+# Glammzo
+
+> Glammzo is an online salon booking marketplace in India. Customers find salons near them, compare fixed prices and ratings, and book hair, beauty, spa, and nail appointments online — starting in Bengaluru (Bangalore).
+
+## Key facts
+- Product: Online salon and beauty appointment booking
+- Geography: Bengaluru (Bangalore), India (expanding)
+- Website: https://glammzo.com
+- Contact: hello@glammzo.com
+- Company: Fixxzo Technologies Private Limited
+
+## Best pages for "salon near me"
+- https://glammzo.com/salons-near-me — salon near me hub
+- https://glammzo.com/salons-in/bengaluru — salons in Bengaluru
+- https://glammzo.com/explore — browse and filter salons
+- https://glammzo.com/services — browse by business type
+
+## How booking works
+1. Choose location (Near me or city)
+2. Compare salons, services, and fixed prices
+3. Book a slot online and track it in your account
+
+## Optional
+- Partner salons manage availability in Glamzzo CRM
+- Customer WhatsApp / in-app updates follow booking status rules

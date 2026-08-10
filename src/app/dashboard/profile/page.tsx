@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type SearchParams = Promise<{
   error?: string
   rescheduled?: string
+  reschedule_requested?: string
   filter?: string
 }>
 
@@ -37,11 +38,12 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      {params.rescheduled === "1" ? (
+      {params.reschedule_requested === "1" || params.rescheduled === "1" ? (
         <Card className="rounded-xl border-primary/30 bg-primary/5">
           <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-foreground/80">
-              Your appointment was rescheduled. The salon will see your new time.
+              Your reschedule request was sent. The salon will confirm soon — your original
+              appointment stays until they accept.
             </p>
           </CardContent>
         </Card>
@@ -52,6 +54,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
               We couldn&apos;t cancel this booking. Please try again or contact the salon.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {params.error === "cancel_too_soon" ? (
+        <Card className="rounded-xl">
+          <CardContent className="px-5 py-3.5 sm:px-6">
+            <p className="text-sm text-destructive/90">
+              Cancellations must be made at least 2 hours before your appointment. Please
+              contact the salon if you need help.
             </p>
           </CardContent>
         </Card>

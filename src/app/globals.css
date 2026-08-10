@@ -157,30 +157,21 @@
   }
 
   /**
-   * Stacked section-y siblings: collapse top padding only between plain sections.
-   * Band sections (.section-band-*) and .section-y-separated always keep full padding.
+   * Stacked section-y siblings: collapse top padding so gaps stay even.
+   * Band sections (.section-band-*) keep full padding for breathing room inside borders.
    */
-  .page-main > .section-y:not([class*="section-band-"]):not(.section-y-separated)
-    + .section-y:not([class*="section-band-"]):not(.section-y-separated),
+  .page-main > .section-y:not([class*="section-band-"])
+    + .section-y:not([class*="section-band-"]),
   .page-main
-    > section.section-y:not([class*="section-band-"]):not(.section-y-separated)
-    + section.section-y:not([class*="section-band-"]):not(.section-y-separated) {
+    > section.section-y:not([class*="section-band-"])
+    + section.section-y:not([class*="section-band-"]) {
     padding-top: 0;
   }
 
-  .page-main > .section-y-b + .section-y:not([class*="section-band-"]):not(.section-y-separated),
+  .page-main > .section-y-b + .section-y:not([class*="section-band-"]),
   .page-main
     > section.section-y-b
-    + section.section-y:not([class*="section-band-"]):not(.section-y-separated) {
-    padding-top: 0;
-  }
-
-  /**
-   * Testimonials (.section-y-separated) → Partner: avoid double vertical gap (one section's padding only).
-   */
-  .page-main
-    > section.section-y.section-y-separated:not([class*="section-band-"])
-    + section#partner.section-y:not([class*="section-band-"]):not(.section-y-separated) {
+    + section.section-y:not([class*="section-band-"]) {
     padding-top: 0;
   }
 

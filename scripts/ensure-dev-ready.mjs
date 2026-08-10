@@ -6,7 +6,13 @@ import { execSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
-import { cleanNext, shouldClearBeforeDev } from "./clean-next.mjs"
+import {
+  cleanNext,
+  formatBytes,
+  getNextDirSizeBytes,
+  NEXT_CACHE_MAX_BYTES,
+  shouldClearBeforeDev,
+} from "./clean-next.mjs"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -22,8 +28,11 @@ function stopStaleDevServers() {
 stopStaleDevServers()
 
 if (shouldClearBeforeDev()) {
+  const size = getNextDirSizeBytes()
+  const oversized = size > NEXT_CACHE_MAX_BYTES
   cleanNext({
-    reason:
-      "Clearing stale .next cache (required after `npm run build` or when chunk errors appear)",
+    reason: oversized
+      ? `Clearing oversized .next cache (${formatBytes(size)} > ${formatBytes(NEXT_CACHE_MAX_BYTES)}) — this was thrashing disk/RAM`
+      : "Clearing stale .next cache (required after `npm run build` or when chunk errors appear)",
   })
 }

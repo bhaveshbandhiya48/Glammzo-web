@@ -205,7 +205,8 @@ export async function cancelBookingAction(formData: FormData) {
     const result = await cancelCrmWebBooking(bookingId, session.phone, cancellationReason)
 
     if (!result.success) {
-      return redirect("/dashboard/profile?error=cancel#bookings")
+      const code = result.code === "too_soon" ? "cancel_too_soon" : "cancel"
+      return redirect(`/dashboard/profile?error=${code}#bookings`)
     }
 
     const { getBookings, saveBookings } = await import("@/lib/bookings/store")
@@ -249,11 +250,18 @@ export async function rescheduleBookingAction(formData: FormData) {
     })
 
     if (!result.success) {
-      const code = result.code === "slot_taken" ? "reschedule_slot" : "reschedule"
+      const code =
+        result.code === "slot_taken"
+          ? "reschedule_slot"
+          : result.code === "contact_salon"
+            ? "contact_salon"
+            : result.code === "pending"
+              ? "reschedule_pending"
+              : "reschedule"
       redirect(`/dashboard/bookings/${appointmentId}/reschedule?error=${code}`)
     }
 
-    redirect("/dashboard/profile?rescheduled=1#bookings")
+    redirect("/dashboard/profile?reschedule_requested=1#bookings")
   }
 
   redirect("/dashboard/profile?error=reschedule#bookings")

@@ -297,15 +297,20 @@ const CATEGORY_MEDIA_MAP: Array<{ keywords: string[]; image: string }> = [
   { keywords: ["skin", "facial", "face"], image: media.categories.spa },
 ]
 
-export function resolveServiceThumbnail(service: SalonService) {
-  if (service.imageUrl?.trim()) return service.imageUrl.trim()
-  const haystack = normalizeText(`${service.name} ${service.category}`)
+/** Last-resort stock image when no service or salon photo exists. */
+export function resolveCategoryStockImage(name: string, category: string) {
+  const haystack = normalizeText(`${name} ${category}`)
   for (const entry of CATEGORY_MEDIA_MAP) {
     if (entry.keywords.some((keyword) => haystack.includes(keyword))) {
       return entry.image
     }
   }
   return media.categories.spa
+}
+
+export function resolveServiceThumbnail(service: SalonService) {
+  if (service.imageUrl?.trim()) return service.imageUrl.trim()
+  return resolveCategoryStockImage(service.name, service.category)
 }
 
 export function getCategoryIconName(category: string): "hair" | "spa" | "nails" | "makeup" | "grooming" {

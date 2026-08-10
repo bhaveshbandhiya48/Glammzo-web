@@ -26,6 +26,7 @@ export function SalonCard({
   selected = false,
   onSelect,
   density = "default",
+  imagePriority = false,
 }: {
   salon: Salon
   className?: string
@@ -39,6 +40,8 @@ export function SalonCard({
   onSelect?: () => void
   /** Tighter layout for map sidebar grids. */
   density?: "default" | "compact"
+  /** Mark the card image as LCP-critical (first above-the-fold card). */
+  imagePriority?: boolean
 }) {
   const origin = useExploreDistanceOrigin({})
   const { salons: catalogSalons } = useSalonCatalog()
@@ -92,6 +95,7 @@ export function SalonCard({
         isMostBooked={isMostBooked}
         href={onSelect ? undefined : `/salons/${salon.id}`}
         onActivate={onSelect}
+        priority={imagePriority}
       />
       <div className={cn("border-t border-border/60", compact ? "p-3" : "p-5")}>
         {salon.businessType ? (
@@ -143,6 +147,7 @@ function SalonCardImage({
   isMostBooked = false,
   href,
   onActivate,
+  priority = false,
 }: {
   salon: Salon
   images: string[]
@@ -151,6 +156,7 @@ function SalonCardImage({
   isMostBooked?: boolean
   href?: string
   onActivate?: () => void
+  priority?: boolean
 }) {
   return (
     <div
@@ -166,6 +172,7 @@ function SalonCardImage({
         compact={compact}
         href={href}
         onActivate={onActivate}
+        priority={priority}
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
       <div

@@ -18,6 +18,7 @@ import {
   canConsumerCancelBooking,
   canConsumerRebookBooking,
   canConsumerRescheduleBooking,
+  getConsumerCancelBlockedReason,
 } from "@/lib/bookings/booking-status"
 import {
   buildBookHref,
@@ -50,7 +51,11 @@ export function BookingOrderSummary({
   const bookingReference = booking.id.slice(0, 8).toUpperCase()
   const rescheduleAppointmentId = booking.crmAppointmentId ?? booking.id
   const canReschedule = canConsumerRescheduleBooking(booking.status)
-  const canCancel = canConsumerCancelBooking(booking.status)
+  const canCancel = canConsumerCancelBooking(booking.status, booking.startsAt ?? null)
+  const cancelBlockedReason =
+    canConsumerCancelBooking(booking.status) && !canCancel
+      ? getConsumerCancelBlockedReason(booking.startsAt ?? null)
+      : null
   const canRebook = canConsumerRebookBooking(booking.status)
   const canLeaveReview =
     booking.status === "completed" &&
@@ -64,7 +69,7 @@ export function BookingOrderSummary({
   const showSalonPaymentLabel =
     hasPayAtSalonNote(booking.notes) || isCompleted || breakdown.hasAdjustments
   const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
-  const hasActions = canReschedule || canCancel || canRebook || canLeaveReview
+  const hasActions = canReschedule || canCancel || canRebook || canLeaveReview || Boolean(cancelBlockedReason)
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col bg-background", className)}>
@@ -213,6 +218,9 @@ export function BookingOrderSummary({
 
       {hasActions ? (
         <div className="shrink-0 border-t border-border/70 bg-card px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {cancelBlockedReason ? (
+            <p className="mb-3 text-sm text-foreground/65">{cancelBlockedReason}</p>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             {canReschedule ? (
               <Button asChild variant="outline" className="min-w-0 flex-1 rounded-full">
