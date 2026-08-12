@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose"
 import { resolveAuthSecret, shouldExposeDebugOtp } from "@/lib/auth/auth-secret"
 import type { AuthState } from "@/lib/auth/auth-types"
 import { authCookieOptions } from "@/lib/auth/cookie-options"
+import { enforceAuthRateLimit } from "@/lib/auth/rate-limit"
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session"
 import { normalizeCustomerPhoneDigits, normalizeCustomerPhone } from "@/lib/phone/normalize"
 import { getActiveSmsProvider } from "@/lib/sms"
@@ -87,6 +88,11 @@ export async function requestOtpAction(
       }
     }
 
+    const rateLimited = await enforceAuthRateLimit("otp-request", phoneDigits)
+    if (rateLimited) {
+      return { ok: false, message: rateLimited, step: "phone" }
+    }
+
     const phoneE164 = normalizeCustomerPhone(phoneRaw)
     const otp = resolveOtpCode()
 
@@ -155,6 +161,14 @@ export async function verifyOtpAction(
         message: "That code expired. Request a new one.",
         step: "phone",
       }
+    }
+
+    const rateLimited = await enforceAuthRateLimit(
+      "otp-verify",
+      challenge.phoneDigits,
+    )
+    if (rateLimited) {
+      return { ok: false, message: rateLimited, step: "otp" }
     }
 
     if (otp !== challenge.otp) {

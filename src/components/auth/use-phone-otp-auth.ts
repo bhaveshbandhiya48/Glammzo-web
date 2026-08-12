@@ -139,10 +139,6 @@ export function usePhoneOtpAuth(actions: PhoneOtpActions) {
   }
 
   const activeState = step === "otp" ? verifyState : requestState
-  const otpSentMessage =
-    step === "otp" && isFailedAuthState(requestState) && requestState.step === "otp"
-      ? requestState.message
-      : ""
 
   return {
     step,
@@ -155,6 +151,5 @@ export function usePhoneOtpAuth(actions: PhoneOtpActions) {
     handleSubmit,
     resetToPhone,
     resendCode,
-    otpSentMessage,
   }
 }

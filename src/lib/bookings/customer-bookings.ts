@@ -3,8 +3,6 @@ import "server-only"
 import { after } from "next/server"
 
 import { fetchCrmCustomerBookingById, fetchCrmCustomerBookings } from "@/lib/bookings/crm/fetch-customer-bookings"
-import { processConsumerBookingReminders } from "@/lib/bookings/crm/process-booking-reminders"
-import { processConsumerBookingOutcomeNotices } from "@/lib/bookings/crm/process-booking-outcome-notices"
 import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
 import { getBookings } from "@/lib/bookings/store"
 import { getSession } from "@/lib/auth/session"
@@ -38,16 +36,8 @@ function scheduleBookingMaintenance() {
       console.error("[bookings] expire trigger failed:", error)
     }),
   )
-  after(() =>
-    processConsumerBookingReminders().catch((error) => {
-      console.error("[reminders] lazy process failed:", error)
-    }),
-  )
-  after(() =>
-    processConsumerBookingOutcomeNotices().catch((error) => {
-      console.error("[outcome-notices] lazy process failed:", error)
-    }),
-  )
+  // Consumer SMS reminders/outcomes disabled — CRM WhatsApp handles messaging.
+  // Wallet rewards run via /api/cron/wallet-rewards on the VPS.
 }
 
 export async function getCustomerBookings(): Promise<Booking[]> {

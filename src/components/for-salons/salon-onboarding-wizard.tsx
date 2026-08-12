@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import {
   BUSINESS_TYPES,
   type OnboardingActionState,
@@ -241,12 +242,16 @@ export function SalonOnboardingWizard({
 
               <div className="grid gap-2">
                 <Label htmlFor="businessType">Business type</Label>
-                <select
+                <Select
                   id="businessType"
                   name="businessType"
                   defaultValue={initialProgress?.businessType ?? ""}
-                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  required
+                  placeholder="Select your business type"
+                  className={cn(
+                    "h-11 rounded-xl border-input bg-background/60 px-4 shadow-sm shadow-black/[0.02]",
+                    state.fieldErrors?.businessType &&
+                      "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20",
+                  )}
                 >
                   <option value="" disabled>
                     Select your business type
@@ -256,7 +261,7 @@ export function SalonOnboardingWizard({
                       {type}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {state.fieldErrors?.businessType ? (
                   <p className="text-sm text-destructive">{state.fieldErrors.businessType}</p>
                 ) : null}

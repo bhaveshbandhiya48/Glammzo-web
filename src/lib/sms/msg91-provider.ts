@@ -115,15 +115,20 @@ export class Msg91SmsProvider implements SmsProvider {
 
       if (!ok) {
         console.error("[sms:msg91] send failed:", response.status, text)
+        // Only treat explicit IP / 418 responses as whitelist failures.
+        // Do not map every MSG91 `type: "error"` to whitelist — that hides the real cause.
         const ipBlocked =
-          /whitelist|418/i.test(messageText) ||
-          /whitelist|418/i.test(text) ||
-          type === "error"
+          response.status === 418 ||
+          /whitelist|not\s*whitelisted|ip\s*security|418/i.test(messageText) ||
+          /whitelist|not\s*whitelisted|ip\s*security|418/i.test(text)
+        const detail = messageText.trim().slice(0, 180)
         return {
           success: false,
           error: ipBlocked
-            ? "MSG91 blocked this request. Whitelist this server IP in MSG91 Authkey settings (or disable IP security for testing)."
-            : "Could not send SMS via MSG91.",
+            ? "MSG91 blocked this request: server egress IP is not whitelisted on the Authkey. On the VPS run `curl -s https://api.ipify.org` and whitelist that exact IP (not your laptop IP)."
+            : detail
+              ? `Could not send SMS via MSG91: ${detail}`
+              : "Could not send SMS via MSG91.",
         }
       }
 

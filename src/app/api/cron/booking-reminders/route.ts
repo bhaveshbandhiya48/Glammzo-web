@@ -5,6 +5,10 @@ import { isCronRequestAuthorized } from "@/lib/env/cron-auth"
 
 export const runtime = "nodejs"
 
+/**
+ * Wallet rewards + reserved consumer-notice hooks.
+ * SMS reminders/outcomes are no-ops (CRM WhatsApp is the messaging channel).
+ */
 export async function GET(request: Request) {
   if (!isCronRequestAuthorized(request)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })

@@ -3,13 +3,14 @@ export const ONBOARDING_OTP_COOKIE = "glamzzo_salon_onboarding_otp"
 export const ONBOARDING_COOKIE_TTL_SECONDS = 60 * 15 // 15m like CRM pending signup
 export const ONBOARDING_OTP_TTL_SECONDS = 60 * 10
 
-/** Same options as glamzzo-crm salon signup. */
+/** Same options as glamzzo-crm `BUSINESS_TYPES` (serviceTemplates). */
 export const BUSINESS_TYPES = [
   "Salon",
   "Unisex Salon",
   "Beauty Parlour",
   "Spa",
   "Barber Shop",
+  "Nail Art Studio",
   "Yoga Center",
 ] as const
 

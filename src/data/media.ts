@@ -31,7 +31,7 @@ export const media = {
   },
   sections: {
     featuredExperience: "/images/sections/featured-experience.jpg",
-    mobileApp: "/images/sections/mobile-app.jpg",
+    mobileApp: "/images/sections/mobile-app-v2.jpg",
     partnerSalon: "/images/sections/partner-salon.jpg",
     exploreComingSoon: "/images/sections/explore-coming-soon.jpg",
     partnerFlangeSign: "/images/sections/partner-flange-kit.jpg",
@@ -39,7 +39,7 @@ export const media = {
     partnerFlangeCta: "/images/sections/partner-flange-cta.jpg",
   },
   auth: {
-    salon: "/images/auth/salon.jpg",
+    salon: "/images/auth/salon-auth-v3.jpg",
   },
   testimonials: {
     t1: "/images/testimonials/t1.jpg",

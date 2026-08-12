@@ -142,6 +142,11 @@ export async function createBookingAction(formData: FormData) {
     redirect(`/book/confirmation?id=${booking.id}`)
   }
 
+  // Production / configured CRM: never create phantom cookie-only bookings.
+  if (isSupabaseConfigured()) {
+    redirect(`/book/${salonId}?services=${serviceIds.join(",")}&error=booking`)
+  }
+
   if (!customerName || customerPhone.length < 8 || !isValidEmail(customerEmail)) {
     redirect(`/book/${salonId}?services=${serviceIds.join(",")}&error=contact`)
   }

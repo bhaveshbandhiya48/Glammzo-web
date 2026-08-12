@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRightIcon, SmartphoneIcon } from "lucide-react"
 
+import { media } from "@/data/media"
 import { siteCopy } from "@/data/site-copy"
 import { Container } from "@/components/layout/container"
 import { Button } from "@/components/ui/button"
@@ -52,10 +53,10 @@ export function MobileAppCtaSection() {
             </div>
             <div className="relative min-h-[280px] lg:min-h-full">
               <Image
-                src="/images/sections/mobile-app.jpg"
-                alt="Salon reception, book on Glammzo"
+                src={media.sections.mobileApp}
+                alt="Using Glammzo on a smartphone"
                 fill
-                className="object-cover"
+                className="object-cover object-[center_22%]"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>

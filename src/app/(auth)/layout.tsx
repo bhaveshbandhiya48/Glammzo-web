@@ -68,16 +68,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div className="overflow-hidden rounded-[1.75rem] shadow-2xl shadow-black/15 ring-1 ring-black/[0.06]">
               <div className="relative aspect-[16/11]">
                 <Image
-                  src="/images/auth/salon.jpg"
-                  alt="Salon interior"
+                  src="/images/auth/salon-auth-v3.jpg"
+                  alt="Luxury salon interior with styling stations"
                   fill
-                  className="object-cover"
+                  className="object-cover object-[center_40%]"
                   priority
                   sizes="50vw"
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(20,16,14,0.45),transparent_55%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(28,22,18,0.52),transparent_55%)]" />
                 <p className="absolute inset-x-5 bottom-5 font-heading text-lg font-semibold tracking-tight text-white">
-                  Calm booking for every appointment.
+                  Premium salons. Effortless booking.
                 </p>
               </div>
             </div>

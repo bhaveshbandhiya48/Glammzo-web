@@ -11,10 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-function maskPhone(phone: string) {
+function formatPhoneDisplay(phone: string) {
   const digits = phone.replace(/\D/g, "").slice(-10)
-  if (digits.length !== 10) return phone
-  return `+91 ${digits.slice(0, 2)}••••${digits.slice(-4)}`
+  if (digits.length !== 10) return phone.trim() || "your number"
+  return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`
 }
 
 export function ContinueWithPhoneForm({ nextPath }: { nextPath: string }) {
@@ -29,7 +29,6 @@ export function ContinueWithPhoneForm({ nextPath }: { nextPath: string }) {
     handleSubmit,
     resetToPhone,
     resendCode,
-    otpSentMessage,
   } = usePhoneOtpAuth({
     requestOtp: requestOtpAction,
     verifyOtp: verifyOtpAction,
@@ -51,11 +50,20 @@ export function ContinueWithPhoneForm({ nextPath }: { nextPath: string }) {
           <h2 className="font-heading text-[1.85rem] font-semibold tracking-tight text-foreground sm:text-3xl lg:text-[2rem]">
             {step === "phone" ? "Enter your number" : "Enter the code"}
           </h2>
-          <p className="text-sm leading-6 text-foreground/65">
-            {step === "phone"
-              ? "We'll text a one-time code. New here? Your account is created automatically."
-              : otpSentMessage || `We sent a 6-digit code to ${maskPhone(phone)}.`}
-          </p>
+          {step === "phone" ? (
+            <p className="text-sm leading-6 text-foreground/65">
+              We&apos;ll text a one-time code. New here? Your account is created automatically.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-sm leading-6 text-foreground/65">
+                We sent a 6-digit code to
+              </p>
+              <p className="font-heading text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                {formatPhoneDisplay(phone)}
+              </p>
+            </div>
+          )}
         </div>
 
         <form

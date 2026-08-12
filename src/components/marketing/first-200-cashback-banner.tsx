@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Container } from "@/components/layout/container"
 
 type First200CashbackBannerProps = {
-  /** Hide the “Book now” CTA when the user is already on Explore. */
+  /** Hide the reserve CTA when the user is already on Explore. */
   showBookCta?: boolean
 }
 
@@ -46,9 +46,19 @@ export function First200CashbackBanner({ showBookCta = true }: First200CashbackB
           </p>
           <p className="mt-1 text-sm font-semibold leading-snug sm:text-base">
             Book your first service and get {reward} cashback. Use code{" "}
-            <span className="rounded-md bg-white/15 px-2 py-0.5 font-mono tracking-wide">
+            <button
+              type="button"
+              onClick={copyCode}
+              className="inline-flex items-center gap-1.5 rounded-md bg-white/15 px-2 py-0.5 font-mono tracking-wide transition-colors hover:bg-white/25"
+              aria-label={copied ? "Code copied" : `Copy code ${LAUNCH_PROMO_CODE}`}
+            >
               {LAUNCH_PROMO_CODE}
-            </span>
+              {copied ? (
+                <CheckIcon className="size-3.5 shrink-0 text-white/80" aria-hidden />
+              ) : (
+                <CopyIcon className="size-3.5 shrink-0 text-white/70" aria-hidden />
+              )}
+            </button>
           </p>
           <p className="mt-1.5 text-[10px] leading-none text-white/45">
             <Link
@@ -59,35 +69,16 @@ export function First200CashbackBanner({ showBookCta = true }: First200CashbackB
             </Link>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="border border-white/25 bg-white/5 px-4 text-white hover:bg-white/12 hover:text-white"
-            onClick={copyCode}
-          >
-            {copied ? (
-              <>
-                <CheckIcon className="size-3.5" />
-                Copied
-              </>
-            ) : (
-              <>
-                <CopyIcon className="size-3.5" />
-                Copy code
-              </>
-            )}
-          </Button>
-          {showBookCta ? (
+        {showBookCta ? (
+          <div className="flex flex-wrap gap-2">
             <Button asChild size="sm" className="px-5">
               <Link href="/explore">
-                Book now
+                Reserve Your Chair Now
                 <ArrowRightIcon className="size-3.5" />
               </Link>
             </Button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </Container>
     </section>
   )
