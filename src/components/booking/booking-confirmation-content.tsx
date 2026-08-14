@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -144,17 +145,28 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
   const showWhatsAppReminder =
     booking.status === "confirmed" || booking.status === "upcoming"
 
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-col">
       {tone === "success" || isPending ? <BookingSuccessConfetti /> : null}
 
+      {/*
+        On mobile, confirmation status stacks first (order-1). On desktop,
+        appointment summary stays in the left column.
+      */}
       <div className="grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
-        {/* Left — appointment pass */}
+        {/* Appointment pass — second on mobile, left column on desktop */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.06, ease: easeOut }}
-          className={cn(cardChrome, "mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none")}
+          transition={{ duration: 0.45, delay: 0.12, ease: easeOut }}
+          className={cn(
+            cardChrome,
+            "order-2 mx-auto w-full max-w-lg lg:order-1 lg:mx-0 lg:max-w-none",
+          )}
           aria-labelledby="confirmation-summary-heading"
         >
           <h2 id="confirmation-summary-heading" className="sr-only">
@@ -346,12 +358,15 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
           </div>
         </motion.section>
 
-        {/* Right — success + next steps */}
+        {/* Success / next steps — first on mobile, right column on desktop */}
         <motion.aside
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.12, ease: easeOut }}
-          className={cn(cardChrome, "mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none")}
+          transition={{ duration: 0.45, delay: 0.06, ease: easeOut }}
+          className={cn(
+            cardChrome,
+            "order-1 mx-auto w-full max-w-lg lg:order-2 lg:mx-0 lg:max-w-none",
+          )}
         >
           <div className="flex flex-1 flex-col px-6 py-7 sm:px-8 sm:py-8">
             <header className="flex flex-col items-center text-center">

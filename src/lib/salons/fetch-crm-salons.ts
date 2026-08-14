@@ -21,7 +21,14 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const SALON_SELECT =
+  "id, name, slug, email, phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score, established_year"
+
+const SALON_SELECT_LEGACY =
   "id, name, slug, email, phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score"
+
+function isMissingEstablishedYearColumn(message: string) {
+  return message.toLowerCase().includes("established_year")
+}
 
 type FetchSalonOptions = {
   allowUnpublished?: boolean
@@ -32,31 +39,40 @@ async function fetchSalonRowByIdentifier(
   options: FetchSalonOptions = {},
 ): Promise<CrmSalonRow | null> {
   const supabase = createAdminClient()
-  let query = supabase
-    .from("salons")
-    .select(SALON_SELECT)
-    .eq("is_active", true)
-    .eq("status", "active")
-    .is("deleted_at", null)
 
-  if (!options.allowUnpublished) {
-    query = query.eq("listing_status", "published")
+  async function run(select: string) {
+    let query = supabase
+      .from("salons")
+      .select(select)
+      .eq("is_active", true)
+      .eq("status", "active")
+      .is("deleted_at", null)
+
+    if (!options.allowUnpublished) {
+      query = query.eq("listing_status", "published")
+    }
+
+    if (UUID_RE.test(identifier)) {
+      query = query.eq("id", identifier)
+    } else {
+      query = query.eq("slug", identifier)
+    }
+
+    return query.maybeSingle()
   }
 
-  if (UUID_RE.test(identifier)) {
-    query = query.eq("id", identifier)
-  } else {
-    query = query.eq("slug", identifier)
-  }
+  const primary = await run(SALON_SELECT)
+  const result =
+    primary.error && isMissingEstablishedYearColumn(primary.error.message)
+      ? await run(SALON_SELECT_LEGACY)
+      : primary
 
-  const { data, error } = await query.maybeSingle()
-
-  if (error) {
-    console.error("[salons] Failed to fetch salon:", error.message)
+  if (result.error) {
+    console.error("[salons] Failed to fetch salon:", result.error.message)
     return null
   }
 
-  return (data as CrmSalonRow | null) ?? null
+  return (result.data as CrmSalonRow | null) ?? null
 }
 
 async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
@@ -72,7 +88,7 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
     console.info(`[salons] Reading published listings from ${host}`)
   }
 
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("salons")
     .select(SALON_SELECT)
     .eq("is_active", true)
@@ -82,12 +98,25 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
     .order("is_featured", { ascending: false })
     .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("[salons] Failed to fetch CRM salons:", error.message)
+  const result =
+    primary.error && isMissingEstablishedYearColumn(primary.error.message)
+      ? await supabase
+          .from("salons")
+          .select(SALON_SELECT_LEGACY)
+          .eq("is_active", true)
+          .eq("status", "active")
+          .eq("listing_status", "published")
+          .is("deleted_at", null)
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false })
+      : primary
+
+  if (result.error) {
+    console.error("[salons] Failed to fetch CRM salons:", result.error.message)
     return []
   }
 
-  return (data ?? []) as CrmSalonRow[]
+  return (result.data ?? []) as CrmSalonRow[]
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =

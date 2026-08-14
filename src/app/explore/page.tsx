@@ -20,6 +20,7 @@ import {
   ExplorePageTitle,
   ExplorePartnerSubtitle,
 } from "@/components/explore/explore-location-copy"
+import { ExploreLocalDirectory } from "@/components/explore/explore-local-directory"
 import { PartnerDiscoverCta } from "@/components/sections/parts/partner-discover-cta"
 import { Footer } from "@/components/sections/parts/footer"
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,11 @@ import {
   resolveExploreRadiusKm,
   sortExploreSalons,
 } from "@/lib/explore-filters"
+import {
+  buildExploreAreaDirectory,
+  resolveExploreDirectoryCity,
+} from "@/lib/explore/local-directory"
+import { DEFAULT_CITY_NAME } from "@/lib/location"
 import { GLAMZZO_CITY_COOKIE } from "@/lib/location-city-cookie"
 import { SEO_EXPLORE, SITE_URL } from "@/lib/seo/site-seo"
 
@@ -142,6 +148,12 @@ export default async function ExplorePage({
 
   const featuredSalons = getFeaturedSalons(list)
   const showFeatured = !hasAnyExploreFilters(searchState) && featuredSalons.length > 0
+  const { areasByCity, cityLabels } = buildExploreAreaDirectory(allSalons)
+  const directoryCity = resolveExploreDirectoryCity({
+    city,
+    area,
+    fallbackCity: DEFAULT_CITY_NAME,
+  })
 
   return (
     <>
@@ -283,6 +295,12 @@ export default async function ExplorePage({
             />
           )}
         </PageSection>
+
+        <ExploreLocalDirectory
+          initialCity={directoryCity}
+          areasByCity={areasByCity}
+          cityLabels={cityLabels}
+        />
 
         <PageSection
           tone="featured"

@@ -114,9 +114,12 @@ export function SalonCardImageSlider({
       <div
         ref={scrollRef}
         className={cn(
-          "flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x",
-          hasMultiple &&
-            "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          // Allow vertical page scroll even when the gesture starts on the cover.
+          // pan-x alone traps the touch and blocks scrolling the Explore list on mobile.
+          "flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain",
+          hasMultiple
+            ? "[touch-action:pan-x_pan-y] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            : "touch-pan-y",
         )}
         aria-roledescription={hasMultiple ? "carousel" : undefined}
         aria-label={hasMultiple ? `${salonName} photos` : undefined}

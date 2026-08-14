@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   images: {
+    // macOS/local DNS often resolves *.supabase.co via NAT64 (64:ff9b::…), which
+    // Next treats as a private IP and blocks in the image optimizer. Safe here
+    // because remotePatterns still restrict which hosts can be fetched.
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",

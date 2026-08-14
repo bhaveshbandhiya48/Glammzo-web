@@ -577,6 +577,11 @@ export function mapCrmSalonToWeb(
     isFeatured,
     marketplaceResponseScore,
     businessType: parseBusinessTypeFromSettings(row.settings),
+    establishedYear:
+      typeof row.established_year === "number" &&
+      Number.isFinite(row.established_year)
+        ? row.established_year
+        : null,
     completedBookingCount: salonBookingCount > 0 ? salonBookingCount : undefined,
     isOpenNow: isSalonOpenNow(row.settings, row.timezone || "Asia/Kolkata"),
     priceFrom,

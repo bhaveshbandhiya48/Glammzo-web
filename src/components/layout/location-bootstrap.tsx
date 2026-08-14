@@ -5,9 +5,9 @@ import { useEffect, useRef } from "react"
 import { bootstrapBrowseLocation } from "@/lib/location-storage"
 
 /**
- * On first paint, ask for geolocation (browser permission dialog) and write the
- * result into header location state. Skips when the user already denied, already
- * has GPS Near me, or manually picked a city.
+ * On first paint, ask for geolocation via the browser's native permission
+ * prompt and store live Near me coordinates. Skips when the user already
+ * denied permission, or manually picked a city (unless permission is already granted).
  */
 export function LocationBootstrap() {
   const started = useRef(false)
@@ -16,10 +16,10 @@ export function LocationBootstrap() {
     if (started.current) return
     started.current = true
 
-    // Defer one tick so the first paint / hydration settles before the prompt.
+    // Slight delay so hydration settles; still early enough to show the browser prompt.
     const timer = window.setTimeout(() => {
       void bootstrapBrowseLocation()
-    }, 300)
+    }, 200)
 
     return () => window.clearTimeout(timer)
   }, [])

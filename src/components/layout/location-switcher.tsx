@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { CrosshairIcon, MapPinIcon, SearchIcon, SparklesIcon } from "lucide-react"
 
@@ -17,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useNearMe } from "@/hooks/use-near-me"
 import {
+  DEFAULT_CITY_NAME,
   GLAMZZO_LOCATIONS,
   type GlamzzoLocation,
   type StoredLocation,
@@ -26,13 +26,13 @@ import {
 import {
   LOCATION_UPDATED_EVENT,
   buildExploreHrefForStoredLocation,
-  buildExploreNearMeHref,
   hasActiveNearMe,
   readStoredLocation,
   writeStoredLocation,
 } from "@/lib/location-storage"
 import { getNearestPopularCities, resolvePlaceCentroid } from "@/lib/salon-coordinates"
-import { getSalonAreasForCity } from "@/lib/salons/city-filter"
+import { getExploreAreasForCity } from "@/lib/explore/local-directory"
+import { getNearestKnownAreas } from "@/lib/geo"
 import { getSignupCityOptions } from "@/lib/salon-onboarding/india"
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
 
@@ -167,7 +167,29 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
     refreshAfterLocationChange(next)
   }
 
-  const handleUseNearMe = async () => {
+  const applyBengaluruFallback = () => {
+    const centroid = resolvePlaceCentroid(DEFAULT_CITY_NAME)
+    const next: StoredLocation = {
+      id: "blr_other",
+      city: DEFAULT_CITY_NAME,
+      nearMe: false,
+      inServiceArea: false,
+      defaultFallback: true,
+      ...(centroid
+        ? { latitude: centroid.lat, longitude: centroid.lng }
+        : {}),
+    }
+    const location = getLocationById(next.id)
+    setCurrent(location)
+    setStored(next)
+    writeStoredLocation(next)
+    setQuery("")
+    setOpen(false)
+    clearError()
+    refreshAfterLocationChange(next)
+  }
+
+  const handleUseCurrentLocation = async () => {
     clearError()
     const result = await applyNearMe({ navigateToExplore: false })
     if (result) {
@@ -176,7 +198,10 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
       setQuery("")
       setOpen(false)
       refreshAfterLocationChange(result.stored)
+      return
     }
+    // Permission denied / unavailable — default to Bengaluru; city search still works anytime.
+    applyBengaluruFallback()
   }
 
   const displayLabel = stored
@@ -185,15 +210,6 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
   const isNearMe = hasActiveNearMe(stored)
   const selectedCity = stored?.city?.trim() || null
   const selectedArea = stored?.areaLabelOverride?.trim() || null
-
-  const exploreNearHref =
-    isNearMe && stored?.latitude != null && stored?.longitude != null
-      ? buildExploreNearMeHref(stored.latitude, stored.longitude)
-      : selectedCity
-        ? buildExploreHrefForStoredLocation(
-            stored ?? { id: "blr_other", city: selectedCity },
-          )
-        : "/explore"
 
   const trimmedQuery = query.trim()
   const queryLower = trimmedQuery.toLowerCase()
@@ -216,21 +232,42 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
     (isNearMe ? stored?.city?.trim() || displayLabel : null) ||
     current.label
 
+  // GPS Near me: rank known neighbourhoods by distance (not hardcoded popular order).
+  const nearestAreasToYou = useMemo(() => {
+    if (queryLower) return []
+    if (!isNearMe || stored?.latitude == null || stored?.longitude == null) return []
+    if (stored.inServiceArea === false) return []
+    return getNearestKnownAreas(stored.latitude, stored.longitude, 3)
+  }, [isNearMe, queryLower, stored?.inServiceArea, stored?.latitude, stored?.longitude])
+
+  const showNearestToYou = nearestAreasToYou.length > 0
+
   const showBengaluruAreas =
     !selectedCity &&
-    (!isNearMe || Boolean(stored?.inServiceArea)) &&
+    !showNearestToYou &&
+    !isNearMe &&
     /bengaluru|bangalore/i.test(browseOriginCity)
 
+  // Prefer neighbourhoods in the selected / browse city (salon data + curated fallbacks).
   const cityAreas = useMemo(() => {
-    if (queryLower || showBengaluruAreas) return []
-    return getSalonAreasForCity(catalogSalons, browseOriginCity)
-  }, [browseOriginCity, catalogSalons, queryLower, showBengaluruAreas])
+    if (queryLower || showBengaluruAreas || showNearestToYou) return []
+    if (!browseOriginCity.trim()) return []
+    return getExploreAreasForCity(catalogSalons, browseOriginCity).slice(0, 3)
+  }, [
+    browseOriginCity,
+    catalogSalons,
+    queryLower,
+    showBengaluruAreas,
+    showNearestToYou,
+  ])
 
   const showCityAreas = cityAreas.length > 0
 
+  // Other cities only when we don't already have a selected city to browse within.
   const nearestPopularCities = useMemo(() => {
     if (queryLower) return []
-    if (showBengaluruAreas || showCityAreas) return []
+    if (selectedCity) return []
+    if (showNearestToYou || showBengaluruAreas || showCityAreas) return []
 
     return getNearestPopularCities({
       city: browseOriginCity,
@@ -242,8 +279,10 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
   }, [
     browseOriginCity,
     queryLower,
+    selectedCity,
     showBengaluruAreas,
     showCityAreas,
+    showNearestToYou,
     stored?.latitude,
     stored?.longitude,
   ])
@@ -320,7 +359,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               Choose your area
             </DialogTitle>
             <DialogDescription>
-              Search your city, use My current location, or pick a nearby popular city.
+              Use My current location for GPS, or search a city/area — no permission needed to
+              browse by city.
             </DialogDescription>
           </DialogHeader>
 
@@ -353,34 +393,59 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               )}
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative flex-1">
-                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/40" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      applyPrimarySearchSelection()
-                    }
-                  }}
-                  placeholder="Search city or area (e.g. Jamnagar)"
-                  className="h-11 w-full rounded-2xl border border-border/70 bg-background/70 pl-9 pr-3 text-sm outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
-                  aria-label="Search city or area"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="default"
-                className="shrink-0 px-5"
-                onClick={handleUseNearMe}
-                disabled={geoBusy}
-              >
-                <CrosshairIcon className="size-4" />
-                {geoBusy ? "Detecting…" : "Near me"}
-              </Button>
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/40" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    applyPrimarySearchSelection()
+                  }
+                }}
+                placeholder="Search city or area (e.g. Jamnagar)"
+                className="h-11 w-full rounded-2xl border border-border/70 bg-background/70 pl-9 pr-3 text-sm outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
+                aria-label="Search city or area"
+              />
             </div>
+
+            <button
+              type="button"
+              onClick={() => void handleUseCurrentLocation()}
+              disabled={geoBusy}
+              className={cn(
+                "flex w-full items-center justify-between rounded-2xl border px-3.5 py-3 text-left text-sm transition-colors disabled:opacity-60",
+                isNearMe
+                  ? "border-primary bg-primary/5 text-foreground"
+                  : "border-primary/30 bg-primary/[0.04] hover:bg-primary/[0.08]",
+              )}
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <CrosshairIcon className="size-4" aria-hidden />
+                </span>
+                <span>
+                  <span className="font-semibold text-foreground">
+                    {geoBusy ? "Detecting your location…" : "My current location"}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-foreground/55">
+                    {isNearMe
+                      ? "Using your device GPS for distances"
+                      : "Allow location to find salons nearest to you"}
+                  </span>
+                </span>
+              </span>
+              {isNearMe ? (
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  Current
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-primary">
+                  {geoBusy ? "…" : "Select"}
+                </span>
+              )}
+            </button>
 
             {geoError ? (
               <p
@@ -406,7 +471,7 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                           Select {typedCityLabel}
                         </span>
                         <span className="mt-0.5 block text-xs text-foreground/55">
-                          Use this city for browsing and distances
+                          Use this city for browsing — location permission not required
                         </span>
                       </span>
                     </span>
@@ -447,65 +512,17 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
               </div>
             ) : null}
 
-            {isNearMe || selectedCity ? (
-              <Button asChild variant="outline" className="w-full">
-                <Link
-                  href={exploreNearHref}
-                  onClick={() => setOpen(false)}
-                >
-                  View nearby salons
-                </Link>
-              </Button>
-            ) : null}
-
             <div className="grid gap-2">
-              {!queryLower ? (
-                <button
-                  type="button"
-                  onClick={() => void handleUseNearMe()}
-                  disabled={geoBusy}
-                  className={cn(
-                    "flex items-center justify-between rounded-2xl border px-3.5 py-3 text-left text-sm transition-colors disabled:opacity-60",
-                    isNearMe
-                      ? "border-primary bg-primary/5 text-foreground"
-                      : "border-primary/30 bg-primary/[0.04] hover:bg-primary/[0.08]",
-                  )}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <CrosshairIcon className="size-4" aria-hidden />
-                    </span>
-                    <span>
-                      <span className="font-semibold text-foreground">
-                        {geoBusy ? "Detecting your location…" : "My current location"}
-                      </span>
-                      <span className="mt-0.5 block text-xs text-foreground/55">
-                        {isNearMe
-                          ? "Using your device GPS for distances"
-                          : "Use GPS to find salons nearest to you"}
-                      </span>
-                    </span>
-                  </span>
-                  {isNearMe ? (
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                      Current
-                    </span>
-                  ) : (
-                    <span className="text-xs font-medium text-primary">
-                      {geoBusy ? "…" : "Select"}
-                    </span>
-                  )}
-                </button>
-              ) : null}
-
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/45">
                 {queryLower
                   ? "Matching areas"
-                  : showBengaluruAreas
-                    ? "Popular areas"
-                    : showCityAreas
-                      ? `Areas in ${browseOriginCity}`
-                      : `Nearest to ${browseOriginCity}`}
+                  : showNearestToYou
+                    ? "Nearest to you"
+                    : showBengaluruAreas
+                      ? "Popular areas"
+                      : selectedCity || showCityAreas
+                        ? `Areas in ${browseOriginCity}`
+                        : "Popular cities"}
               </p>
 
               {queryLower ? (
@@ -539,8 +556,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                         <span className="flex items-center gap-2">
                           <MapPinIcon className="size-4 text-primary" />
                           <span className="font-medium">
-                            {loc.label}{" "}
-                            <span className="text-foreground/60">· {loc.areaLabel}</span>
+                            {loc.areaLabel}{" "}
+                            <span className="text-foreground/60">· {loc.label}</span>
                           </span>
                         </span>
                         {isActive ? (
@@ -552,8 +569,54 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                     )
                   })
                 )
+              ) : showNearestToYou ? (
+                nearestAreasToYou.map((area) => {
+                  const isActive =
+                    selectedArea?.toLowerCase() === area.areaLabel.toLowerCase() ||
+                    stored?.resolvedArea?.toLowerCase() === area.areaLabel.toLowerCase()
+                  return (
+                    <button
+                      key={area.areaLabel}
+                      type="button"
+                      onClick={() =>
+                        handleSelectCityArea(
+                          stored?.city?.trim() || "Bengaluru",
+                          area.areaLabel,
+                        )
+                      }
+                      className={cn(
+                        "flex items-center justify-between rounded-2xl border px-3.5 py-2.5 text-left text-sm transition-colors",
+                        isActive
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border/70 bg-background/70 hover:bg-muted/80",
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <MapPinIcon className="size-4 shrink-0 text-primary" />
+                        <span className="min-w-0">
+                          <span className="block font-medium">
+                            {area.areaLabel}{" "}
+                            <span className="text-foreground/60">
+                              · {stored?.city?.trim() || "Bengaluru"}
+                            </span>
+                          </span>
+                          <span className="block text-xs text-foreground/55">
+                            {formatDistanceLabel(area.distanceKm)}
+                          </span>
+                        </span>
+                      </span>
+                      {isActive ? (
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                          Current
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium text-primary">Select</span>
+                      )}
+                    </button>
+                  )
+                })
               ) : showBengaluruAreas ? (
-                filteredAreas.map((loc) => {
+                filteredAreas.slice(0, 3).map((loc) => {
                   const isActive =
                     !selectedCity &&
                     (isNearMe
@@ -578,8 +641,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                       <span className="flex items-center gap-2">
                         <MapPinIcon className="size-4 text-primary" />
                         <span className="font-medium">
-                          {loc.label}{" "}
-                          <span className="text-foreground/60">· {loc.areaLabel}</span>
+                          {loc.areaLabel}{" "}
+                          <span className="text-foreground/60">· {loc.label}</span>
                         </span>
                       </span>
                       {isActive ? (
@@ -611,8 +674,8 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                       <span className="flex items-center gap-2">
                         <MapPinIcon className="size-4 text-primary" />
                         <span className="font-medium">
-                          {browseOriginCity}{" "}
-                          <span className="text-foreground/60">· {area}</span>
+                          {area}{" "}
+                          <span className="text-foreground/60">· {browseOriginCity}</span>
                         </span>
                       </span>
                       {isActive ? (
@@ -627,7 +690,9 @@ export function LocationSwitcher({ className, size = "sm" }: LocationSwitcherPro
                 })
               ) : nearestPopularCities.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-border/70 px-3.5 py-3 text-sm text-foreground/55">
-                  Search another city above to continue browsing.
+                  {selectedCity
+                    ? `No areas listed for ${selectedCity} yet. Search another city or area above.`
+                    : "Search a city above to continue browsing."}
                 </p>
               ) : (
                 nearestPopularCities.map((city) => {

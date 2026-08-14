@@ -110,9 +110,9 @@ export async function resolveInitialLocation(): Promise<ParsedStoredLocation> {
 }
 
 /**
- * On every landing: request GPS when we don't already have a live “Near me” fix,
- * unless the user already denied permission or manually picked a city.
- * Updates the header via writeStoredLocation → LOCATION_UPDATED_EVENT.
+ * On landing: ask the browser for geolocation (native permission prompt) when
+ * the visitor has not explicitly picked a city/area. Uses live GPS + reverse
+ * geocode for Near me — does not open the location panel.
  */
 export async function bootstrapBrowseLocation(): Promise<void> {
   if (typeof window === "undefined") return
@@ -127,37 +127,25 @@ export async function bootstrapBrowseLocation(): Promise<void> {
     !hasGps &&
     existing!.stored.defaultFallback !== true
 
-  if (manualChoice && permission !== "granted") {
+  if (manualChoice) {
     syncBrowseCityCookie(resolveBrowseCityFromStored(existing!.stored))
-    return
+    // If the browser already granted permission, still upgrade to live Near me.
+    if (permission !== "granted") return
   }
 
   if (permission === "denied") {
-    if (!existing) {
+    if (!existing || existing.stored.defaultFallback === true) {
       writeStoredLocation(buildDefaultFallbackLocation())
     }
     return
   }
 
-  // Already have GPS — refresh quietly when the browser still allows it.
-  if (hasGps && permission !== "prompt") {
-    try {
-      const position = await requestUserLocation()
-      await applyGpsPosition(position.latitude, position.longitude)
-    } catch {
-      // Keep the existing Near me fix.
-    }
-    return
-  }
-
-  // No GPS yet (first visit or default fallback) — ask the browser.
-  if (hasGps) return
-
   try {
+    // Triggers the browser's native location permission prompt when state is "prompt".
     const position = await requestUserLocation()
     await applyGpsPosition(position.latitude, position.longitude)
   } catch {
-    if (!existing) {
+    if (!existing || existing.stored.defaultFallback === true) {
       writeStoredLocation(buildDefaultFallbackLocation())
     }
   }
@@ -174,7 +162,7 @@ export function buildStoredFromNearMe(resolved: ResolvedGpsLocation): StoredLoca
     state: resolved.state,
     country: resolved.country,
     inServiceArea: resolved.inServiceArea,
-    resolvedArea: resolved.nearestArea?.areaLabel,
+    resolvedArea: resolved.resolvedArea,
   }
 }
 

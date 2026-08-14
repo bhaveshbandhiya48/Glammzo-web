@@ -25,6 +25,7 @@ export type CrmSalonRow = {
   is_featured?: boolean
   featured_until?: string | null
   marketplace_response_score?: number | null
+  established_year?: number | null
 }
 
 export type CrmMarketplaceProfileRow = {

@@ -169,6 +169,8 @@ export type Salon = {
   marketplaceResponseScore?: number | null
   /** Signup business type from CRM settings (Salon, Barber Shop, …). */
   businessType?: string | null
+  /** Calendar year the business started (CRM established_year). */
+  establishedYear?: number | null
   /**
    * Completed Glammzo-web bookings in the popularity window.
    * Used for local “Most booked” badges (10 km radius).

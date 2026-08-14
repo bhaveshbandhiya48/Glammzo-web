@@ -50,6 +50,14 @@ export function SalonDetailAbout({ salon }: { salon: Salon }) {
             At a glance
           </p>
           <dl className="mt-4 space-y-4 text-sm">
+            {salon.establishedYear ? (
+              <div>
+                <dt className="text-foreground/50">Established</dt>
+                <dd className="mt-1 font-medium text-foreground">
+                  Since {salon.establishedYear}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt className="text-foreground/50">Experience</dt>
               <dd className="mt-1 font-medium text-foreground">

@@ -22,7 +22,8 @@ export async function GET(request: Request) {
   url.searchParams.set("lon", String(longitude))
   url.searchParams.set("format", "json")
   url.searchParams.set("addressdetails", "1")
-  url.searchParams.set("zoom", "10")
+  // Neighbourhood / suburb level (city zoom=10 was snapping labels to the wrong area).
+  url.searchParams.set("zoom", "16")
 
   try {
     const res = await fetch(url.toString(), {

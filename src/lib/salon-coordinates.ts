@@ -35,6 +35,12 @@ const CITY_CENTROIDS: Record<string, { lat: number; lng: number }> = {
   koramangala: { lat: 12.9352, lng: 77.6245 },
   "hsr layout": { lat: 12.9116, lng: 77.6476 },
   "mg road": { lat: 12.975, lng: 77.6063 },
+  marathahalli: { lat: 12.9591, lng: 77.6974 },
+  whitefield: { lat: 12.9698, lng: 77.75 },
+  jayanagar: { lat: 12.9308, lng: 77.5838 },
+  "jp nagar": { lat: 12.9077, lng: 77.5857 },
+  "btm layout": { lat: 12.9166, lng: 77.6101 },
+  bellandur: { lat: 12.9304, lng: 77.6784 },
 }
 
 /** Full cities shown in location popular/nearby lists (not neighbourhood pins). */
