@@ -42,7 +42,7 @@ import {
 } from "@/lib/explore/local-directory"
 import { DEFAULT_CITY_NAME } from "@/lib/location"
 import { GLAMZZO_CITY_COOKIE } from "@/lib/location-city-cookie"
-import { SEO_EXPLORE, SITE_URL } from "@/lib/seo/site-seo"
+import { SEO_EXPLORE, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 
 export const metadata: Metadata = {
   title: SEO_EXPLORE.title,
@@ -61,6 +61,13 @@ export const metadata: Metadata = {
     title: SEO_EXPLORE.title,
     description: SEO_EXPLORE.description,
     url: `${SITE_URL}/explore`,
+    images: buildShareImages(),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_EXPLORE.title,
+    description: SEO_EXPLORE.description,
+    images: buildShareImages().map((image) => image.url),
   },
 }
 

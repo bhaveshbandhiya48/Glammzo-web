@@ -32,7 +32,7 @@ import {
   buildCityLandingPath,
   slugifyLocalLabel,
 } from "@/lib/seo/local-landing"
-import { SEO_SALONS_NEAR_ME, SITE_URL } from "@/lib/seo/site-seo"
+import { SEO_SALONS_NEAR_ME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 import { LAUNCH_PROMO_CODE, LAUNCH_CASHBACK_RUPEES } from "@/lib/marketing/launch-promo"
 import { formatInr } from "@/lib/salons/catalog-utils"
 
@@ -58,6 +58,13 @@ export const metadata: Metadata = {
     url: `${SITE_URL}${SEO_SALONS_NEAR_ME.path}`,
     type: "website",
     locale: "en_IN",
+    images: buildShareImages(),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_SALONS_NEAR_ME.title,
+    description: SEO_SALONS_NEAR_ME.description,
+    images: buildShareImages().map((image) => image.url),
   },
   robots: { index: true, follow: true },
 }

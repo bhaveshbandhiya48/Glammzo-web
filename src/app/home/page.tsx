@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 import { LandingPage } from "@/components/sections/landing-page"
-import { SEO_HOME, SITE_URL } from "@/lib/seo/site-seo"
+import { SEO_HOME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 
 /**
  * Explicit marketing homepage (not redirected on mobile).
@@ -24,11 +24,13 @@ export const metadata: Metadata = {
     siteName: "Glammzo",
     type: "website",
     locale: "en_IN",
+    images: buildShareImages(),
   },
   twitter: {
     card: "summary_large_image",
     title: SEO_HOME.title,
     description: SEO_HOME.description,
+    images: buildShareImages().map((image) => image.url),
   },
   robots: {
     index: false,

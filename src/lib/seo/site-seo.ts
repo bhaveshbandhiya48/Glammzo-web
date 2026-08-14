@@ -5,7 +5,29 @@ export const SITE_URL =
 
 export const SITE_NAME = "Glammzo"
 
-export const DEFAULT_OG_IMAGE = "/brand/glamzzo-icon.svg"
+/** App Router OG route — PNG suitable for WhatsApp / iMessage / social previews. */
+export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image"
+
+export const DEFAULT_OG_IMAGE = {
+  url: DEFAULT_OG_IMAGE_PATH,
+  width: 1200,
+  height: 630,
+  alt: "Glammzo — find a salon near you and book online",
+} as const
+
+/** Prefer a remote salon photo when sharing a listing; otherwise the brand OG card. */
+export function buildShareImages(imageUrl?: string | null, alt?: string) {
+  const trimmed = imageUrl?.trim()
+  if (trimmed && /^https?:\/\//i.test(trimmed)) {
+    return [
+      {
+        url: trimmed,
+        alt: alt?.trim() || SITE_NAME,
+      },
+    ]
+  }
+  return [DEFAULT_OG_IMAGE]
+}
 
 /** Primary local-intent keywords we target on public pages. */
 export const LOCAL_SALON_KEYWORDS = [

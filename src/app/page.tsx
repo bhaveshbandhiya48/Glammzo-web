@@ -10,7 +10,7 @@ import {
   buildWebsiteJsonLd,
   SALON_NEAR_ME_FAQS,
 } from "@/lib/seo/json-ld"
-import { SEO_HOME, SITE_URL } from "@/lib/seo/site-seo"
+import { SEO_HOME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 
 export const metadata: Metadata = {
   title: {
@@ -28,11 +28,13 @@ export const metadata: Metadata = {
     siteName: "Glammzo",
     type: "website",
     locale: "en_IN",
+    images: buildShareImages(),
   },
   twitter: {
     card: "summary_large_image",
     title: SEO_HOME.title,
     description: SEO_HOME.description,
+    images: buildShareImages().map((image) => image.url),
   },
   robots: {
     index: true,

@@ -26,7 +26,7 @@ import {
   resolveSeoCity,
   slugifyLocalLabel,
 } from "@/lib/seo/local-landing"
-import { SITE_NAME, SITE_URL } from "@/lib/seo/site-seo"
+import { SITE_NAME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 
 type PageProps = {
   params: Promise<{ city: string }>
@@ -57,6 +57,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: canonical,
       type: "website",
       locale: "en_IN",
+      images: buildShareImages(),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+      images: buildShareImages().map((image) => image.url),
     },
     robots: { index: true, follow: true },
   }

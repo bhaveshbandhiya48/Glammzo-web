@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth/session"
 import { isSalonFavorited } from "@/lib/favorites/server"
 import { trackListingView } from "@/lib/listing/track-listing-view"
 import { buildSalonJsonLd } from "@/lib/seo/salon-json-ld"
-import { SITE_URL } from "@/lib/seo/site-seo"
+import { SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 import { primarySalonCategory } from "@/lib/salons/salon-detail-utils"
 import { Navbar } from "@/components/layout/navbar"
 import { SalonDetailView } from "@/components/salons/salon-detail/salon-detail-view"
@@ -57,6 +57,10 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     salon.shortDescription ??
     salon.description ??
     `Book ${salon.name}${place ? ` in ${place}` : ""} on Glammzo. See services, fixed prices, and available slots.`
+  const shareImages = buildShareImages(
+    salon.coverImageUrl || salon.imageUrl,
+    `${salon.name}${place ? ` in ${place}` : ""}`,
+  )
 
   return {
     title,
@@ -68,6 +72,15 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       title,
       description,
       type: "website",
+      url: `${SITE_URL}/salons/${encodeURIComponent(salon.id)}`,
+      siteName: "Glammzo",
+      images: shareImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: shareImages.map((image) => image.url),
     },
     robots: isPreviewMode(preview) ? { index: false, follow: false } : { index: true, follow: true },
   }

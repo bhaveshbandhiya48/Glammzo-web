@@ -5,7 +5,7 @@ import { Analytics } from "@/components/analytics/google-analytics"
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
 import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
 import { getSalons } from "@/lib/salons"
-import { SEO_HOME, SITE_URL } from "@/lib/seo/site-seo"
+import { SEO_HOME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 import { ExploreDistanceOriginProvider } from "@/providers/explore-distance-origin-provider"
 import { SalonCatalogProvider } from "@/providers/salon-catalog-provider"
 import "./globals.css"
@@ -49,11 +49,13 @@ export const metadata: Metadata = {
     siteName: "Glammzo",
     locale: "en_IN",
     url: SITE_URL,
+    images: buildShareImages(),
   },
   twitter: {
     card: "summary_large_image",
     title: SEO_HOME.title,
     description: SEO_HOME.description,
+    images: buildShareImages().map((image) => image.url),
   },
   alternates: {
     canonical: SITE_URL,
