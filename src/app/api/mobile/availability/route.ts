@@ -8,6 +8,7 @@ import {
   findFirstAvailableDate,
   formatSlotLabel,
   getAvailableSlotsForDate,
+  isStaffEligibleForServices,
 } from "@/lib/bookings/crm/availability"
 import { BOOKING_ENGINE_CONFIG } from "@/lib/bookings/crm/booking-confirmation-engine"
 import { loadSalonBookingContext } from "@/lib/bookings/crm/salon-context"
@@ -111,6 +112,19 @@ export async function GET(request: Request) {
       { packageBooking },
     )
 
+    const staff = packageBooking
+      ? []
+      : context.staffMembers
+          .filter((member) =>
+            isStaffEligibleForServices(context, member.id, resolvedServiceIds),
+          )
+          .map((member) => ({
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            imageUrl: member.imageUrl,
+          }))
+
     return jsonOk({
       date,
       closed: Boolean(slotResult.closed),
@@ -120,6 +134,7 @@ export async function GET(request: Request) {
         value,
         label: formatSlotLabel(value),
       })),
+      staff,
     })
   } catch (error) {
     if (error instanceof MobileAuthError) {

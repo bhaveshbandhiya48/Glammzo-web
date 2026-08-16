@@ -11,9 +11,12 @@ import {
   CONSUMER_GENDER_OPTIONS,
   type ConsumerGender,
 } from "@/lib/auth/consumer-profile-constants"
+import { deleteConsumerAccount } from "@/lib/auth/delete-consumer-account"
 import { resolveSessionDisplayEmail, resolveSessionDisplayName } from "@/lib/auth/display"
-import { getSession, updateSessionProfile } from "@/lib/auth/session"
+import { clearSessionCookie, getSession, updateSessionProfile } from "@/lib/auth/session"
 import { isValidEmail } from "@/lib/validations/email"
+
+const DELETE_CONFIRM_WORD = "DELETE"
 
 export type ProfileActionState =
   | { ok: true; saved?: boolean }
@@ -128,4 +131,37 @@ export async function getProfileDefaults() {
     dateOfBirth: stored?.dateOfBirth ?? "",
     address: stored?.address ?? "",
   }
+}
+
+export type DeleteAccountActionState =
+  | { ok: true }
+  | { ok: false; message: string }
+
+export async function deleteAccountAction(
+  _prevState: DeleteAccountActionState,
+  formData: FormData,
+): Promise<DeleteAccountActionState> {
+  const session = await getSession()
+  if (!session?.phone) {
+    redirect("/login?next=/dashboard/profile#details")
+  }
+
+  const confirm = String(formData.get("confirm") ?? "").trim()
+  if (confirm.toUpperCase() !== DELETE_CONFIRM_WORD) {
+    return {
+      ok: false,
+      message: `Type ${DELETE_CONFIRM_WORD} to confirm account deletion.`,
+    }
+  }
+
+  const result = await deleteConsumerAccount(session.phone)
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.message || "Could not delete account. Please try again.",
+    }
+  }
+
+  await clearSessionCookie()
+  redirect("/")
 }

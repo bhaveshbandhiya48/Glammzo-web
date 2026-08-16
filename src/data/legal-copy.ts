@@ -121,6 +121,7 @@ export const PRIVACY_POLICY = {
       ],
       bullets: [
         "Update profile details from your account settings where available.",
+        "Delete your Glammzo account from Profile → Profile information in the app or website, or visit https://glammzo.com/delete-account.",
         "Manage booking actions such as cancellation or rescheduling through My Appointments, subject to Platform and salon rules.",
         "Withdraw location permissions through your device/browser settings.",
         "Contact us at hello@glammzo.com to request support with privacy preferences or data requests.",
@@ -441,3 +442,45 @@ export const CANCELLATION_POLICY = {
     },
   ] satisfies LegalSection[],
 }
+
+export const ACCOUNT_DELETION_GUIDE = {
+  title: "Delete your Glammzo account",
+  lastUpdated: "16 August 2026",
+  intro: [
+    "You can delete your Glammzo account and associated personal data from the Glammzo app or website. This page explains what is removed and how to start the request.",
+    "Account deletion removes your profile, wallet balance, loyalty credits, favorites, and push notification tokens. Booking records may be retained in anonymized form for salon operations, dispute resolution, and legal requirements.",
+  ],
+  sections: [
+    {
+      id: "how-to-delete",
+      title: "1. How to delete",
+      paragraphs: ["Choose one of the following:"],
+      bullets: [
+        "In the Glammzo app: Profile → My profile → Delete account → type DELETE to confirm.",
+        "On the website: sign in → Profile → Profile information → Delete account → type DELETE to confirm.",
+        "If you cannot access your account, email hello@glammzo.com from a reachable number/email and request deletion with your registered mobile number.",
+      ],
+    },
+    {
+      id: "what-is-deleted",
+      title: "2. What we delete",
+      paragraphs: [
+        "When deletion completes, we remove or anonymize personal information tied to your consumer account.",
+      ],
+      bullets: [
+        "Profile details (name, email, gender, date of birth, address).",
+        "Saved favorites and mobile push tokens.",
+        "Wallet balance and loyalty credits.",
+        "Salon customer contact details are anonymized while appointment history may remain for partners and compliance.",
+      ],
+    },
+    {
+      id: "timing",
+      title: "3. Timing",
+      paragraphs: [
+        "Deletion started from Profile is processed immediately when you confirm. Support-assisted requests are completed as soon as we verify your identity, typically within 7 days.",
+      ],
+    },
+  ] satisfies LegalSection[],
+}
+

@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { LogoutFormButton } from "@/components/auth/logout-form-button"
+import { DeleteAccountButton } from "@/components/auth/delete-account-button"
 import { ProfileSettingsForm } from "@/components/auth/profile-settings-form"
 import { BookingsSection } from "@/components/booking/bookings-section"
 import { Button } from "@/components/ui/button"
@@ -280,14 +281,17 @@ function SectionBody({
   }
 
   return (
-    <ProfileSettingsForm
-      defaultName={profile.name}
-      defaultEmail={profile.email}
-      defaultPhone={profile.phone}
-      defaultGender={profile.gender}
-      defaultDateOfBirth={profile.dateOfBirth}
-      defaultAddress={profile.address}
-    />
+    <div className="space-y-8">
+      <ProfileSettingsForm
+        defaultName={profile.name}
+        defaultEmail={profile.email}
+        defaultPhone={profile.phone}
+        defaultGender={profile.gender}
+        defaultDateOfBirth={profile.dateOfBirth}
+        defaultAddress={profile.address}
+      />
+      <DeleteAccountButton />
+    </div>
   )
 }
 

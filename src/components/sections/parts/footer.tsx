@@ -70,6 +70,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
 const LEGAL_LINKS: FooterLink[] = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
+  { label: "Delete account", href: "/delete-account" },
   { label: "Cookies", href: "/privacy#cookies" },
 ]
 
