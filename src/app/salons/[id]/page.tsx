@@ -6,9 +6,17 @@ import { getSession } from "@/lib/auth/session"
 import { isSalonFavorited } from "@/lib/favorites/server"
 import { trackListingView } from "@/lib/listing/track-listing-view"
 import { getGlammzoOffersForSalonDetail } from "@/lib/marketing/glammzo-offers"
+import { buildBreadcrumbJsonLd } from "@/lib/seo/json-ld"
 import { buildSalonJsonLd } from "@/lib/seo/salon-json-ld"
 import { SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
+import {
+  buildAreaLandingPath,
+  buildCityLandingPath,
+  resolveSeoCity,
+  slugifyLocalLabel,
+} from "@/lib/seo/local-landing"
 import { primarySalonCategory } from "@/lib/salons/salon-detail-utils"
+import { JsonLd } from "@/components/seo/json-ld"
 import { Navbar } from "@/components/layout/navbar"
 import { SalonDetailView } from "@/components/salons/salon-detail/salon-detail-view"
 import { SalonListingPreviewBanner } from "@/components/salons/salon-listing-preview-banner"
@@ -111,14 +119,31 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
   const similarSalons = pickSimilarSalons(salon, allSalons)
 
   const pageUrl = `${SITE_URL}/salons/${encodeURIComponent(salon.id)}`
+  const salonPath = `/salons/${encodeURIComponent(salon.id)}`
   const jsonLd = buildSalonJsonLd(salon, pageUrl)
+
+  const seoCity = resolveSeoCity(salon.city ?? "")
+  const breadcrumbItems: Array<{ name: string; path?: string }> = [{ name: "Home", path: "/" }]
+  if (seoCity) {
+    breadcrumbItems.push({
+      name: `Salons in ${seoCity.displayName}`,
+      path: buildCityLandingPath(seoCity.slug),
+    })
+    if (salon.area?.trim()) {
+      breadcrumbItems.push({
+        name: salon.area.trim(),
+        path: buildAreaLandingPath(seoCity.slug, slugifyLocalLabel(salon.area.trim())),
+      })
+    }
+  } else {
+    breadcrumbItems.push({ name: "Salon near me", path: "/salons-near-me" })
+  }
+  breadcrumbItems.push({ name: salon.name, path: salonPath })
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbItems)
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={[jsonLd, breadcrumbJsonLd]} />
       <Navbar salonName={salon.name} />
       {isPreview ? <SalonListingPreviewBanner /> : null}
       <main className="page-main bg-background">

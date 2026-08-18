@@ -12,13 +12,24 @@ function isMobilePhoneUserAgent(ua: string): boolean {
   return false
 }
 
+/**
+ * Search/AI crawlers (incl. Googlebot Smartphone, which spoofs an Android/Mobile
+ * UA for mobile-first indexing) must always see the real homepage — never the
+ * redirect — or Google indexes /explore's content and metadata for "/".
+ */
+function isCrawlerUserAgent(ua: string): boolean {
+  return /bot|crawl|spider|slurp|googlebot|bingbot|duckduckbot|baiduspider|yandex|facebookexternalhit|whatsapp|telegrambot|discordbot|linkedinbot|embedly|quora link preview|pinterest|applebot/i.test(
+    ua,
+  )
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // Mobile phones land on Explore (filter / browse / book) instead of marketing home.
   if (pathname === "/") {
     const ua = req.headers.get("user-agent") ?? ""
-    if (isMobilePhoneUserAgent(ua)) {
+    if (isMobilePhoneUserAgent(ua) && !isCrawlerUserAgent(ua)) {
       const url = req.nextUrl.clone()
       url.pathname = "/explore"
       return NextResponse.redirect(url)

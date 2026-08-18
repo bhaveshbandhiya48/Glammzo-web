@@ -61,6 +61,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const seo = buildAreaPageSeo(city, areaLabel)
   const canonical = `${SITE_URL}${seo.path}`
 
+  // Avoid indexing a doorway page: only index once this neighbourhood has real inventory.
+  const hasInventory = filterSalonsByAreaLanding(salons, city, areaLabel).length > 0
+
   return {
     title: { absolute: `${seo.title} | ${SITE_NAME}` },
     description: seo.description,
@@ -80,7 +83,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: seo.description,
       images: buildShareImages().map((image) => image.url),
     },
-    robots: { index: true, follow: true },
+    robots: hasInventory
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
   }
 }
 

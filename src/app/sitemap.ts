@@ -5,6 +5,8 @@ import {
   SEO_CITY_LANDINGS,
   buildAreaLandingPath,
   buildCityLandingPath,
+  filterSalonsByAreaLanding,
+  filterSalonsByCityLanding,
   getAreasForSeoCity,
   slugifyLocalLabel,
 } from "@/lib/seo/local-landing"
@@ -21,16 +23,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // Only list city/area landing pages that have real, bookable salon inventory —
+  // matches the noindex guard in the corresponding generateMetadata so the
+  // sitemap never advertises doorway pages to crawlers.
   const localLandingEntries: MetadataRoute.Sitemap = []
   for (const city of SEO_CITY_LANDINGS) {
-    localLandingEntries.push({
-      url: `${BASE_URL}${buildCityLandingPath(city.slug)}`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.92,
-    })
+    if (filterSalonsByCityLanding(salons, city).length > 0) {
+      localLandingEntries.push({
+        url: `${BASE_URL}${buildCityLandingPath(city.slug)}`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.92,
+      })
+    }
 
     for (const area of getAreasForSeoCity(salons, city)) {
+      if (filterSalonsByAreaLanding(salons, city, area).length === 0) continue
       localLandingEntries.push({
         url: `${BASE_URL}${buildAreaLandingPath(city.slug, slugifyLocalLabel(area))}`,
         lastModified: new Date(),
