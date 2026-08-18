@@ -17,8 +17,11 @@ export const LAUNCH_PROMO_DISCOUNT_RUPEES = LAUNCH_CASHBACK_RUPEES
 
 export const LAUNCH_PROMO_TITLE = "Launch offer — ₹200 cashback"
 
-/** Set NEXT_PUBLIC_LAUNCH_PROMO_ACTIVE=false to hide launch offer marketing. */
-export const LAUNCH_PROMO_ACTIVE = process.env.NEXT_PUBLIC_LAUNCH_PROMO_ACTIVE !== "false"
+/**
+ * Hardcoded WLCM200 launch/welcome offer is retired — use CMS Glammzo offers.
+ * Set NEXT_PUBLIC_LAUNCH_PROMO_ACTIVE=true only to re-enable temporarily.
+ */
+export const LAUNCH_PROMO_ACTIVE = process.env.NEXT_PUBLIC_LAUNCH_PROMO_ACTIVE === "true"
 
 export function isLaunchPromoCode(code: string) {
   return code.trim().toUpperCase() === LAUNCH_PROMO_CODE

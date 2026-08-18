@@ -39,12 +39,12 @@ import {
 } from "@/lib/salons/offer-utils"
 import { resolveServices, toggleServiceId, removeOneServiceId } from "@/lib/bookings/utils"
 import type {
-  SalonCancellationPolicy,
   SalonOffer,
   SalonPackage,
   SalonReview,
   SalonService,
 } from "@/types/salon"
+import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 import { MotionDiv, MotionSection, stagger } from "@/components/shared/motion"
 
 type SalonBookingCatalogSectionProps = {
@@ -55,8 +55,8 @@ type SalonBookingCatalogSectionProps = {
   salonCoverImageUrl: string
   authenticated: boolean
   customerReviews?: SalonReview[]
-  cancellationPolicy?: SalonCancellationPolicy
   offers?: SalonOffer[]
+  glammzoOffers?: GlammzoOffer[]
 }
 
 export function SalonBookingCatalogSection({
@@ -67,8 +67,8 @@ export function SalonBookingCatalogSection({
   salonCoverImageUrl,
   authenticated,
   customerReviews = [],
-  cancellationPolicy,
   offers = [],
+  glammzoOffers = [],
 }: SalonBookingCatalogSectionProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState<CatalogFilterId>("all")
@@ -355,6 +355,7 @@ export function SalonBookingCatalogSection({
   const assistantProps = {
     services,
     offers,
+    glammzoOffers,
     selectedIds,
     selectedServices,
     extraServices,
@@ -498,7 +499,6 @@ export function SalonBookingCatalogSection({
         salonName={salonName}
         salonCoverImageUrl={salonCoverImageUrl}
         authenticated={authenticated}
-        cancellationPolicy={cancellationPolicy}
         open={detailPackageOpen}
         onOpenChange={setDetailPackageOpen}
         onAddPackage={addPackage}

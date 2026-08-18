@@ -1,4 +1,4 @@
-import type { SalonCancellationPolicy, SalonReview, SalonService } from "@/types/salon"
+import type { SalonReview, SalonService } from "@/types/salon"
 
 export type ServiceDetailContent = {
   highlight: string | null
@@ -189,30 +189,6 @@ export function buildServiceDetailContent(
   }
 }
 
-export function getPackagePerfectFor(packageName: string, description: string) {
-  const haystack = `${packageName} ${description}`.toLowerCase()
-  const matches: string[] = []
-
-  if (haystack.includes("bridal") || haystack.includes("wedding")) {
-    matches.push("Brides & wedding guests", "Pre-wedding prep", "Special occasions")
-  }
-  if (haystack.includes("glow") || haystack.includes("facial") || haystack.includes("skin")) {
-    matches.push("Skin refresh", "Event-ready glow", "Self-care days")
-  }
-  if (haystack.includes("hair")) {
-    matches.push("Complete hair refresh", "Style makeovers", "Maintenance visits")
-  }
-  if (haystack.includes("spa") || haystack.includes("relax")) {
-    matches.push("Stress relief", "Weekend pampering", "Recovery days")
-  }
-
-  if (matches.length === 0) {
-    return ["Value seekers", "First-time guests", "Complete salon visits"]
-  }
-
-  return [...new Set(matches)].slice(0, 4)
-}
-
 export function getPackageBenefits(services: SalonService[]) {
   const unique = new Set<string>()
   for (const service of services) {
@@ -221,21 +197,4 @@ export function getPackageBenefits(services: SalonService[]) {
     }
   }
   return Array.from(unique).slice(0, 6)
-}
-
-export function getPackageTerms(policy?: SalonCancellationPolicy) {
-  if (!policy) return []
-
-  const terms: string[] = []
-  if (policy.freeCancelHours > 0) {
-    terms.push(`Free cancellation up to ${policy.freeCancelHours} hours before your appointment.`)
-  }
-  if (policy.cancellationFeePercent && policy.cancellationFeePercent > 0) {
-    terms.push(`Late cancellations may incur a ${policy.cancellationFeePercent}% fee.`)
-  }
-  if (policy.depositRequired && policy.depositPercent) {
-    terms.push(`A ${policy.depositPercent}% deposit may be required to confirm your booking.`)
-  }
-
-  return terms
 }

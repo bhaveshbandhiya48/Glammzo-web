@@ -136,7 +136,7 @@ export function AppointmentCard({ booking, authenticated, index = 0 }: Appointme
           className={
             isDesktop
               ? "flex h-full w-[min(92vw,440px)] flex-col gap-0 overflow-hidden p-0"
-              : "flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-t-2xl p-0"
+              : "flex max-h-[92dvh] flex-col gap-0 overflow-hidden rounded-t-2xl p-0"
           }
         >
           <SheetHeader className="sr-only">

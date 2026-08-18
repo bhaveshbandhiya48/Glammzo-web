@@ -18,7 +18,9 @@ import {
   canConsumerCancelBooking,
   canConsumerRebookBooking,
   canConsumerRescheduleBooking,
+  canLeaveBookingReview,
   getConsumerCancelBlockedReason,
+  getConsumerRescheduleBlockedReason,
 } from "@/lib/bookings/booking-status"
 import {
   buildBookHref,
@@ -50,18 +52,30 @@ export function BookingOrderSummary({
   const rebookHref = buildBookHref(booking.salonId, serviceIds, authenticated)
   const bookingReference = booking.id.slice(0, 8).toUpperCase()
   const rescheduleAppointmentId = booking.crmAppointmentId ?? booking.id
-  const canReschedule = canConsumerRescheduleBooking(booking.status)
-  const canCancel = canConsumerCancelBooking(booking.status, booking.startsAt ?? null)
+  const cancelNoticeHours = booking.cancelNoticeHours
+  const canReschedule = canConsumerRescheduleBooking(
+    booking.status,
+    booking.startsAt,
+  )
+  const canCancel = canConsumerCancelBooking(
+    booking.status,
+    booking.startsAt,
+    cancelNoticeHours,
+  )
   const cancelBlockedReason =
     canConsumerCancelBooking(booking.status) && !canCancel
-      ? getConsumerCancelBlockedReason(booking.startsAt ?? null)
+      ? getConsumerCancelBlockedReason(booking.startsAt, cancelNoticeHours)
+      : null
+  const rescheduleBlockedReason =
+    canConsumerRescheduleBooking(booking.status) && !canReschedule
+      ? getConsumerRescheduleBlockedReason(booking.startsAt)
       : null
   const canRebook = canConsumerRebookBooking(booking.status)
-  const canLeaveReview =
-    booking.status === "completed" &&
-    booking.isCrmCompleted &&
-    Boolean(booking.crmAppointmentId) &&
-    !booking.hasVerifiedReview
+  const canLeaveReview = canLeaveBookingReview({
+    status: booking.status,
+    crmAppointmentId: booking.crmAppointmentId,
+    hasVerifiedReview: booking.hasVerifiedReview,
+  })
   const isCompleted =
     Boolean(booking.isCrmCompleted) || booking.status === "completed"
   const displayNotes = formatBookingNotesForDisplay(booking.notes)
@@ -69,11 +83,17 @@ export function BookingOrderSummary({
   const showSalonPaymentLabel =
     hasPayAtSalonNote(booking.notes) || isCompleted || breakdown.hasAdjustments
   const salonPaymentLabel = isCompleted ? "Paid at salon" : "Pay at salon"
-  const hasActions = canReschedule || canCancel || canRebook || canLeaveReview || Boolean(cancelBlockedReason)
+  const hasActions =
+    canReschedule ||
+    canCancel ||
+    canRebook ||
+    canLeaveReview ||
+    Boolean(cancelBlockedReason) ||
+    Boolean(rescheduleBlockedReason)
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col bg-background", className)}>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+    <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain bg-background", className)}>
+      <div className="min-h-0 flex-1">
         {/* Order header */}
         <div className="border-b border-border/60 px-5 py-5 pr-14">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -214,39 +234,65 @@ export function BookingOrderSummary({
             />
           </div>
         </div>
-      </div>
 
-      {hasActions ? (
-        <div className="shrink-0 border-t border-border/70 bg-card px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {cancelBlockedReason ? (
-            <p className="mb-3 text-sm text-foreground/65">{cancelBlockedReason}</p>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            {canReschedule ? (
-              <Button asChild variant="outline" className="min-w-0 flex-1 rounded-full">
-                <Link href={`/dashboard/bookings/${rescheduleAppointmentId}/reschedule`}>
-                  Reschedule
-                </Link>
-              </Button>
-            ) : null}
-            {canCancel ? (
-              <CancelBookingButton bookingId={booking.crmAppointmentId ?? booking.id} />
-            ) : null}
-            {canRebook ? (
-              <Button asChild className="min-w-0 flex-1 rounded-full">
-                <Link href={rebookHref}>Book again</Link>
-              </Button>
-            ) : null}
-            {canLeaveReview && booking.crmAppointmentId ? (
-              <LeaveReviewDialog
-                appointmentId={booking.crmAppointmentId}
-                salonName={booking.salonName}
-                staffName={booking.staffName}
-              />
+        {booking.hasVerifiedReview && booking.review ? (
+          <div className="border-t border-border/60 px-5 py-4">
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-foreground/45 uppercase">
+              Your review
+            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {booking.review.rating}/5 · {booking.review.reviewType}
+            </p>
+            {booking.review.comment ? (
+              <p className="mt-1 text-sm leading-relaxed text-foreground/65">
+                {booking.review.comment}
+              </p>
             ) : null}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+
+        {hasActions ? (
+          <div className="sticky bottom-0 border-t border-border/70 bg-card px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {rescheduleBlockedReason ? (
+              <p className="mb-3 text-sm text-foreground/65">{rescheduleBlockedReason}</p>
+            ) : null}
+            {cancelBlockedReason ? (
+              <p className="mb-3 text-sm text-foreground/65">{cancelBlockedReason}</p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              {canLeaveReview && booking.crmAppointmentId ? (
+                <LeaveReviewDialog
+                  appointmentId={booking.crmAppointmentId}
+                  salonName={booking.salonName}
+                  staffName={booking.staffName}
+                />
+              ) : null}
+              {canReschedule ? (
+                <Button asChild variant="outline" className="min-w-0 flex-1 rounded-full">
+                  <Link href={`/dashboard/bookings/${rescheduleAppointmentId}/reschedule`}>
+                    Reschedule
+                  </Link>
+                </Button>
+              ) : null}
+              {canCancel ? (
+                <CancelBookingButton
+                  bookingId={booking.crmAppointmentId ?? booking.id}
+                  noticeHours={cancelNoticeHours}
+                />
+              ) : null}
+              {canRebook ? (
+                <Button
+                  asChild
+                  variant={canLeaveReview ? "outline" : "default"}
+                  className="min-w-0 flex-1 rounded-full"
+                >
+                  <Link href={rebookHref}>Book again</Link>
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

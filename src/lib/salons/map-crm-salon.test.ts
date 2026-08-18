@@ -113,10 +113,10 @@ describe("mapCrmSalonToWeb", () => {
     ])
     expect(mapped.cancellationPolicy).toMatchObject({
       freeCancelHours: 24,
-      cancellationFeePercent: 20,
-      depositRequired: true,
-      depositPercent: 10,
     })
+    expect(mapped.cancellationPolicy).not.toHaveProperty("cancellationFeePercent")
+    expect(mapped.cancellationPolicy).not.toHaveProperty("depositRequired")
+    expect(mapped.cancellationPolicy).not.toHaveProperty("depositPercent")
     expect(mapped.gallery).toContain(
       "https://images.unsplash.com/canonical-gallery.jpg",
     )

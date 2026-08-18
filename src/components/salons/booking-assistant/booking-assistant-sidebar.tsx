@@ -6,12 +6,16 @@ import { AnimatePresence, motion } from "framer-motion"
 
 import { BookingSummaryCard } from "@/components/salons/booking-assistant/booking-summary-card"
 import { RecommendationCard } from "@/components/salons/booking-assistant/recommendation-card"
+import { PromoSuccessDialog } from "@/components/salons/booking-assistant/promo-success-dialog"
 import { SavingsCard } from "@/components/salons/booking-assistant/savings-card"
 import { OfferEligibilityBanner } from "@/components/salons/offers/offer-eligibility-banner"
 import {
   buildBookingLineItems,
+  isGlammzoSpotlightOfferId,
+  listGlammzoSpotlightOffers,
+  listSpotlightOffers,
+  mergeSpotlightOffers,
   pickRecommendedAddOn,
-  pickSpotlightOffer,
 } from "@/components/salons/booking-assistant/assistant-utils"
 import { AnimatedPrice } from "@/components/salons/booking-assistant/animated-price"
 import { Button } from "@/components/ui/button"
@@ -21,8 +25,10 @@ import {
   eligibleServicesForOffer,
   offerNotCoveredMessage,
   offerValidationMessage,
+  type AppliedOfferDiscount,
 } from "@/lib/salons/offer-utils"
 import { buildBookHref } from "@/lib/bookings/utils"
+import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import type { SalonOffer, SalonPackage, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
@@ -30,6 +36,7 @@ import { cn } from "@/lib/utils"
 export type BookingAssistantSidebarProps = {
   services: SalonService[]
   offers: SalonOffer[]
+  glammzoOffers?: GlammzoOffer[]
   selectedIds: string[]
   selectedServices: SalonService[]
   extraServices: SalonService[]
@@ -49,6 +56,7 @@ export type BookingAssistantSidebarProps = {
 export function BookingAssistantSidebar({
   services,
   offers,
+  glammzoOffers = [],
   selectedIds,
   selectedServices,
   extraServices,
@@ -65,7 +73,14 @@ export function BookingAssistantSidebar({
 }: BookingAssistantSidebarProps) {
   const [appliedOfferId, setAppliedOfferId] = useState<string | null>(null)
   const [applyError, setApplyError] = useState<string | null>(null)
+  const [applyErrorOfferId, setApplyErrorOfferId] = useState<string | null>(null)
   const [addedRecommendationId, setAddedRecommendationId] = useState<string | null>(null)
+  const [celebrationDiscount, setCelebrationDiscount] =
+    useState<AppliedOfferDiscount | null>(null)
+  const [celebrationKind, setCelebrationKind] = useState<"discount" | "cashback">(
+    "discount",
+  )
+  const [celebrationOpen, setCelebrationOpen] = useState(false)
 
   const subtotal = useMemo(
     () =>
@@ -87,33 +102,111 @@ export function BookingAssistantSidebar({
     [services, selectedIds, selectedPackage, subtotal],
   )
 
-  const appliedOffer =
+  const hasCart = selectedIds.length > 0 || Boolean(selectedPackage)
+
+  const spotlightOffers = useMemo(() => {
+    const salonSpotlights = listSpotlightOffers(offers, offerInput)
+    const glammzoSpotlights = listGlammzoSpotlightOffers(glammzoOffers, {
+      subtotal,
+      hasCart,
+    })
+    return mergeSpotlightOffers(salonSpotlights, glammzoSpotlights)
+  }, [offers, glammzoOffers, offerInput, subtotal, hasCart])
+
+  const appliedSpotlight =
     appliedOfferId != null
-      ? offers.find((offer) => offer.id === appliedOfferId) ?? null
+      ? spotlightOffers.find((item) => item.offer.id === appliedOfferId) ?? null
       : null
 
+  const appliedOffer = appliedSpotlight?.offer ?? null
+  const appliedIsGlammzo = Boolean(appliedSpotlight?.isGlammzo)
+
   const spotlight = useMemo(() => {
-    if (appliedOffer) {
-      return (
-        pickSpotlightOffer([appliedOffer], offerInput) ??
-        pickSpotlightOffer(offers, offerInput)
-      )
-    }
-    return pickSpotlightOffer(offers, offerInput)
-  }, [appliedOffer, offers, offerInput])
+    if (appliedSpotlight) return appliedSpotlight
+    return (
+      spotlightOffers.find((item) => item.isBestForCart) ??
+      spotlightOffers[0] ??
+      null
+    )
+  }, [appliedSpotlight, spotlightOffers])
 
   const discountResult = useMemo(() => {
-    if (!appliedOffer) return null
+    if (!appliedOffer || appliedIsGlammzo) return null
     const result = applyOfferDiscount(appliedOffer, offerInput)
     return "error" in result ? null : result
-  }, [appliedOffer, offerInput])
+  }, [appliedOffer, appliedIsGlammzo, offerInput])
+
+  const savingsItems = useMemo(() => {
+    return spotlightOffers.map((item) => {
+      const isApplied = Boolean(
+        appliedOffer && appliedOffer.id === item.offer.id,
+      )
+
+      if (item.isGlammzo) {
+        const belowMin = hasCart && item.amountToUnlock > 0
+        const ineligible = hasCart && belowMin
+        return {
+          spotlight: {
+            ...item,
+            currentSavings: isApplied
+              ? item.offer.discountValue
+              : item.currentSavings,
+          },
+          applied: isApplied,
+          ineligible,
+          applyError:
+            applyError && applyErrorOfferId === item.offer.id ? applyError : null,
+          eligibleServices: [] as SalonService[],
+        }
+      }
+
+      const isAppliedWithDiscount = Boolean(isApplied && discountResult)
+      const currentSavings = isAppliedWithDiscount
+        ? (discountResult?.discountAmount ?? item.currentSavings)
+        : item.currentSavings
+
+      let ineligible = false
+      let message: string | null = null
+
+      if (hasCart) {
+        const result = applyOfferDiscount(item.offer, offerInput)
+        if ("error" in result) {
+          ineligible = true
+          if (result.error === "no_eligible_services") {
+            message = offerNotCoveredMessage(item.offer)
+          } else if (result.error !== "below_min_order") {
+            message = offerValidationMessage(result.error)
+          }
+        }
+      }
+
+      const itemApplyError =
+        applyError && applyErrorOfferId === item.offer.id ? applyError : message
+
+      return {
+        spotlight: { ...item, currentSavings },
+        applied: isAppliedWithDiscount,
+        ineligible,
+        applyError: itemApplyError,
+        eligibleServices: eligibleServicesForOffer(item.offer, services),
+      }
+    })
+  }, [
+    spotlightOffers,
+    appliedOffer,
+    discountResult,
+    hasCart,
+    offerInput,
+    applyError,
+    applyErrorOfferId,
+    services,
+  ])
 
   const spotlightEligibility = useMemo(() => {
-    if (!spotlight) {
+    if (!spotlight || spotlight.isGlammzo) {
       return { ineligible: false, message: null as string | null }
     }
 
-    const hasCart = selectedIds.length > 0 || Boolean(selectedPackage)
     if (!hasCart) {
       return { ineligible: false, message: null }
     }
@@ -130,34 +223,48 @@ export function BookingAssistantSidebar({
       }
     }
 
+    if (result.error === "below_min_order") {
+      return { ineligible: true, message: null }
+    }
+
     return {
       ineligible: true,
       message: offerValidationMessage(result.error),
     }
-  }, [spotlight, selectedIds.length, selectedPackage, offerInput])
+  }, [spotlight, hasCart, offerInput])
 
-  // Drop a previously applied offer if the cart no longer qualifies.
+  // Drop a previously applied salon offer if the cart no longer qualifies.
   useEffect(() => {
-    if (!appliedOffer) return
+    if (!appliedOffer || appliedIsGlammzo) return
     const result = applyOfferDiscount(appliedOffer, offerInput)
     if (!("error" in result)) return
 
     setAppliedOfferId(null)
+    if (result.error === "below_min_order") {
+      setApplyError(null)
+      setApplyErrorOfferId(null)
+      return
+    }
+    setApplyErrorOfferId(appliedOffer.id)
     setApplyError(
       result.error === "no_eligible_services"
         ? offerNotCoveredMessage(appliedOffer)
         : offerValidationMessage(result.error),
     )
-  }, [appliedOffer, offerInput])
+  }, [appliedOffer, appliedIsGlammzo, offerInput])
+
+  // Drop Glammzo cashback if cart is empty or falls below min spend.
+  useEffect(() => {
+    if (!appliedSpotlight?.isGlammzo) return
+    if (!hasCart || appliedSpotlight.amountToUnlock > 0) {
+      setAppliedOfferId(null)
+      setApplyError(null)
+      setApplyErrorOfferId(null)
+    }
+  }, [appliedSpotlight, hasCart])
 
   const discount = discountResult?.discountAmount ?? 0
   const estimatedTotal = Math.max(0, subtotal - discount)
-
-  const spotlightEligibleServices = useMemo(() => {
-    if (!spotlight) return []
-    return eligibleServicesForOffer(spotlight.offer, services)
-  }, [spotlight, services])
-
   const lines = useMemo(
     () =>
       buildBookingLineItems({
@@ -179,16 +286,22 @@ export function BookingAssistantSidebar({
     return pickRecommendedAddOn(services, selectedIds)
   }, [hasSelection, addedRecommendationId, services, selectedIds])
 
+  const appliedPromoCode =
+    appliedOffer && (appliedIsGlammzo || discountResult)
+      ? appliedOffer.code
+      : undefined
+
   const bookHref = buildBookHref(
     salonId,
     selectedIds,
     authenticated,
     selectedPackage?.id,
-    discountResult ? appliedOffer?.code : undefined,
+    appliedPromoCode,
   )
 
   useEffect(() => {
     setApplyError(null)
+    setApplyErrorOfferId(null)
   }, [selectedIds.join("|"), selectedPackage?.id])
 
   useEffect(() => {
@@ -219,7 +332,9 @@ export function BookingAssistantSidebar({
         }}
       />
 
-      {spotlight && (selectedIds.length > 0 || selectedPackage) ? (
+      {spotlight &&
+      !spotlight.isGlammzo &&
+      (selectedIds.length > 0 || selectedPackage) ? (
         <OfferEligibilityBanner
           offer={spotlight.offer}
           qualifies={!spotlightEligibility.ineligible}
@@ -229,54 +344,89 @@ export function BookingAssistantSidebar({
 
       <SavingsCard
         className="hidden lg:block"
-        spotlight={
-          spotlight
-            ? {
-                ...spotlight,
-                currentSavings: discountResult?.discountAmount ?? spotlight.currentSavings,
-              }
-            : null
-        }
-        applied={Boolean(
-          appliedOffer &&
-            spotlight &&
-            appliedOffer.id === spotlight.offer.id &&
-            discountResult,
-        )}
-        ineligible={spotlightEligibility.ineligible}
-        applyError={applyError ?? (spotlightEligibility.ineligible ? spotlightEligibility.message : null)}
-        eligibleServices={spotlightEligibleServices}
-        onViewEligibleServices={
-          spotlight && onViewEligibleServices
-            ? () => onViewEligibleServices(spotlight.offer)
-            : undefined
-        }
-        onApply={() => {
-          if (!spotlight) return
-
-          const hasCart = selectedIds.length > 0 || Boolean(selectedPackage)
+        items={savingsItems}
+        hasCart={hasCart}
+        onViewEligibleServices={onViewEligibleServices}
+        onApply={(offer) => {
           if (!hasCart) {
+            setApplyErrorOfferId(offer.id)
             setApplyError("Add a service before applying this offer.")
             return
           }
 
-          const result = applyOfferDiscount(spotlight.offer, offerInput)
+          if (isGlammzoSpotlightOfferId(offer.id)) {
+            const glammzoItem = spotlightOffers.find(
+              (item) => item.offer.id === offer.id,
+            )
+            if (!glammzoItem || glammzoItem.amountToUnlock > 0) {
+              setApplyError(null)
+              setApplyErrorOfferId(null)
+              return
+            }
+            if (!offer.code) {
+              setApplyErrorOfferId(offer.id)
+              setApplyError("This Glammzo offer has no promo code.")
+              return
+            }
+
+            setApplyError(null)
+            setApplyErrorOfferId(null)
+            setAppliedOfferId(offer.id)
+            setCelebrationKind("cashback")
+            setCelebrationDiscount({
+              offerId: offer.id,
+              code: offer.code,
+              title: offer.title,
+              discountType: "fixed",
+              discountValue: offer.discountValue,
+              subtotal,
+              discountAmount: offer.discountValue,
+              finalTotal: subtotal,
+            })
+            setCelebrationOpen(true)
+            return
+          }
+
+          const result = applyOfferDiscount(offer, offerInput)
           if ("error" in result) {
             setAppliedOfferId(null)
+            if (result.error === "below_min_order") {
+              setApplyError(null)
+              setApplyErrorOfferId(null)
+              return
+            }
+            setApplyErrorOfferId(offer.id)
             setApplyError(
               result.error === "no_eligible_services"
-                ? offerNotCoveredMessage(spotlight.offer)
+                ? offerNotCoveredMessage(offer)
                 : offerValidationMessage(result.error),
             )
             return
           }
 
           setApplyError(null)
-          setAppliedOfferId(spotlight.offer.id)
+          setApplyErrorOfferId(null)
+          setAppliedOfferId(offer.id)
+          setCelebrationKind("discount")
+          setCelebrationDiscount(result)
+          setCelebrationOpen(true)
         }}
         onClear={() => {
           setAppliedOfferId(null)
           setApplyError(null)
+          setApplyErrorOfferId(null)
+          setCelebrationDiscount(null)
+          setCelebrationOpen(false)
+        }}
+      />
+
+      <PromoSuccessDialog
+        open={celebrationOpen}
+        discount={celebrationDiscount}
+        rewardKind={celebrationKind}
+        onOpenChange={(open) => {
+          setCelebrationOpen(open)
+          if (!open) setCelebrationDiscount(null)
         }}
       />
 
@@ -327,3 +477,4 @@ export function BookingAssistantSidebar({
     </aside>
   )
 }
+

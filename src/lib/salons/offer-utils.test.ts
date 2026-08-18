@@ -29,6 +29,10 @@ function makeOffer(overrides: Partial<SalonOffer> = {}): SalonOffer {
     maxRedemptions: null,
     redemptionCount: 0,
     isActive: true,
+    minOrderRupees: null,
+    customerEligibility: "all_customers",
+    terms: null,
+    ctaLabel: "Book now",
     ...overrides,
   }
 }

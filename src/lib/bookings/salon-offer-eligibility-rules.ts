@@ -11,7 +11,7 @@ export const SALON_OFFER_ID_NOTE_MARKER = "offer_id:"
 
 export type SalonOfferEligibility = PromoReservationResult | {
   ok: false
-  reason: "sign_in_required"
+  reason: "sign_in_required" | "new_customers_only"
   message: string
 }
 
@@ -25,6 +25,10 @@ export function salonOfferReservedMessage(code: string) {
 
 export function salonOfferSignInMessage() {
   return "Sign in to apply this promo code."
+}
+
+export function salonOfferNewCustomerOnlyMessage(code: string) {
+  return `${code} is for new customers only at this salon.`
 }
 
 export function evaluateSalonOfferReservations(

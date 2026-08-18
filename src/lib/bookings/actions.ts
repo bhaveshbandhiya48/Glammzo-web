@@ -17,7 +17,7 @@ import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
 import { addBooking } from "@/lib/bookings/store"
 import { getSession, updateSessionProfile } from "@/lib/auth/session"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
-import { normalizeCustomerPhone } from "@/lib/phone/normalize"
+import { guardCreateBooking } from "@/lib/bookings/guard-create-booking"
 import { isValidEmail } from "@/lib/validations/email"
 import type { Booking } from "@/types/booking"
 
@@ -33,6 +33,21 @@ async function persistBookingProfile(customerName: string, customerEmail: string
   })
 }
 
+function bookingErrorPath(
+  salonId: string,
+  serviceIds: string[],
+  error: string,
+  extras?: { packageId?: string; promoCode?: string },
+) {
+  const query = new URLSearchParams({
+    services: serviceIds.join(","),
+    error,
+  })
+  if (extras?.packageId) query.set("package", extras.packageId)
+  if (extras?.promoCode) query.set("promo", extras.promoCode)
+  return `/book/${salonId}?${query.toString()}`
+}
+
 export async function createBookingAction(formData: FormData) {
   const session = await getSession()
   if (!session) redirect("/login?next=/explore")
@@ -44,15 +59,23 @@ export async function createBookingAction(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim()
   const customerName = String(formData.get("customerName") ?? session.name ?? "").trim()
   const customerEmail = String(formData.get("customerEmail") ?? session.email ?? "").trim()
-  const customerPhone = String(
-    formData.get("customerPhone") ?? session.phone ?? "",
-  ).trim()
   const preferredStaffId = String(formData.get("preferredStaffId") ?? "").trim() || undefined
   const packageId = String(formData.get("packageId") ?? "").trim()
   const promoCode = String(formData.get("promoCode") ?? "").trim()
   const marketingOptIn = parseMarketingOptIn(formData)
   const useWallet = String(formData.get("useWallet") ?? "") === "1"
   const useFreeService = String(formData.get("useFreeService") ?? "") === "1"
+
+  const gated = await guardCreateBooking(session.phone)
+  if (!gated.ok) {
+    if (gated.code === "no_session_phone") {
+      redirect(`/login?next=/book/${encodeURIComponent(salonId)}`)
+    } else {
+      const pendingServiceIds = parseServiceIds(serviceIdsRaw)
+      redirect(bookingErrorPath(salonId, pendingServiceIds, "rate_limit", { packageId }))
+    }
+  }
+  const customerPhone = gated.customerPhone
 
   const salon = await getSalonById(salonId)
   const serviceIds = parseServiceIds(serviceIdsRaw)
@@ -86,7 +109,7 @@ export async function createBookingAction(formData: FormData) {
       appointmentDate: date,
       startTime: time,
       customerName,
-      customerPhone: normalizeCustomerPhone(customerPhone),
+      customerPhone,
       customerEmail,
       notes: notes || undefined,
       preferredStaffId,
@@ -262,7 +285,9 @@ export async function rescheduleBookingAction(formData: FormData) {
             ? "contact_salon"
             : result.code === "pending"
               ? "reschedule_pending"
-              : "reschedule"
+              : result.code === "too_soon"
+                ? "reschedule_too_soon"
+                : "reschedule"
       redirect(`/dashboard/bookings/${appointmentId}/reschedule?error=${code}`)
     }
 

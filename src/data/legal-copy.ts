@@ -369,6 +369,8 @@ export const CANCELLATION_POLICY = {
         "The appointment is already completed.",
         "The booking has already been cancelled, declined, or expired.",
         "The salon has marked the visit as no-show or otherwise closed the booking.",
+        "Less than 4 hours remain before the appointment start time (reschedule).",
+        "Less than 2 hours remain before the appointment start time (cancel).",
         "Technical or operational restrictions prevent further changes.",
       ],
     },

@@ -63,7 +63,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
         <Card className="rounded-xl">
           <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
-              Cancellations must be made at least 2 hours before your appointment. Please
+              This booking is too close to the appointment time to cancel online. Please
               contact the salon if you need help.
             </p>
           </CardContent>
@@ -75,6 +75,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           <CardContent className="px-5 py-3.5 sm:px-6">
             <p className="text-sm text-destructive/90">
               We couldn&apos;t reschedule this booking. Please try again or contact the salon.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {params.error === "reschedule_too_soon" ? (
+        <Card className="rounded-xl">
+          <CardContent className="px-5 py-3.5 sm:px-6">
+            <p className="text-sm text-destructive/90">
+              Reschedules must be made at least 4 hours before your appointment. Please contact
+              the salon if you need help.
             </p>
           </CardContent>
         </Card>

@@ -169,8 +169,8 @@ export const SALON_NEAR_ME_FAQS = [
     answer: GEO_GLAMMZO_DEFINITION,
   },
   {
-    question: "Is there a launch offer when I book my first salon service?",
+    question: "Are there Glammzo offers or cashback on bookings?",
     answer:
-      "Yes. Use the launch promo code shown on Glammzo when you book. After your first completed visit, ₹200 cashback is added to your Glammzo wallet.",
+      "Yes, when Glammzo publishes an offer. Active offers appear on Explore and salon pages — apply the promo code at checkout. Cashback (if any) is added to your Glammzo wallet after a completed visit.",
   },
 ] as const

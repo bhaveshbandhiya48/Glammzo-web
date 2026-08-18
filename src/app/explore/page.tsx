@@ -15,7 +15,7 @@ import { ExploreFeaturedGrid } from "@/components/explore/explore-featured-grid"
 import { ExploreFilters } from "@/components/explore/explore-filters"
 import { ExploreResultsSection } from "@/components/explore/explore-results-section"
 import { ExploreCityComingSoon } from "@/components/explore/explore-city-coming-soon"
-import { First200CashbackBanner } from "@/components/marketing/first-200-cashback-banner"
+import { MarketingOfferStrip } from "@/components/marketing/marketing-offer-strip"
 import {
   ExplorePageTitle,
   ExplorePartnerSubtitle,
@@ -166,7 +166,7 @@ export default async function ExplorePage({
     <>
       <Navbar />
       <main className="page-main">
-        <First200CashbackBanner showBookCta={false} />
+        <MarketingOfferStrip showBookCta={false} />
         <PageSection tone="base" className="!border-b-0 !pt-4 !pb-12 sm:!pt-20 sm:!pb-28">
           <PageHeader
             eyebrow="Explore"

@@ -2,7 +2,8 @@ import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { CrmOfferRow } from "@/lib/salons/crm-types"
-import { isLaunchPromoCode } from "@/lib/marketing/launch-promo"
+import { isLaunchPromoCode, LAUNCH_PROMO_ACTIVE } from "@/lib/marketing/launch-promo"
+import { getGlammzoCashbackOfferByCode } from "@/lib/marketing/glammzo-offers"
 import {
   applyOfferDiscount,
   normalizePromoCode,
@@ -23,7 +24,7 @@ export async function fetchSalonOfferByCode(
   const { data, error } = await supabase
     .from("salon_offers")
     .select(
-      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, salon_offer_services(service_id)",
+      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id)",
     )
     .eq("salon_id", salonId)
     .eq("is_active", true)
@@ -36,6 +37,7 @@ export async function fetchSalonOfferByCode(
   }
 
   const row = data as CrmOfferRow
+  const minPaise = row.min_order_paise
 
   return {
     id: row.id,
@@ -51,6 +53,16 @@ export async function fetchSalonOfferByCode(
     maxRedemptions: row.max_redemptions,
     redemptionCount: row.redemption_count ?? 0,
     isActive: row.is_active,
+    minOrderRupees:
+      minPaise != null && Number.isFinite(minPaise) && minPaise > 0
+        ? Math.round(minPaise / 100)
+        : null,
+    customerEligibility:
+      row.customer_eligibility === "new_customers_only"
+        ? "new_customers_only"
+        : "all_customers",
+    terms: row.terms?.trim() || null,
+    ctaLabel: row.cta_label?.trim() || "Book now",
   }
 }
 
@@ -70,8 +82,14 @@ export async function resolveBookingOfferDiscount(input: {
     return { ok: true, discount: null }
   }
 
-  if (isLaunchPromoCode(promoCode)) {
+  if (LAUNCH_PROMO_ACTIVE && isLaunchPromoCode(promoCode)) {
     // Launch code claims wallet cashback after visit — not a checkout discount.
+    return { ok: true, discount: null }
+  }
+
+  const glammzoCashback = await getGlammzoCashbackOfferByCode(promoCode)
+  if (glammzoCashback) {
+    // CMS Glammzo cashback offer — not an instant salon discount.
     return { ok: true, discount: null }
   }
 
@@ -87,6 +105,13 @@ export async function resolveBookingOfferDiscount(input: {
   })
 
   if ("error" in result) {
+    if (result.error === "below_min_order") {
+      const min = result.minOrderRupees ?? offer.minOrderRupees ?? 0
+      return {
+        ok: false,
+        error: `${offer.code} needs a booking of ₹${min} or more.`,
+      }
+    }
     return {
       ok: false,
       error:
@@ -124,9 +149,16 @@ export async function incrementSalonOfferRedemption(offerId: string) {
     return false
   }
 
+  const nextCount = row.redemption_count + 1
+  const shouldClose =
+    row.max_redemptions != null && nextCount >= row.max_redemptions
+
   const { error: updateError } = await supabase
     .from("salon_offers")
-    .update({ redemption_count: row.redemption_count + 1 })
+    .update({
+      redemption_count: nextCount,
+      ...(shouldClose ? { is_active: false } : {}),
+    })
     .eq("id", offerId)
     .eq("redemption_count", row.redemption_count)
 

@@ -1,4 +1,4 @@
-import { LAUNCH_PROMO_CODE, LAUNCH_CASHBACK_RUPEES, LAUNCH_CASHBACK_MIN_RUPEES } from "@/lib/marketing/launch-promo"
+import { LAUNCH_PROMO_ACTIVE } from "@/lib/marketing/launch-promo"
 
 export type HelpTopic = {
   id: string
@@ -88,7 +88,7 @@ export const HELP_CENTER = {
       summary: "Cancel, reschedule, or review appointment details.",
       steps: [
         "Go to My Appointments and open the booking you want to change.",
-        "To reschedule, choose Reschedule, pick a new slot, and confirm.",
+        "To reschedule, choose Reschedule, pick a new slot, and confirm. Reschedule is available until 4 hours before your appointment.",
         "To cancel, choose Cancel, select a reason, and confirm cancellation.",
         "Completed visits may allow leaving a review when prompted.",
         "If a salon declines or a request expires, you can book again anytime.",
@@ -105,7 +105,13 @@ export const HELP_CENTER = {
         "Totals shown during booking are estimates for the items you select.",
         "Unless checkout clearly says otherwise, pay at the salon for the visit.",
         "Glammzo wallet credit and free-service loyalty rewards can reduce what you pay at the salon.",
-        `Use promo code ${LAUNCH_PROMO_CODE} when you book ₹${LAUNCH_CASHBACK_MIN_RUPEES}+ to unlock ₹${LAUNCH_CASHBACK_RUPEES} wallet cashback after your first completed visit.`,
+        ...(LAUNCH_PROMO_ACTIVE
+          ? [
+              "Use an active Glammzo promo code at checkout to unlock wallet cashback after a completed visit (when offered).",
+            ]
+          : [
+              "When Glammzo publishes a cashback offer, apply the promo code at checkout — cashback credits to your wallet after the completed visit.",
+            ]),
         "Every 10 completed visits unlocks ₹999 off one service (free if that service costs ₹999 or less).",
         "Final charges may change if you add services or the salon applies taxes/fees.",
         "For refund questions on pay-at-salon visits, contact the salon directly.",

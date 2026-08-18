@@ -65,8 +65,8 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: [{ url: "/brand/glamzzo-icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/glamzzo-icon.svg" }],
+    icon: [{ url: "/brand/glamzzo-icon.svg?v=2", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/glamzzo-icon.svg?v=2" }],
   },
   manifest: "/manifest.webmanifest",
   appleWebApp: {

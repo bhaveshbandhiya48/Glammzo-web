@@ -1,5 +1,11 @@
 import type { BookingStatus } from "@/types/booking"
-import { canCancelWithNotice } from "@/lib/bookings/cancel-policy"
+import {
+  canCancelWithNotice,
+  canRescheduleWithNotice,
+  CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
+  CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS,
+  getCustomerCancelBlockedMessage,
+} from "@/lib/bookings/cancel-policy"
 
 export const BOOKING_SOURCE_GLAMZZO_WEB = "glamzzo_web" as const
 export const WEB_BOOKING_SOURCE_TAG = "source:glamzzo_web" as const
@@ -173,6 +179,7 @@ export function extractDeclineReasonForDisplay(input: {
 export function canConsumerCancelBooking(
   status: BookingStatus,
   startsAtIso?: string | null,
+  noticeHours: number = CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
 ) {
   if (status !== "pending" && status !== "confirmed" && status !== "upcoming") {
     return false
@@ -181,23 +188,85 @@ export function canConsumerCancelBooking(
     // Legacy callers without start time keep status-only check.
     return true
   }
-  return canCancelWithNotice(startsAtIso).allowed
+  return canCancelWithNotice(startsAtIso, noticeHours).allowed
 }
 
-export function getConsumerCancelBlockedReason(startsAtIso?: string | null) {
+export function getConsumerCancelBlockedReason(
+  startsAtIso?: string | null,
+  noticeHours: number = CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
+) {
   if (startsAtIso == null) return null
-  const result = canCancelWithNotice(startsAtIso)
+  const result = canCancelWithNotice(startsAtIso, noticeHours)
   if (result.allowed) return null
   if (result.reason === "too_soon") {
-    return "Cancellations must be made at least 2 hours before your appointment. Please contact the salon if you need help."
+    return getCustomerCancelBlockedMessage(noticeHours)
   }
   return "This booking can no longer be cancelled online."
 }
 
-export function canConsumerRescheduleBooking(status: BookingStatus) {
-  return status === "pending" || status === "confirmed" || status === "upcoming"
+export function canConsumerRescheduleBooking(
+  status: BookingStatus,
+  startsAtIso?: string | null,
+) {
+  if (status !== "pending" && status !== "confirmed" && status !== "upcoming") {
+    return false
+  }
+  if (startsAtIso === undefined) {
+    // Legacy callers without start time keep status-only check.
+    return true
+  }
+  return canRescheduleWithNotice(startsAtIso).allowed
+}
+
+export function getConsumerRescheduleBlockedReason(startsAtIso?: string | null) {
+  if (startsAtIso == null) return null
+  const result = canRescheduleWithNotice(startsAtIso)
+  if (result.allowed) return null
+  if (result.reason === "too_soon") {
+    return `Reschedules must be made at least ${CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS} hours before your appointment. Please contact the salon if you need help.`
+  }
+  return "This booking can no longer be rescheduled online."
 }
 
 export function canConsumerRebookBooking(status: BookingStatus) {
   return status === "completed" || status === "cancelled" || status === "declined" || status === "expired"
 }
+
+/**
+ * UI: customer can leave a review for visits shown as completed,
+ * when we have a CRM appointment id and no review yet.
+ */
+export function canLeaveBookingReview(input: {
+  status: BookingStatus
+  crmAppointmentId?: string | null
+  hasVerifiedReview?: boolean
+}) {
+  return (
+    input.status === "completed" &&
+    Boolean(input.crmAppointmentId) &&
+    !input.hasVerifiedReview
+  )
+}
+
+/**
+ * Server: allow reviews for CRM `completed`, or for past visits still in
+ * confirmed / checked_in / in_progress (UI already labels those "Completed").
+ */
+export function isCrmAppointmentEligibleForReview(input: {
+  status: string
+  appointmentDate: string
+}) {
+  if (input.status === "completed") return true
+
+  if (
+    input.status !== "confirmed" &&
+    input.status !== "checked_in" &&
+    input.status !== "in_progress"
+  ) {
+    return false
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  return input.appointmentDate < today
+}
+

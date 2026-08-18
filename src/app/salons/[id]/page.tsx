@@ -5,6 +5,7 @@ import { getSalonById, getSalons } from "@/lib/salons"
 import { getSession } from "@/lib/auth/session"
 import { isSalonFavorited } from "@/lib/favorites/server"
 import { trackListingView } from "@/lib/listing/track-listing-view"
+import { getGlammzoOffersForSalonDetail } from "@/lib/marketing/glammzo-offers"
 import { buildSalonJsonLd } from "@/lib/seo/salon-json-ld"
 import { SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 import { primarySalonCategory } from "@/lib/salons/salon-detail-utils"
@@ -103,7 +104,10 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
       ? await isSalonFavorited(session.phone, salon.crmSalonId)
       : false
 
-  const allSalons = await getSalons()
+  const [allSalons, glammzoOffers] = await Promise.all([
+    getSalons(),
+    getGlammzoOffersForSalonDetail({ city: salon.city, area: salon.area }),
+  ])
   const similarSalons = pickSimilarSalons(salon, allSalons)
 
   const pageUrl = `${SITE_URL}/salons/${encodeURIComponent(salon.id)}`
@@ -123,6 +127,7 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
           similarSalons={similarSalons}
           initialFavorited={initialFavorited}
           authenticated={Boolean(session)}
+          glammzoOffers={glammzoOffers}
         />
       </main>
       <Footer />

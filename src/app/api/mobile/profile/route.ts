@@ -1,6 +1,5 @@
 import {
-  CONSUMER_GENDER_OPTIONS,
-  type ConsumerGender,
+  isSelectableConsumerGender,
 } from "@/lib/auth/consumer-profile-constants"
 import {
   getConsumerProfile,
@@ -57,6 +56,9 @@ export async function PATCH(request: Request) {
       return jsonError(400, "Invalid JSON body.")
     }
 
+    const existing = await getConsumerProfile(session.phone)
+    const lockedGender = existing?.gender?.trim() || ""
+
     const name = typeof body.name === "string" ? body.name.trim() : ""
     const email = typeof body.email === "string" ? body.email.trim() : ""
     const genderRaw = typeof body.gender === "string" ? body.gender.trim() : ""
@@ -68,9 +70,15 @@ export async function PATCH(request: Request) {
     if (!name) fieldErrors.name = "Name is required."
     if (!email) fieldErrors.email = "Email is required."
     else if (!isValidEmail(email)) fieldErrors.email = "Enter a valid email address."
-    if (genderRaw && !CONSUMER_GENDER_OPTIONS.includes(genderRaw as ConsumerGender)) {
-      fieldErrors.gender = "Select a valid gender option."
+
+    if (lockedGender) {
+      if (genderRaw && genderRaw !== lockedGender) {
+        fieldErrors.gender = "Gender cannot be changed once saved."
+      }
+    } else if (genderRaw && !isSelectableConsumerGender(genderRaw)) {
+      fieldErrors.gender = "Select Male or Female."
     }
+
     if (dateOfBirthRaw && Number.isNaN(Date.parse(dateOfBirthRaw))) {
       fieldErrors.dateOfBirth = "Enter a valid date of birth."
     }
@@ -82,9 +90,10 @@ export async function PATCH(request: Request) {
       return jsonError(400, "Please check the form.", { fieldErrors })
     }
 
-    const gender =
-      genderRaw && CONSUMER_GENDER_OPTIONS.includes(genderRaw as ConsumerGender)
-        ? (genderRaw as ConsumerGender)
+    const gender = lockedGender
+      ? lockedGender
+      : isSelectableConsumerGender(genderRaw)
+        ? genderRaw
         : null
     const dateOfBirth =
       dateOfBirthRaw && !Number.isNaN(Date.parse(dateOfBirthRaw))

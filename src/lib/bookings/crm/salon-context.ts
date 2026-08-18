@@ -1,3 +1,4 @@
+import { resolveStaffImageUrl } from "@/lib/salons/staff-avatar"
 import "server-only"
 
 import { cache } from "react"
@@ -54,7 +55,7 @@ export async function loadSalonBookingContext(
     ] = await Promise.all([
       supabase
         .from("staff")
-        .select("id, full_name, designation, avatar_url")
+        .select("id, full_name, designation, gender, avatar_url")
         .eq("salon_id", crmSalonId)
         .eq("is_active", true)
         .eq("is_bookable", true)
@@ -99,6 +100,7 @@ export async function loadSalonBookingContext(
         id: string
         full_name: string
         designation: string | null
+        gender: "male" | "female" | null
         avatar_url: string | null
       }
 
@@ -106,7 +108,7 @@ export async function loadSalonBookingContext(
         id: staff.id,
         name: staff.full_name,
         role: staff.designation?.trim() || "Specialist",
-        imageUrl: staff.avatar_url,
+        imageUrl: resolveStaffImageUrl(staff.avatar_url, staff.gender),
       }
     })
 

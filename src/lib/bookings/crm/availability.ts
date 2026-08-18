@@ -414,7 +414,7 @@ export function getTimeSlotOptionsForDate(
       closed: true,
       closedMessage: preferredStaffId
         ? "This team member can’t take the selected services. Choose another person or clear the preference."
-        : "No team member is assigned to these services for online booking.",
+        : "This category has no staff assigned, so date and time can’t be selected. Choose another service or contact the salon.",
     }
   }
 

@@ -46,6 +46,11 @@ export const media = {
     t2: "/images/testimonials/t2.jpg",
     t3: "/images/testimonials/t3.jpg",
   },
+  staffAvatars: {
+    male: "/images/staff/avatar-male.svg",
+    female: "/images/staff/avatar-female.svg",
+    neutral: "/images/staff/avatar-neutral.svg",
+  },
 } as const
 
 export type CategoryMediaId = keyof typeof media.categories

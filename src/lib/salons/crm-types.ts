@@ -77,6 +77,7 @@ export type CrmStaffRow = {
   salon_id: string
   full_name: string
   designation: string | null
+  gender?: "male" | "female" | null
   avatar_url: string | null
   bio: string | null
   specialties: string[] | null
@@ -131,6 +132,10 @@ export type CrmOfferRow = {
   max_redemptions: number | null
   redemption_count: number
   is_active: boolean
+  min_order_paise?: number | null
+  customer_eligibility?: "all_customers" | "new_customers_only" | null
+  terms?: string | null
+  cta_label?: string | null
   salon_offer_services?: Array<{ service_id: string }> | null
 }
 

@@ -96,20 +96,24 @@ function ServiceDetailSummaryPanel({
           <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
             Service summary
           </p>
-          <SheetTitle className="font-heading text-xl leading-tight sm:text-2xl">
-            {service.name}
-          </SheetTitle>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-foreground/60">
-            <span>{service.category}</span>
+          <div className="space-y-2.5">
+            <SheetTitle className="font-heading text-xl leading-tight sm:text-2xl">
+              {service.name}
+            </SheetTitle>
             {content.rating !== null ? (
-              <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                <StarIcon className="size-4 fill-primary text-primary" />
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                <StarIcon className="size-3.5 fill-primary text-primary" />
                 {content.rating.toFixed(1)}
                 <span className="font-normal text-foreground/50">({content.reviewCount})</span>
               </span>
             ) : null}
           </div>
+
+          {content.about || content.highlight ? (
+            <p className="text-sm leading-relaxed text-foreground/70">
+              {content.about ?? content.highlight}
+            </p>
+          ) : null}
         </SheetHeader>
 
         <div className="mt-4 rounded-xl border border-border/60 bg-background/80 p-4">
@@ -128,12 +132,6 @@ function ServiceDetailSummaryPanel({
               </p>
             </div>
           </div>
-
-          {content.highlight ? (
-            <p className="mt-3 border-t border-border/50 pt-3 text-sm leading-relaxed text-foreground/65">
-              {content.highlight}
-            </p>
-          ) : null}
         </div>
 
         <ServiceDetailOffers offers={serviceOffers} className="mt-5" />
@@ -143,7 +141,7 @@ function ServiceDetailSummaryPanel({
             <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
               What&apos;s included
             </p>
-            <ul className="space-y-2.5 rounded-xl border border-border/60 bg-background/70 px-4 py-3.5">
+            <ul className="space-y-2.5">
               {content.includedSteps.map((item) => (
                 <li
                   key={item}
@@ -158,13 +156,6 @@ function ServiceDetailSummaryPanel({
                 </li>
               ))}
             </ul>
-          </div>
-        ) : content.about ? (
-          <div className="mt-5 space-y-2">
-            <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
-              About
-            </p>
-            <p className="text-sm leading-relaxed text-foreground/70">{content.about}</p>
           </div>
         ) : null}
 

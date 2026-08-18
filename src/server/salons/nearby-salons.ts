@@ -135,7 +135,7 @@ async function fetchActiveOffers(salonIds: string[]) {
   const { data, error } = await supabase
     .from("salon_offers")
     .select(
-      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, salon_offer_services(service_id)",
+      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id)",
     )
     .in("salon_id", salonIds)
     .eq("is_active", true)
@@ -149,6 +149,7 @@ async function fetchActiveOffers(salonIds: string[]) {
   const bySalon = new Map<string, SalonOffer[]>()
 
   for (const row of (data ?? []) as CrmOfferRow[]) {
+    const minPaise = row.min_order_paise
     const offer: SalonOffer = {
       id: row.id,
       code: row.code.trim().toUpperCase(),
@@ -163,6 +164,16 @@ async function fetchActiveOffers(salonIds: string[]) {
       maxRedemptions: row.max_redemptions,
       redemptionCount: row.redemption_count ?? 0,
       isActive: row.is_active,
+      minOrderRupees:
+        minPaise != null && Number.isFinite(minPaise) && minPaise > 0
+          ? Math.round(minPaise / 100)
+          : null,
+      customerEligibility:
+        row.customer_eligibility === "new_customers_only"
+          ? "new_customers_only"
+          : "all_customers",
+      terms: row.terms?.trim() || null,
+      ctaLabel: row.cta_label?.trim() || "Book now",
     }
     const list = bySalon.get(row.salon_id) ?? []
     list.push(offer)

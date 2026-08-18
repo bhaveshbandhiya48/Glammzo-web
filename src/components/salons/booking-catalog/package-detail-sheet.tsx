@@ -24,11 +24,9 @@ import {
 } from "@/lib/salons/catalog-utils"
 import {
   getPackageBenefits,
-  getPackagePerfectFor,
-  getPackageTerms,
 } from "@/lib/salons/service-detail-utils"
 import { buildBookHref, resolveServices } from "@/lib/bookings/utils"
-import type { SalonCancellationPolicy, SalonPackage, SalonService } from "@/types/salon"
+import type { SalonPackage, SalonService } from "@/types/salon"
 
 type PackageDetailSheetProps = {
   pkg: SalonPackage | null
@@ -37,7 +35,6 @@ type PackageDetailSheetProps = {
   salonName: string
   salonCoverImageUrl: string
   authenticated: boolean
-  cancellationPolicy?: SalonCancellationPolicy
   open: boolean
   onOpenChange: (open: boolean) => void
   onAddPackage: (pkg: SalonPackage) => void
@@ -67,7 +64,6 @@ export function PackageDetailSheet({
   salonName,
   salonCoverImageUrl,
   authenticated,
-  cancellationPolicy,
   open,
   onOpenChange,
   onAddPackage,
@@ -82,8 +78,6 @@ export function PackageDetailSheet({
   const packageServices = resolveServices(services, buildPackageServiceIds(pkg))
   const bookHref = buildBookHref(salonId, buildPackageServiceIds(pkg), authenticated, pkg.id)
   const benefits = getPackageBenefits(packageServices)
-  const perfectFor = getPackagePerfectFor(pkg.name, pkg.description)
-  const terms = getPackageTerms(cancellationPolicy)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -178,31 +172,6 @@ export function PackageDetailSheet({
                         <CheckIcon className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                         {item}
                       </li>
-                    ))}
-                  </ul>
-                </DetailSection>
-              ) : null}
-
-              {perfectFor.length > 0 ? (
-                <DetailSection title="Perfect for">
-                  <div className="flex flex-wrap gap-2">
-                    {perfectFor.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-foreground/70"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </DetailSection>
-              ) : null}
-
-              {terms.length > 0 ? (
-                <DetailSection title="Terms & conditions">
-                  <ul className="space-y-2 text-sm leading-relaxed text-foreground/70">
-                    {terms.map((term) => (
-                      <li key={term}>{term}</li>
                     ))}
                   </ul>
                 </DetailSection>

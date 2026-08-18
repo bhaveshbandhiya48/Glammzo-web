@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getSession } from "@/lib/auth/session"
+import { isCrmAppointmentEligibleForReview } from "@/lib/bookings/booking-status"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-types"
 
@@ -41,7 +42,7 @@ export async function createSalonReviewAction(formData: FormData) {
 
   const { data: appointment } = await supabase
     .from("appointments")
-    .select("id, salon_id, customer_id, staff_id, service_id, status")
+    .select("id, salon_id, customer_id, staff_id, service_id, status, appointment_date")
     .eq("id", appointmentId)
     .is("deleted_at", null)
     .maybeSingle()
@@ -50,7 +51,12 @@ export async function createSalonReviewAction(formData: FormData) {
     redirect(`/dashboard/profile?error=review#bookings`)
   }
 
-  if (appointment.status !== "completed") {
+  if (
+    !isCrmAppointmentEligibleForReview({
+      status: appointment.status,
+      appointmentDate: appointment.appointment_date,
+    })
+  ) {
     redirect(`/dashboard/profile?error=review#bookings`)
   }
 

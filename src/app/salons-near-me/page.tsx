@@ -33,7 +33,7 @@ import {
   slugifyLocalLabel,
 } from "@/lib/seo/local-landing"
 import { SEO_SALONS_NEAR_ME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
-import { LAUNCH_PROMO_CODE, LAUNCH_CASHBACK_RUPEES } from "@/lib/marketing/launch-promo"
+import { LAUNCH_PROMO_ACTIVE, LAUNCH_PROMO_CODE, LAUNCH_CASHBACK_RUPEES } from "@/lib/marketing/launch-promo"
 import { formatInr } from "@/lib/salons/catalog-utils"
 
 export const metadata: Metadata = {
@@ -92,13 +92,12 @@ function buildSteps(city: string) {
     },
     {
       title: "Book in minutes",
-      body: "Choose a slot, book online, and unlock ₹200 wallet cashback after your first completed visit.",
+      body: "Choose a slot, book online, and pay at the salon. Glammzo offers and wallet cashback apply when published.",
     },
   ]
 }
 
 export default async function SalonsNearMePage() {
-  const reward = formatInr(LAUNCH_CASHBACK_RUPEES)
   const browseCity = (await getBrowseCityFromCookies())?.trim() || DEFAULT_CITY_NAME
   const salons = await getSalons()
   const cityAreas = getSalonAreasForCity(salons, browseCity)
@@ -115,6 +114,7 @@ export default async function SalonsNearMePage() {
 
   const steps = buildSteps(browseCity)
   const exploreCityHref = `/explore?city=${encodeURIComponent(browseCity)}`
+  const reward = formatInr(LAUNCH_CASHBACK_RUPEES)
 
   return (
     <>
@@ -157,11 +157,18 @@ export default async function SalonsNearMePage() {
               </Button>
             </div>
 
-            <p className="mt-5 text-sm text-foreground/60">
-              Launch offer: book your first service and get {reward} cashback with code{" "}
-              <span className="font-semibold text-foreground">{LAUNCH_PROMO_CODE}</span> after your
-              first completed visit.
-            </p>
+            {LAUNCH_PROMO_ACTIVE ? (
+              <p className="mt-5 text-sm text-foreground/60">
+                Launch offer: book your first service and get {reward} cashback with code{" "}
+                <span className="font-semibold text-foreground">{LAUNCH_PROMO_CODE}</span> after your
+                first completed visit.
+              </p>
+            ) : (
+              <p className="mt-5 text-sm text-foreground/60">
+                Active Glammzo offers appear on Explore and salon pages — apply the promo code at
+                checkout when one is available.
+              </p>
+            )}
           </Container>
         </section>
 

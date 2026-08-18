@@ -10,6 +10,10 @@ import {
   getSalonTimeKey,
   normalizeTime,
 } from "@/lib/bookings/crm/time"
+import {
+  canRescheduleWithNotice,
+  CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS,
+} from "@/lib/bookings/cancel-policy"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -73,6 +77,7 @@ export async function rescheduleCrmWebBooking(input: {
         | "forbidden"
         | "pending"
         | "contact_salon"
+        | "too_soon"
     }
 > {
   const phoneDigits = normalizeCustomerPhoneDigits(input.phone)
@@ -95,6 +100,7 @@ export async function rescheduleCrmWebBooking(input: {
       appointment_date,
       start_time,
       end_time,
+      starts_at,
       booking_source,
       internal_notes,
       customers!inner(phone_normalized, full_name)
@@ -118,6 +124,7 @@ export async function rescheduleCrmWebBooking(input: {
     appointment_date: string
     start_time: string
     end_time: string
+    starts_at: string | null
     booking_source: string | null
     internal_notes: string | null
     customers:
@@ -138,6 +145,15 @@ export async function rescheduleCrmWebBooking(input: {
     row.status === "expired"
   ) {
     return { success: false, error: "This booking can no longer be rescheduled.", code: "invalid" }
+  }
+
+  const notice = canRescheduleWithNotice(row.starts_at)
+  if (!notice.allowed) {
+    return {
+      success: false,
+      error: `Reschedules must be made at least ${CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS} hours before your appointment.`,
+      code: "too_soon",
+    }
   }
 
   const declinedCount = await countDeclinedRescheduleAttempts(row.id)

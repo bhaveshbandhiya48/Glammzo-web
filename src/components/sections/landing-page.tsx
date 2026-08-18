@@ -14,7 +14,7 @@ import { StatementSection } from "@/components/sections/parts/statement-section"
 import { TestimonialsSection } from "@/components/sections/parts/testimonials-section"
 import { WhyChooseSection } from "@/components/sections/parts/why-choose-section"
 import { LaunchOfferCtaSection } from "@/components/sections/parts/launch-offer-cta-section"
-import { First200CashbackBanner } from "@/components/marketing/first-200-cashback-banner"
+import { MarketingOfferStrip } from "@/components/marketing/marketing-offer-strip"
 import { getBrowseCityFromCookies } from "@/lib/categories/browse-city"
 import { getBrowseDefaultCategories } from "@/lib/categories/default-service-categories"
 import { getSalons } from "@/lib/salons"
@@ -30,7 +30,7 @@ export async function LandingPage() {
     <MotionProvider>
       <Navbar />
       <main className="page-main">
-        <First200CashbackBanner />
+        <MarketingOfferStrip />
         <HeroSection />
         <MarqueeBand />
         <NearbySalonsMarqueeSection />

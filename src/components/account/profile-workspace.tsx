@@ -23,6 +23,7 @@ import {
   type ProfileNavSection,
 } from "@/lib/account/profile-nav"
 import {
+  LAUNCH_PROMO_ACTIVE,
   LAUNCH_PROMO_CODE,
   LAUNCH_CASHBACK_RUPEES,
 } from "@/lib/marketing/launch-promo"
@@ -86,6 +87,8 @@ function reasonLabel(reason: string) {
   switch (reason) {
     case "cashback_first200":
       return "Welcome cashback"
+    case "cashback_glammzo_offer":
+      return "Glammzo cashback"
     case "wallet_redeem":
       return "Used on booking"
     case "wallet_restore":
@@ -175,9 +178,19 @@ function SectionBody({
             {formatInr(balanceRupees)}
           </p>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-foreground/60">
-            Use code <span className="font-semibold text-foreground">{LAUNCH_PROMO_CODE}</span> when
-            you book. After your first completed visit, {launchCashback} cashback is added to this
-            wallet.
+            {LAUNCH_PROMO_ACTIVE ? (
+              <>
+                Use code <span className="font-semibold text-foreground">{LAUNCH_PROMO_CODE}</span>{" "}
+                when you book. After your first completed visit, {launchCashback} cashback is added
+                to this wallet.
+              </>
+            ) : (
+              <>
+                Wallet credit comes from Glammzo cashback offers and reimbursements. Apply an active
+                promo at checkout when one is available — cashback lands here after a completed
+                visit.
+              </>
+            )}
           </p>
         </div>
         <Button asChild>
@@ -242,8 +255,9 @@ function SectionBody({
       <div>
         {ledger.length === 0 ? (
           <p className="text-sm text-foreground/55">
-            No wallet activity yet. Book with code {LAUNCH_PROMO_CODE} and get {launchCashback}{" "}
-            cashback after your first completed visit.
+            {LAUNCH_PROMO_ACTIVE
+              ? `No wallet activity yet. Book with code ${LAUNCH_PROMO_CODE} and get ${launchCashback} cashback after your first completed visit.`
+              : "No wallet activity yet. When you claim a Glammzo cashback offer, credits appear here after the visit."}
           </p>
         ) : (
           <ul className="divide-y divide-border/60">

@@ -19,8 +19,8 @@ type FeaturedServicesSliderProps = {
   className?: string
 }
 
-/** Mobile: ~75% so next card peeks. Desktop: ~2.5 cards (2 full + half). */
-const CARD_WIDTH = "w-[75%] lg:w-[calc((100%-1.5rem)/2.5)]"
+/** Viewport shows ~2.5 cards (2 full + half of third). Gap is 0.75rem (gap-3). */
+const CARD_WIDTH = "w-[calc((100%-1.5rem)/2.5)]"
 const CARD_GAP_PX = 12
 
 export function FeaturedServicesSlider({
@@ -68,7 +68,7 @@ export function FeaturedServicesSlider({
     if (!container) return
 
     const firstCard = container.querySelector<HTMLElement>("[data-featured-card]")
-    const stride = (firstCard?.offsetWidth ?? container.clientWidth * 0.75) + CARD_GAP_PX
+    const stride = (firstCard?.offsetWidth ?? container.clientWidth / 2.5) + CARD_GAP_PX
     const nextIndex = Math.min(Math.max(index, 0), services.length - 1)
 
     container.scrollTo({ left: nextIndex * stride, behavior: "smooth" })
@@ -80,7 +80,7 @@ export function FeaturedServicesSlider({
   if (services.length === 1) {
     const service = services[0]!
     return (
-      <div className={cn("max-w-md", className)}>
+      <div className={cn("w-[calc((100%-1.5rem)/2.5)] max-w-xs", className)}>
         <FeaturedServiceCard
           service={service}
           badge={badges.get(service.id)}

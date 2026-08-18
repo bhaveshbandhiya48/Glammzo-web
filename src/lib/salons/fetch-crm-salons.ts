@@ -258,7 +258,7 @@ async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {
     supabase
       .from("staff")
       .select(
-        "id, salon_id, full_name, designation, avatar_url, bio, specialties, is_active, is_bookable, staff_roles(name)"
+        "id, salon_id, full_name, designation, gender, avatar_url, bio, specialties, is_active, is_bookable, staff_roles(name)"
       )
       .in("salon_id", salonIds)
       .eq("is_active", true)
@@ -500,7 +500,7 @@ async function fetchOffersForSalons(salonIds: string[]): Promise<CrmOfferRow[]> 
     const { data, error } = await supabase
       .from("salon_offers")
       .select(
-        "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, salon_offer_services(service_id)",
+        "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id)",
       )
       .in("salon_id", salonIds)
       .eq("is_active", true)

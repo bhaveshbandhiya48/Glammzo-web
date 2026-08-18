@@ -10,6 +10,10 @@ import {
   hasPendingRescheduleRequest,
   MAX_DECLINED_RESCHEDULE_ATTEMPTS,
 } from "@/lib/bookings/crm/reschedule-booking"
+import {
+  canRescheduleWithNotice,
+  CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS,
+} from "@/lib/bookings/cancel-policy"
 import { getSession } from "@/lib/auth/session"
 import { getSalonById } from "@/lib/salons"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -27,6 +31,9 @@ function rescheduleErrorMessage(error: string | undefined) {
   }
   if (error === "reschedule_pending") {
     return "You already have a reschedule request waiting for the salon. Please wait for their response."
+  }
+  if (error === "reschedule_too_soon") {
+    return `Reschedules must be made at least ${CUSTOMER_RESCHEDULE_MIN_NOTICE_HOURS} hours before your appointment. Please contact the salon if you need help.`
   }
   if (error === "contact_salon") {
     return null
@@ -61,6 +68,7 @@ export default async function RescheduleBookingPage({ params, searchParams }: Pa
       salon_id,
       appointment_date,
       start_time,
+      starts_at,
       duration_minutes,
       status,
       salons ( slug, id, phone, whatsapp_phone, name ),
@@ -78,6 +86,7 @@ export default async function RescheduleBookingPage({ params, searchParams }: Pa
     salon_id: string
     appointment_date: string
     start_time: string
+    starts_at: string | null
     duration_minutes: number
     status: string
     salons:
@@ -104,6 +113,10 @@ export default async function RescheduleBookingPage({ params, searchParams }: Pa
 
   if (row.status === "cancelled" || row.status === "completed" || row.status === "no_show") {
     redirect("/dashboard/profile?error=reschedule#bookings")
+  }
+
+  if (!canRescheduleWithNotice(row.starts_at).allowed) {
+    redirect("/dashboard/profile?error=reschedule_too_soon#bookings")
   }
 
   const salonRelation = Array.isArray(row.salons) ? row.salons[0] : row.salons

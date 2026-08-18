@@ -14,7 +14,7 @@ import {
   resolveServices,
   sumServiceDuration,
 } from "@/lib/bookings/utils"
-import { normalizeCustomerPhone } from "@/lib/phone/normalize"
+import { guardCreateBooking } from "@/lib/bookings/guard-create-booking"
 import { getSalonById } from "@/lib/salons"
 import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -29,7 +29,7 @@ export type MobileCreateBookingInput = {
   notes?: string
   customerName: string
   customerEmail: string
-  customerPhone: string
+  sessionPhone: string
   preferredStaffId?: string
   packageId?: string
   promoCode?: string
@@ -58,6 +58,15 @@ export async function getMobileCustomerBooking(
 export async function createMobileBooking(
   input: MobileCreateBookingInput,
 ): Promise<MobileCreateBookingResult> {
+  const gated = await guardCreateBooking(input.sessionPhone)
+  if (!gated.ok) {
+    return {
+      ok: false,
+      error: gated.message,
+      code: gated.code,
+    }
+  }
+
   const salon = await getSalonById(input.salonId)
   const serviceIds = parseServiceIds(input.serviceIds.join(","))
   const services = salon ? resolveServices(salon.services, serviceIds) : []
@@ -72,12 +81,12 @@ export async function createMobileBooking(
 
   const customerName = input.customerName.trim()
   const customerEmail = input.customerEmail.trim()
-  const customerPhone = input.customerPhone.trim()
+  const customerPhone = gated.customerPhone
 
-  if (!customerName || customerPhone.length < 8 || !isValidEmail(customerEmail)) {
+  if (!customerName || !isValidEmail(customerEmail)) {
     return {
       ok: false,
-      error: "Name, valid email, and phone are required.",
+      error: "Name and a valid email are required.",
       code: "contact",
     }
   }
@@ -102,7 +111,7 @@ export async function createMobileBooking(
     appointmentDate: input.date,
     startTime: input.time,
     customerName,
-    customerPhone: normalizeCustomerPhone(customerPhone),
+    customerPhone,
     customerEmail,
     notes: input.notes?.trim() || undefined,
     preferredStaffId: input.preferredStaffId,
@@ -227,7 +236,9 @@ export async function rescheduleMobileBooking(input: {
           ? "contact_salon"
           : result.code === "pending"
             ? "reschedule_pending"
-            : "reschedule"
+            : result.code === "too_soon"
+              ? "reschedule_too_soon"
+              : "reschedule"
     return {
       ok: false,
       error: result.error || "Could not reschedule booking.",

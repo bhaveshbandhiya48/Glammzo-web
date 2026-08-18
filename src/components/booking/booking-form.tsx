@@ -138,7 +138,7 @@ export function BookingForm({
   const [notes, setNotes] = useState("")
   const [customerName, setCustomerName] = useState(defaultCustomerName)
   const [customerEmail, setCustomerEmail] = useState(defaultCustomerEmail)
-  const [customerPhone, setCustomerPhone] = useState(defaultCustomerPhone)
+  const [customerPhone] = useState(defaultCustomerPhone)
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [appliedOffer, setAppliedOffer] = useState<AppliedOfferDiscount | null>(null)
   const [cashbackClaim, setCashbackClaim] = useState<CashbackClaim | null>(null)
@@ -255,6 +255,13 @@ export function BookingForm({
     if (!bookingContext || packageMode || selectedIds.length < 2) return false
     return !hasEligibleStaffForServices(bookingContext, selectedIds)
   }, [bookingContext, packageMode, selectedIds])
+
+  const noEligibleStaff = Boolean(
+    !packageMode &&
+      selectedIds.length > 0 &&
+      bookingContext &&
+      bookableStaff.length === 0,
+  )
 
   useEffect(() => {
     if (staffId && !bookableStaff.some((member) => member.id === staffId)) {
@@ -746,23 +753,25 @@ export function BookingForm({
             </Label>
             <Input
               id="customerPhone"
-              name="customerPhone"
               type="tel"
-              required
+              readOnly
               value={customerPhone}
-              onChange={(event) => setCustomerPhone(event.target.value)}
-              onBlur={() => markTouched("customerPhone")}
               placeholder="10-digit mobile"
               autoComplete="tel"
               inputMode="numeric"
               aria-invalid={showFieldError("customerPhone") || undefined}
-              aria-describedby={showFieldError("customerPhone") ? "customerPhone-error" : undefined}
+              aria-describedby={
+                showFieldError("customerPhone") ? "customerPhone-error" : "customerPhone-hint"
+              }
               className={
                 showFieldError("customerPhone")
-                  ? "h-10 border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
-                  : "h-10"
+                  ? "h-10 cursor-default border-destructive bg-muted/40 focus-visible:border-destructive focus-visible:ring-destructive/20"
+                  : "h-10 cursor-default bg-muted/40"
               }
             />
+            <p id="customerPhone-hint" className="text-xs text-muted-foreground">
+              Bookings use the mobile number you signed in with.
+            </p>
             <FieldError
               id="customerPhone-error"
               message={showFieldError("customerPhone") ? fieldErrors.customerPhone : undefined}
@@ -832,6 +841,13 @@ export function BookingForm({
           </div>
         ) : null}
 
+        {!packageMode && selectedIds.length > 0 && bookingContext && bookableStaff.length === 0 ? (
+          <p className="text-sm leading-relaxed text-destructive" role="alert">
+            This category has no staff assigned, so date and time can&apos;t be selected. Choose
+            another service or contact the salon.
+          </p>
+        ) : null}
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="date" className="text-xs text-muted-foreground">
@@ -844,7 +860,7 @@ export function BookingForm({
               min={minDate}
               max={maxDate}
               value={date}
-              disabled={selectedServices.length === 0}
+              disabled={selectedServices.length === 0 || noEligibleStaff}
               onChange={(next) => {
                 setDate(next)
                 setTime("")
@@ -868,11 +884,16 @@ export function BookingForm({
                 setTime(next)
                 markTouched("time")
               }}
-              hasDate={Boolean(date)}
-              closed={useCrmSlots ? Boolean(crmSlotResult?.closed) : false}
-              closedMessage={crmSlotResult?.closedMessage}
+              hasDate={Boolean(date) && !noEligibleStaff}
+              disabled={noEligibleStaff}
+              closed={useCrmSlots ? Boolean(crmSlotResult?.closed) || noEligibleStaff : noEligibleStaff}
+              closedMessage={
+                noEligibleStaff
+                  ? "This category has no staff assigned, so date and time can’t be selected. Choose another service or contact the salon."
+                  : crmSlotResult?.closedMessage
+              }
               emptyMessage="No time slots for this day."
-              slots={timeSlotOptions}
+              slots={noEligibleStaff ? [] : timeSlotOptions}
               placeholder="Select time"
             />
             <input type="hidden" name="time" value={time} required />

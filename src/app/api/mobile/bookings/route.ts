@@ -57,10 +57,7 @@ export async function POST(request: Request) {
         typeof body.customerEmail === "string"
           ? body.customerEmail
           : session.email || "",
-      customerPhone:
-        typeof body.customerPhone === "string"
-          ? body.customerPhone
-          : session.phone,
+      sessionPhone: session.phone,
       preferredStaffId:
         typeof body.preferredStaffId === "string"
           ? body.preferredStaffId
@@ -74,7 +71,13 @@ export async function POST(request: Request) {
     })
 
     if (!result.ok) {
-      return jsonError(400, result.error, { code: result.code })
+      const status =
+        result.code === "rate_limit"
+          ? 429
+          : result.code === "no_session_phone"
+            ? 401
+            : 400
+      return jsonError(status, result.error, { code: result.code })
     }
 
     const booking = result.booking

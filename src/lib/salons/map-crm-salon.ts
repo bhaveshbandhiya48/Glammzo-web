@@ -1,4 +1,5 @@
 import { media } from "@/data/media"
+import { resolveStaffImageUrl } from "@/lib/salons/staff-avatar"
 import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { resolveAmenityIconId } from "@/lib/salons/amenity-catalog"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
@@ -211,7 +212,6 @@ function isMarketplaceReadyService(row: CrmServiceRow) {
     row.is_active &&
     Number(row.price) > 0 &&
     Number(row.duration_minutes) > 0 &&
-    (row.description?.trim().length ?? 0) >= 20 &&
     Boolean(relationCategory(row.service_categories))
   )
 }
@@ -221,7 +221,7 @@ function isMarketplaceReadyStaff(row: CrmStaffRow) {
     row.is_active &&
     row.is_bookable &&
     Boolean(row.designation?.trim()) &&
-    Boolean(row.avatar_url?.trim()) &&
+    (row.gender === "male" || row.gender === "female") &&
     row.category_ids.length > 0
   )
 }
@@ -234,7 +234,7 @@ function mapStaff(row: CrmStaffRow, reviewCount: number): SalonTeamMember {
     id: row.id,
     name: row.full_name,
     role: row.designation?.trim() || relationName(row.staff_roles) || "Specialist",
-    imageUrl: sanitizeSalonImageUrl(row.avatar_url) ?? media.testimonials.t1,
+    imageUrl: resolveStaffImageUrl(row.avatar_url, row.gender),
     bio,
     specialties,
     reviewCount,
@@ -294,33 +294,19 @@ function parseCancellationPolicy(settings: unknown): SalonCancellationPolicy | u
   if (!active) return undefined
 
   const freeCancelHoursRaw = (cancellation as { freeCancelHours?: unknown }).freeCancelHours
-  if (typeof freeCancelHoursRaw !== "number" || !Number.isFinite(freeCancelHoursRaw)) return undefined
+  const freeCancelHoursParsed =
+    typeof freeCancelHoursRaw === "number"
+      ? freeCancelHoursRaw
+      : typeof freeCancelHoursRaw === "string" && freeCancelHoursRaw.trim()
+        ? Number(freeCancelHoursRaw)
+        : Number.NaN
+  if (!Number.isFinite(freeCancelHoursParsed)) return undefined
 
-  const freeCancelHours = Math.max(0, Math.min(Math.round(freeCancelHoursRaw), 168))
-
-  const cancellationFeePercentRaw = (cancellation as { cancellationFeePercent?: unknown }).cancellationFeePercent
-  const cancellationFeePercent =
-    typeof cancellationFeePercentRaw === "number" && Number.isFinite(cancellationFeePercentRaw)
-      ? Math.max(0, Math.min(Math.round(cancellationFeePercentRaw), 100))
-      : undefined
-
-  const depositRequired =
-    typeof (cancellation as { depositRequired?: unknown }).depositRequired === "boolean"
-      ? (cancellation as { depositRequired?: boolean }).depositRequired
-      : undefined
-
-  const depositPercentRaw = (cancellation as { depositPercent?: unknown }).depositPercent
-  const depositPercent =
-    typeof depositPercentRaw === "number" && Number.isFinite(depositPercentRaw)
-      ? Math.max(0, Math.min(Math.round(depositPercentRaw), 100))
-      : undefined
+  const freeCancelHours = Math.max(0, Math.min(Math.round(freeCancelHoursParsed), 168))
 
   return {
     active: true,
     freeCancelHours,
-    ...(cancellationFeePercent !== undefined ? { cancellationFeePercent } : {}),
-    ...(depositRequired !== undefined ? { depositRequired } : {}),
-    ...(depositPercent !== undefined ? { depositPercent } : {}),
   }
 }
 
@@ -385,6 +371,7 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
 }
 
 function mapOffer(row: CrmOfferRow): SalonOffer {
+  const minPaise = row.min_order_paise
   return {
     id: row.id,
     code: row.code.trim().toUpperCase(),
@@ -399,6 +386,16 @@ function mapOffer(row: CrmOfferRow): SalonOffer {
     maxRedemptions: row.max_redemptions,
     redemptionCount: row.redemption_count ?? 0,
     isActive: row.is_active,
+    minOrderRupees:
+      minPaise != null && Number.isFinite(minPaise) && minPaise > 0
+        ? Math.round(minPaise / 100)
+        : null,
+    customerEligibility:
+      row.customer_eligibility === "new_customers_only"
+        ? "new_customers_only"
+        : "all_customers",
+    terms: row.terms?.trim() || null,
+    ctaLabel: row.cta_label?.trim() || "Book now",
   }
 }
 

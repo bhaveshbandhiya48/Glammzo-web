@@ -2,10 +2,6 @@ import Link from "next/link"
 import { GiftIcon, WalletIcon } from "lucide-react"
 
 import { formatInr } from "@/lib/salons/catalog-utils"
-import {
-  LAUNCH_PROMO_CODE,
-  LAUNCH_CASHBACK_RUPEES,
-} from "@/lib/marketing/launch-promo"
 import type { WalletLedgerEntry } from "@/lib/wallet/customer-wallet"
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +9,8 @@ function reasonLabel(reason: string) {
   switch (reason) {
     case "cashback_first200":
       return "Welcome cashback"
+    case "cashback_glammzo_offer":
+      return "Glammzo cashback"
     case "wallet_redeem":
       return "Used on booking"
     case "wallet_restore":
@@ -88,8 +86,8 @@ export function AccountWalletPanel({
         <h2 className="font-heading text-lg font-semibold">Wallet activity</h2>
         {ledger.length === 0 ? (
           <p className="mt-3 text-sm text-foreground/55">
-            No wallet activity yet. Book with code {LAUNCH_PROMO_CODE} and get{" "}
-            {formatInr(LAUNCH_CASHBACK_RUPEES)} cashback after your first completed visit.
+            No wallet activity yet. When you claim a Glammzo cashback offer, credits appear here after
+            the visit.
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-border/60">

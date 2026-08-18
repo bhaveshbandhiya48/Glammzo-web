@@ -5,6 +5,7 @@ import {
   requireBearerSession,
 } from "@/lib/auth/mobile-bearer"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
+import { isCrmAppointmentEligibleForReview } from "@/lib/bookings/booking-status"
 import { SALON_REVIEW_TYPES, type SalonReviewType } from "@/lib/reviews/review-types"
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
 
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
     const supabase = createAdminClient()
     const { data: appointment } = await supabase
       .from("appointments")
-      .select("id, salon_id, customer_id, staff_id, service_id, status")
+      .select("id, salon_id, customer_id, staff_id, service_id, status, appointment_date")
       .eq("id", appointmentId)
       .is("deleted_at", null)
       .maybeSingle()
@@ -62,7 +63,12 @@ export async function POST(request: Request) {
     if (!appointment) {
       return jsonError(404, "Booking not found.")
     }
-    if (appointment.status !== "completed") {
+    if (
+      !isCrmAppointmentEligibleForReview({
+        status: appointment.status,
+        appointmentDate: appointment.appointment_date,
+      })
+    ) {
       return jsonError(400, "You can only review completed visits.")
     }
 

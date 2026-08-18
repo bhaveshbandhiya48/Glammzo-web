@@ -95,6 +95,10 @@ function previewOfferFromBadge(
     maxRedemptions: null,
     redemptionCount: 0,
     isActive: true,
+    minOrderRupees: null,
+    customerEligibility: "all_customers",
+    terms: null,
+    ctaLabel: "Book now",
   }
 }
 

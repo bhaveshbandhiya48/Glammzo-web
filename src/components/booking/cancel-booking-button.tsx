@@ -9,6 +9,9 @@ import {
   CUSTOMER_CANCEL_REASON_OPTIONS,
   type CustomerCancelReasonId,
 } from "@/lib/bookings/booking-status"
+import {
+  CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
+} from "@/lib/bookings/cancel-policy"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,6 +28,7 @@ import { cn } from "@/lib/utils"
 
 type CancelBookingButtonProps = {
   bookingId: string
+  noticeHours?: number
 }
 
 function CancelSubmitButton({ disabled }: { disabled: boolean }) {
@@ -50,7 +54,10 @@ function CancelSubmitButton({ disabled }: { disabled: boolean }) {
   )
 }
 
-export function CancelBookingButton({ bookingId }: CancelBookingButtonProps) {
+export function CancelBookingButton({
+  bookingId,
+  noticeHours = CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
+}: CancelBookingButtonProps) {
   const [open, setOpen] = useState(false)
   const [reasonId, setReasonId] = useState<CustomerCancelReasonId | "">("")
   const [details, setDetails] = useState("")
@@ -84,7 +91,9 @@ export function CancelBookingButton({ bookingId }: CancelBookingButtonProps) {
         <DialogHeader className="gap-2 pb-1">
           <DialogTitle className="text-xl">Cancel this booking?</DialogTitle>
           <DialogDescription>
-            Tell us why you&apos;re cancelling so the salon can update their schedule.
+            {noticeHours <= 0
+              ? "You can cancel until the appointment starts. Tell the salon why you are cancelling."
+              : `Free cancellation until ${noticeHours} hours before your appointment. Tell the salon why you are cancelling.`}
           </DialogDescription>
         </DialogHeader>
 

@@ -35,7 +35,7 @@ export function FeaturedServiceCard({
   return (
     <article
       className={cn(
-        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border/70 bg-card/90 shadow-sm shadow-black/[0.03] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md hover:shadow-black/[0.05]",
+        "group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border/70 bg-card/90 shadow-sm shadow-black/[0.03] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md hover:shadow-black/[0.05]",
         selected && "border-primary",
         className,
       )}
@@ -59,30 +59,30 @@ export function FeaturedServiceCard({
           sizes="(max-width: 640px) 40vw, 22vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+        <div className="absolute top-1.5 left-1.5 z-10 flex flex-col items-start gap-1">
           {offer ? <ServiceOfferBadge offer={offer} /> : null}
           {!offer && badge ? (
-            <Badge className="rounded-full border-0 bg-background/95 px-2 py-0.5 text-[10px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
+            <Badge className="rounded-full border-0 bg-background/95 px-1.5 py-0 text-[9px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
               <span aria-hidden>{badge.emoji}</span> {badge.label}
             </Badge>
           ) : null}
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-3.5">
-        <h3 className="line-clamp-2 font-heading text-[15px] font-semibold leading-snug text-foreground">
+      <div className="flex flex-1 flex-col gap-1 p-2.5">
+        <h3 className="line-clamp-1 font-heading text-sm font-semibold leading-snug text-foreground">
           {service.name}
         </h3>
 
-        <p className="mt-1 truncate text-xs text-foreground/55">{service.category}</p>
+        <p className="truncate text-[11px] text-foreground/55">{service.category}</p>
 
-        <div className="mt-auto space-y-2.5 pt-2.5">
-          <div className="flex items-end justify-between gap-2">
-            <p className="inline-flex items-center gap-1 text-xs text-foreground/55">
+        <div className="mt-auto space-y-2 pt-1">
+          <div className="flex items-end justify-between gap-1.5">
+            <p className="inline-flex items-center gap-1 text-[11px] text-foreground/55">
               <ClockIcon className="size-3 shrink-0" />
               {service.durationMin} min
             </p>
-            <p className="font-heading text-base font-semibold text-foreground">
+            <p className="font-heading text-sm font-semibold text-foreground">
               <ServicePriceText service={service} />
             </p>
           </div>
@@ -90,9 +90,9 @@ export function FeaturedServiceCard({
           <Button
             type="button"
             variant={selected ? "outline" : "default"}
-            size="md"
+            size="sm"
             className={cn(
-              "relative z-10 w-full",
+              "relative z-10 h-8 w-full text-xs",
               selected &&
                 "border-border/80 bg-background text-foreground/75 hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive",
             )}

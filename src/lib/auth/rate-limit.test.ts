@@ -10,6 +10,7 @@ vi.mock("next/headers", () => ({
 
 import {
   AUTH_RATE_LIMIT_MESSAGE,
+  BOOKING_RATE_LIMIT_MESSAGE,
   enforceAuthRateLimit,
   normalizePhoneRateLimitIdentifier,
   resetAuthRateLimitsForTests,
@@ -33,5 +34,21 @@ describe("web auth rate limit", () => {
     await expect(enforceAuthRateLimit("otp-request", "9876543210")).resolves.toBe(
       AUTH_RATE_LIMIT_MESSAGE,
     )
+  })
+
+  it("limits repeated booking-create for the same phone", async () => {
+    for (let i = 0; i < 8; i += 1) {
+      await expect(enforceAuthRateLimit("booking-create", "9876543210")).resolves.toBeNull()
+    }
+    await expect(enforceAuthRateLimit("booking-create", "9876543210")).resolves.toBe(
+      BOOKING_RATE_LIMIT_MESSAGE,
+    )
+  })
+
+  it("does not share a global booking bucket when client IP is unknown", async () => {
+    for (let i = 0; i < 8; i += 1) {
+      await expect(enforceAuthRateLimit("booking-create", "9111111111")).resolves.toBeNull()
+    }
+    await expect(enforceAuthRateLimit("booking-create", "9222222222")).resolves.toBeNull()
   })
 })

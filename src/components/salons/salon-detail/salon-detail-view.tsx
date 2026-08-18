@@ -15,6 +15,7 @@ import { SalonDetailSimilar } from "@/components/salons/salon-detail/salon-detai
 import { SalonOffersSection } from "@/components/salons/salon-offers-section"
 import { SalonTeamPanel } from "@/components/salons/salon-team-panel"
 import { Container } from "@/components/layout/container"
+import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 import {
   SALON_SERVICES_SECTION_ID,
   scrollToSalonServicesSection,
@@ -26,6 +27,7 @@ type SalonDetailViewProps = {
   similarSalons: Salon[]
   initialFavorited: boolean
   authenticated: boolean
+  glammzoOffers?: GlammzoOffer[]
 }
 
 export function SalonDetailView({
@@ -33,9 +35,11 @@ export function SalonDetailView({
   similarSalons,
   initialFavorited,
   authenticated,
+  glammzoOffers = [],
 }: SalonDetailViewProps) {
   const galleryImages = salon.gallery
   const bookableOffers = filterBookableOffers(salon.offers)
+  const hasOffers = bookableOffers.length > 0 || glammzoOffers.length > 0
 
   useEffect(() => {
     const run = () => {
@@ -59,14 +63,15 @@ export function SalonDetailView({
       />
 
       <Container className="pb-28 md:pb-16">
-        {bookableOffers.length > 0 ? (
+        {hasOffers ? (
           <SalonDetailSection
             id="offers"
-            title="Offer for you"
+            title="Offers for you"
             className="!pt-6 sm:!pt-8"
           >
             <SalonOffersSection
               offers={bookableOffers}
+              glammzoOffers={glammzoOffers}
               services={salon.services}
               salonId={salon.id}
               authenticated={authenticated}
@@ -81,7 +86,7 @@ export function SalonDetailView({
           title="Services"
           subtitle="Search, filter by category, and add treatments to your visit."
           compactTitleMobile
-          className={bookableOffers.length > 0 ? undefined : "!pt-6 sm:!pt-8"}
+          className={hasOffers ? undefined : "!pt-6 sm:!pt-8"}
         >
           <SalonBookingCatalogSection
             services={salon.services}
@@ -91,8 +96,8 @@ export function SalonDetailView({
             salonCoverImageUrl={salon.coverImageUrl}
             authenticated={authenticated}
             customerReviews={salon.customerReviews}
-            cancellationPolicy={salon.cancellationPolicy}
             offers={salon.offers}
+            glammzoOffers={glammzoOffers}
           />
         </SalonDetailSection>
 

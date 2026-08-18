@@ -3,15 +3,11 @@ import "server-only"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
 
-import {
-  CONSUMER_GENDER_OPTIONS,
-  type ConsumerGender,
-} from "@/lib/auth/consumer-profile-constants"
-
 export type ConsumerProfileRecord = {
   fullName: string
   email: string
-  gender: ConsumerGender | null
+  /** Selectable male/female, or a legacy value once locked. */
+  gender: string | null
   dateOfBirth: string | null
   address: string | null
 }
@@ -24,10 +20,6 @@ type ConsumerProfileRow = {
   address: string | null
 }
 
-function isConsumerGender(value: string | null | undefined): value is ConsumerGender {
-  return Boolean(value && CONSUMER_GENDER_OPTIONS.includes(value as ConsumerGender))
-}
-
 function mapProfileRow(row: ConsumerProfileRow | null | undefined): ConsumerProfileRecord | null {
   if (!row) {
     return null
@@ -36,9 +28,9 @@ function mapProfileRow(row: ConsumerProfileRow | null | undefined): ConsumerProf
   return {
     fullName: row.full_name?.trim() ?? "",
     email: row.email?.trim() ?? "",
-    gender: isConsumerGender(row.gender) ? row.gender : null,
+    gender: row.gender?.trim() || null,
     dateOfBirth: row.date_of_birth ?? null,
-    address: row.address?.trim() ?? null,
+    address: row.address?.trim() || null,
   }
 }
 

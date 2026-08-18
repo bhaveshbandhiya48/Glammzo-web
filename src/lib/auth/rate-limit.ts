@@ -5,7 +5,10 @@ import { headers } from "next/headers"
 export const AUTH_RATE_LIMIT_MESSAGE =
   "Too many attempts. Please wait a few minutes and try again."
 
-export type AuthRateLimitScope = "otp-request" | "otp-verify"
+export const BOOKING_RATE_LIMIT_MESSAGE =
+  "Too many booking attempts. Please wait a few minutes and try again."
+
+export type AuthRateLimitScope = "otp-request" | "otp-verify" | "booking-create"
 
 type ScopeConfig = {
   ip: { limit: number; windowMs: number }
@@ -21,6 +24,16 @@ const SCOPE_CONFIG: Record<AuthRateLimitScope, ScopeConfig> = {
     ip: { limit: 30, windowMs: 15 * 60_000 },
     identifier: { limit: 10, windowMs: 15 * 60_000 },
   },
+  "booking-create": {
+    ip: { limit: 25, windowMs: 15 * 60_000 },
+    identifier: { limit: 8, windowMs: 15 * 60_000 },
+  },
+}
+
+const SCOPE_MESSAGE: Record<AuthRateLimitScope, string> = {
+  "otp-request": AUTH_RATE_LIMIT_MESSAGE,
+  "otp-verify": AUTH_RATE_LIMIT_MESSAGE,
+  "booking-create": BOOKING_RATE_LIMIT_MESSAGE,
 }
 
 type MemoryEntry = {
@@ -93,9 +106,17 @@ export async function enforceAuthRateLimit(
   const config = SCOPE_CONFIG[scope]
   const ip = await getServerActionClientIp()
   const phone = normalizePhoneRateLimitIdentifier(identifier)
+  const message = SCOPE_MESSAGE[scope]
 
-  if (!consumeMemoryLimit(`${scope}:ip:${ip}`, config.ip.limit, config.ip.windowMs)) {
-    return AUTH_RATE_LIMIT_MESSAGE
+  // When proxy headers are off, IP is "unknown". Do not share one global
+  // booking bucket across every customer — still throttle by phone.
+  const skipSharedUnknownIp = scope === "booking-create" && ip === "unknown"
+
+  if (
+    !skipSharedUnknownIp &&
+    !consumeMemoryLimit(`${scope}:ip:${ip}`, config.ip.limit, config.ip.windowMs)
+  ) {
+    return message
   }
 
   if (
@@ -106,7 +127,7 @@ export async function enforceAuthRateLimit(
       config.identifier.windowMs,
     )
   ) {
-    return AUTH_RATE_LIMIT_MESSAGE
+    return message
   }
 
   return null

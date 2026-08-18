@@ -7,6 +7,7 @@ export type OfferValidationError =
   | "expired"
   | "max_redemptions"
   | "no_eligible_services"
+  | "below_min_order"
 
 export type AppliedOfferDiscount = {
   offerId: string
@@ -126,6 +127,8 @@ export function offerValidationMessage(error: OfferValidationError) {
       return "This promo code has reached its usage limit."
     case "no_eligible_services":
       return "Offer not applied — this service isn't covered."
+    case "below_min_order":
+      return "This promo needs a higher booking total."
     default:
       return "This promo code cannot be used."
   }
@@ -220,7 +223,7 @@ function getDiscountableSubtotal(
 export function applyOfferDiscount(
   offer: SalonOffer,
   input: BookingPricingInput,
-): AppliedOfferDiscount | { error: OfferValidationError } {
+): AppliedOfferDiscount | { error: OfferValidationError; minOrderRupees?: number } {
   const validationError = getOfferValidationError(offer)
   if (validationError) {
     return { error: validationError }
@@ -231,6 +234,14 @@ export function applyOfferDiscount(
 
   if (discountableSubtotal <= 0) {
     return { error: "no_eligible_services" }
+  }
+
+  if (
+    offer.minOrderRupees != null &&
+    offer.minOrderRupees > 0 &&
+    subtotal < offer.minOrderRupees
+  ) {
+    return { error: "below_min_order", minOrderRupees: offer.minOrderRupees }
   }
 
   const discountAmount =
@@ -255,6 +266,27 @@ export function applyOfferDiscount(
     discountAmount,
     finalTotal: Math.max(0, subtotal - discountAmount),
   }
+}
+
+/** Discount amount for the current cart, ignoring min-order gate (for ranking / previews). */
+export function estimateOfferDiscountAmount(
+  offer: SalonOffer,
+  input: BookingPricingInput,
+): number {
+  if (getOfferValidationError(offer)) return 0
+
+  const subtotal = computeBookingSubtotal(input)
+  const discountableSubtotal = getDiscountableSubtotal(offer, input)
+  if (discountableSubtotal <= 0 || subtotal <= 0) return 0
+
+  if (offer.discountType === "percent") {
+    return Math.min(
+      subtotal,
+      Math.round((discountableSubtotal * offer.discountValue) / 100),
+    )
+  }
+
+  return Math.min(offer.discountValue, subtotal)
 }
 
 export function isServiceEligibleForOffer(offer: SalonOffer, serviceId: string) {

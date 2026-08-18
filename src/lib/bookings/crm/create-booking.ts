@@ -22,15 +22,26 @@ import { notifySalonNewWebBooking } from "@/lib/bookings/crm/notify-salon-web-bo
 import { notifyCustomerWebBookingPending } from "@/lib/bookings/crm/notify-customer-web-booking-pending"
 import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
 import {
+  fetchSalonOfferByCode,
   incrementSalonOfferRedemption,
   resolveBookingOfferDiscount,
 } from "@/lib/bookings/crm/validate-salon-offer"
 import { getSalonOfferEligibility } from "@/lib/bookings/salon-offer-eligibility"
-import { isLaunchPromoCode, LAUNCH_CASHBACK_MIN_RUPEES, LAUNCH_PROMO_CODE } from "@/lib/marketing/launch-promo"
+import {
+  isLaunchPromoCode,
+  LAUNCH_CASHBACK_MIN_RUPEES,
+  LAUNCH_PROMO_ACTIVE,
+  LAUNCH_PROMO_CODE,
+} from "@/lib/marketing/launch-promo"
 import {
   getLaunchPromoEligibility,
   LAUNCH_CASHBACK_NOTE_MARKER,
 } from "@/lib/marketing/launch-promo-eligibility"
+import {
+  buildGlammzoOfferCashbackNoteMarker,
+  getGlammzoCashbackOfferByCode,
+  getGlammzoOfferCashbackEligibility,
+} from "@/lib/marketing/glammzo-offers"
 import { normalizePromoCode } from "@/lib/salons/offer-utils"
 import {
   BOOKING_ENGINE_CONFIG,
@@ -255,10 +266,16 @@ export async function createCrmWebBooking(
   const appliedOffer = offerResult.discount
 
   if (appliedOffer) {
+    const offerForEligibility = await fetchSalonOfferByCode(
+      input.crmSalonId,
+      appliedOffer.code,
+    )
     const eligibility = await getSalonOfferEligibility({
       phone: customerPhone,
       offerId: appliedOffer.offerId,
       code: appliedOffer.code,
+      salonId: input.crmSalonId,
+      customerEligibility: offerForEligibility?.customerEligibility ?? "all_customers",
     })
     if (!eligibility.ok) {
       return {
@@ -394,7 +411,11 @@ export async function createCrmWebBooking(
           0,
         ))
 
-  if (input.promoCode?.trim() && isLaunchPromoCode(input.promoCode)) {
+  if (
+    LAUNCH_PROMO_ACTIVE &&
+    input.promoCode?.trim() &&
+    isLaunchPromoCode(input.promoCode)
+  ) {
     if (payableBeforeWallet < LAUNCH_CASHBACK_MIN_RUPEES) {
       return {
         success: false,
@@ -404,6 +425,50 @@ export async function createCrmWebBooking(
     }
 
     const eligibility = await getLaunchPromoEligibility(customerPhone)
+    if (!eligibility.ok) {
+      return {
+        success: false,
+        error: eligibility.message,
+        code: "invalid",
+      }
+    }
+  }
+
+  const glammzoCashbackOffer =
+    input.promoCode?.trim() &&
+    !(LAUNCH_PROMO_ACTIVE && isLaunchPromoCode(input.promoCode)) &&
+    !appliedOffer
+      ? await getGlammzoCashbackOfferByCode(input.promoCode)
+      : null
+
+  if (glammzoCashbackOffer) {
+    if (
+      glammzoCashbackOffer.maxClaims != null &&
+      glammzoCashbackOffer.claimsCount >= glammzoCashbackOffer.maxClaims
+    ) {
+      return {
+        success: false,
+        error: `${glammzoCashbackOffer.promoCode} has reached its maximum number of users.`,
+        code: "invalid",
+      }
+    }
+
+    if (payableBeforeWallet < glammzoCashbackOffer.minOrderRupees) {
+      return {
+        success: false,
+        error: `${glammzoCashbackOffer.promoCode} needs a booking of ₹${glammzoCashbackOffer.minOrderRupees} or more.`,
+        code: "invalid",
+      }
+    }
+
+    const eligibility = await getGlammzoOfferCashbackEligibility({
+      phone: customerPhone,
+      offerId: glammzoCashbackOffer.id,
+      code:
+        glammzoCashbackOffer.promoCode ??
+        normalizePromoCode(input.promoCode ?? "") ??
+        "",
+    })
     if (!eligibility.ok) {
       return {
         success: false,
@@ -471,8 +536,17 @@ export async function createCrmWebBooking(
   let internalNotes = "source:glamzzo_web"
   if (appliedOffer) {
     internalNotes += `|promo:${appliedOffer.code}|offer_id:${appliedOffer.offerId}|discount:${appliedOffer.discountAmount}`
-  } else if (input.promoCode?.trim() && isLaunchPromoCode(input.promoCode)) {
+  } else if (
+    LAUNCH_PROMO_ACTIVE &&
+    input.promoCode?.trim() &&
+    isLaunchPromoCode(input.promoCode)
+  ) {
     internalNotes += `|${LAUNCH_CASHBACK_NOTE_MARKER}${normalizePromoCode(input.promoCode)}`
+  } else if (glammzoCashbackOffer) {
+    internalNotes += `|${buildGlammzoOfferCashbackNoteMarker(
+      glammzoCashbackOffer.id,
+      glammzoCashbackOffer.promoCode ?? input.promoCode ?? "",
+    )}`
   }
   if (walletPaise > 0) {
     internalNotes += `|wallet_paise:${walletPaise}`

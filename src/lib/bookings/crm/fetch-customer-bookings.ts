@@ -5,6 +5,10 @@ import {
   extractDeclineReasonForDisplay,
   mapCrmAppointmentToBookingStatus,
 } from "@/lib/bookings/booking-status"
+import {
+  parseSalonCancelPolicyFromSettings,
+  resolveCustomerCancelNoticeHours,
+} from "@/lib/bookings/cancel-policy"
 import { parsePayAtSalonAmount } from "@/lib/bookings/utils"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -27,7 +31,13 @@ type AppointmentRow = {
   response_deadline: string | null
   created_at: string
   staff_id: string | null
-  salons: { id: string; name: string; slug: string; city: string | null } | null
+  salons: {
+    id: string
+    name: string
+    slug: string
+    city: string | null
+    settings?: unknown
+  } | null
   services: {
     id: string
     name: string
@@ -156,7 +166,7 @@ const APPOINTMENT_SELECT = `
   response_deadline,
   created_at,
   staff_id,
-  salons ( id, name, slug, city ),
+  salons ( id, name, slug, city, settings ),
   services ( id, name, price, duration_minutes ),
   staff ( full_name )
 `
@@ -188,6 +198,8 @@ function mapAppointmentRow(
     internalNotes: row.internal_notes,
     expiresAt: row.expires_at ?? row.response_deadline,
   })
+  const cancelPolicy = parseSalonCancelPolicyFromSettings(salon?.settings)
+  const cancelNoticeHours = resolveCustomerCancelNoticeHours(cancelPolicy)
 
   return {
     id: row.id,
@@ -205,6 +217,7 @@ function mapAppointmentRow(
       : undefined,
     status,
     startsAt: row.starts_at ?? undefined,
+    cancelNoticeHours,
     isCrmCompleted: row.status === "completed",
     hasVerifiedReview: Boolean(extras.review),
     review: extras.review,

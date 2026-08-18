@@ -45,6 +45,11 @@ export type SalonOffer = {
   maxRedemptions: number | null
   redemptionCount: number
   isActive: boolean
+  /** Minimum booking total in rupees; null = no minimum. */
+  minOrderRupees: number | null
+  customerEligibility: "all_customers" | "new_customers_only"
+  terms: string | null
+  ctaLabel: string
 }
 
 export type SalonPackage = {

@@ -101,14 +101,34 @@ export function ProfileSettingsForm({
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-3">
           <Label htmlFor="gender">Gender</Label>
-          <Select id="gender" name="gender" defaultValue={defaultGender} placeholder="Select gender">
+          {defaultGender ? (
+            <input type="hidden" name="gender" value={defaultGender} />
+          ) : null}
+          <Select
+            id="gender"
+            name={defaultGender ? undefined : "gender"}
+            defaultValue={defaultGender}
+            placeholder="Select gender"
+            disabled={Boolean(defaultGender)}
+          >
             <option value="">Select gender</option>
             {CONSUMER_GENDER_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {formatGenderLabel(option)}
               </option>
             ))}
+            {defaultGender &&
+            !CONSUMER_GENDER_OPTIONS.includes(
+              defaultGender as (typeof CONSUMER_GENDER_OPTIONS)[number],
+            ) ? (
+              <option value={defaultGender}>{formatGenderLabel(defaultGender)}</option>
+            ) : null}
           </Select>
+          {defaultGender ? (
+            <p className="text-sm text-foreground/60">
+              Gender can’t be changed after it’s saved.
+            </p>
+          ) : null}
           {state.ok === false && state.fieldErrors?.gender ? (
             <p className="text-sm text-destructive">{state.fieldErrors.gender}</p>
           ) : null}

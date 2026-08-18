@@ -1,12 +1,15 @@
 export function FeaturedServiceCardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-xl border border-border/60 bg-card/60">
+    <div className="animate-pulse overflow-hidden rounded-lg border border-border/60 bg-card/60">
       <div className="aspect-[4/3] w-full bg-muted/40" />
-      <div className="space-y-2 p-4">
-        <div className="h-4 w-3/4 rounded-md bg-muted/50" />
-        <div className="h-3 w-1/2 rounded-md bg-muted/40" />
-        <div className="h-3 w-2/3 rounded-md bg-muted/40" />
-        <div className="h-5 w-1/4 rounded-md bg-muted/50" />
+      <div className="space-y-1.5 p-2.5">
+        <div className="h-3.5 w-3/4 rounded-md bg-muted/50" />
+        <div className="h-2.5 w-1/3 rounded-md bg-muted/40" />
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="h-2.5 w-10 rounded-md bg-muted/40" />
+          <div className="h-3.5 w-9 rounded-md bg-muted/50" />
+        </div>
+        <div className="h-8 w-full rounded-md bg-muted/50" />
       </div>
     </div>
   )
@@ -50,7 +53,7 @@ export function FeaturedServicesSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="flex gap-3 overflow-hidden">
       {Array.from({ length: items }).map((_, index) => (
-        <div key={index} className="w-[75%] shrink-0 lg:w-[calc((100%-1.5rem)/2.5)]">
+        <div key={index} className="w-[calc((100%-1.5rem)/2.5)] shrink-0">
           <FeaturedServiceCardSkeleton />
         </div>
       ))}

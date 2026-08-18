@@ -36,14 +36,16 @@ function BookingTrustSection({
 }: {
   cancellationPolicy?: SalonCancellationPolicy | null
 }) {
-  const hasFreeCancellation =
-    cancellationPolicy?.active === true && cancellationPolicy.freeCancelHours > 0
+  const hasFreeCancellation = cancellationPolicy?.active === true
+  const noticeHours = cancellationPolicy?.freeCancelHours ?? 0
 
   const trustItems = [
     "Pay directly at the salon",
     "Instant booking confirmation",
     hasFreeCancellation
-      ? `Free cancellation before appointment (${cancellationPolicy!.freeCancelHours}h notice)`
+      ? noticeHours > 0
+        ? `Free cancellation until ${noticeHours} hours before your appointment`
+        : "Free cancellation until your appointment starts"
       : "Easily reschedule from My Bookings",
   ]
 

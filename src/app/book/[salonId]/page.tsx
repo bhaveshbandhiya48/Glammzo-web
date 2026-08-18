@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 export default async function BookPage({ params, searchParams }: Props) {
   const session = await getSession()
-  if (!session) redirect("/login")
+  if (!session?.phone?.trim()) redirect("/login")
 
   const { salonId } = await params
   const { services, serviceId, package: packageId, promo, error } = await searchParams
@@ -77,7 +77,12 @@ export default async function BookPage({ params, searchParams }: Props) {
           ) : null}
           {error === "contact" ? (
             <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
-              Please enter your name, email, and a valid mobile number to continue.
+              Please enter your name and a valid email to continue.
+            </p>
+          ) : null}
+          {error === "rate_limit" ? (
+            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+              Too many booking attempts. Please wait a few minutes and try again.
             </p>
           ) : null}
           {error === "booking" ? (

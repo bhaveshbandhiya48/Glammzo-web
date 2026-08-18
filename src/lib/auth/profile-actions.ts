@@ -8,7 +8,7 @@ import {
   upsertConsumerProfile,
 } from "@/lib/auth/consumer-profile"
 import {
-  CONSUMER_GENDER_OPTIONS,
+  isSelectableConsumerGender,
   type ConsumerGender,
 } from "@/lib/auth/consumer-profile-constants"
 import { deleteConsumerAccount } from "@/lib/auth/delete-consumer-account"
@@ -34,9 +34,7 @@ function parseGender(value: FormDataEntryValue | null): ConsumerGender | null {
     return null
   }
 
-  return CONSUMER_GENDER_OPTIONS.includes(raw as ConsumerGender)
-    ? (raw as ConsumerGender)
-    : null
+  return isSelectableConsumerGender(raw) ? raw : null
 }
 
 function parseDateOfBirth(value: FormDataEntryValue | null): string | null {
@@ -79,8 +77,15 @@ export async function updateProfileAction(
     fieldErrors.email = "Enter a valid email address."
   }
 
-  if (genderRaw && !CONSUMER_GENDER_OPTIONS.includes(genderRaw as ConsumerGender)) {
-    fieldErrors.gender = "Select a valid gender option."
+  const existing = session.phone ? await getConsumerProfile(session.phone) : null
+  const lockedGender = existing?.gender?.trim() || ""
+
+  if (lockedGender) {
+    if (genderRaw && genderRaw !== lockedGender) {
+      fieldErrors.gender = "Gender cannot be changed once saved."
+    }
+  } else if (genderRaw && !isSelectableConsumerGender(genderRaw)) {
+    fieldErrors.gender = "Select Male or Female."
   }
 
   if (dateOfBirthRaw && Number.isNaN(Date.parse(dateOfBirthRaw))) {
@@ -98,7 +103,7 @@ export async function updateProfileAction(
   const profile = {
     fullName: name,
     email,
-    gender: parseGender(genderRaw),
+    gender: lockedGender || parseGender(genderRaw),
     dateOfBirth: parseDateOfBirth(dateOfBirthRaw),
     address: address || null,
   }

@@ -19,7 +19,7 @@ export const siteCopy = {
     headlineAccent: "book in minutes.",
     subhead:
       "Discover salons nearby, see fixed prices, and confirm appointments without phone calls or guesswork.",
-    offerLine: "Book your first service and get ₹200 cashback",
+    offerLine: "Discover salons nearby and book in minutes",
     primaryCta: "Book your first service",
     secondaryCta: "See how it works",
     searchPlaceholder: "Service or salon",
@@ -27,12 +27,12 @@ export const siteCopy = {
     socialProof: "Trusted by early users across the city",
   },
   launchOfferCta: {
-    eyebrow: "Launch offer",
-    title: "Book your first service and get ₹200 cashback",
+    eyebrow: "Glammzo offers",
+    title: "Watch for Glammzo cashback and promos",
     subtitle:
-      "Complete your first visit and ₹200 lands in your Glammzo wallet for your next booking.",
+      "Active Glammzo offers appear on Explore and salon pages. Apply the promo code at checkout when one is available.",
     primaryCta: "Find a salon & book",
-    secondaryCta: "Copy offer code",
+    secondaryCta: "Browse offers",
   },
   statement: {
     eyebrow: "Why Glammzo",
@@ -172,7 +172,7 @@ export const whyChooseReasons = [
     id: "rewards",
     title: "Discounts & loyalty",
     description:
-      "Use launch offer codes for ₹200 wallet cashback, and every 10th completed service unlocks a free service (or ₹999 off).",
+      "Use Glammzo offer codes for wallet cashback when available, and every 10th completed service unlocks a free service (or ₹999 off).",
   },
 ] as const
 

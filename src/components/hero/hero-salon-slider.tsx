@@ -7,14 +7,15 @@ import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon, StarIcon } from "lucide-
 
 import { media } from "@/data/media"
 import { MirrorShine } from "@/components/hero/MirrorShine"
-import { sortSalonsByDistance } from "@/lib/geo"
 import type { DistanceOrigin } from "@/lib/explore-distance"
 import { formatDistanceKmShort } from "@/lib/maps/haversine"
+import {
+  pickHeroSalonSlides,
+  type SalonWithDistance,
+} from "@/lib/salons/pick-hero-salon-slides"
 import { isSalonInCity } from "@/lib/salons/city-filter"
 import { cn } from "@/lib/utils"
 import type { Salon } from "@/types/salon"
-
-type SalonWithDistance = Salon & { distanceKm: number }
 
 type HeroSalonSliderProps = {
   salons: Salon[]
@@ -29,7 +30,12 @@ function badgeForSalon(
   index: number,
   hasCoords: boolean,
   browseCity: string,
+  usedNearbyFallback: boolean,
 ): string {
+  if (salon.isFeatured && !usedNearbyFallback) {
+    return index === 0 ? "Featured for you" : "Featured"
+  }
+
   const sameCity = isSalonInCity(salon, browseCity)
 
   if (!hasCoords) {
@@ -44,7 +50,7 @@ function badgeForSalon(
 
   if (sameCity) return "In your city"
 
-  return salon.isFeatured ? "Featured partner" : "Popular partner"
+  return "Popular partner"
 }
 
 function HeroSalonSlide({
@@ -140,15 +146,14 @@ export function HeroSalonSlider({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
-  const slides = useMemo((): SalonWithDistance[] => {
-    if (salons.length === 0) return []
-
-    const ranked = sortSalonsByDistance(salons, origin.latitude, origin.longitude)
-    const local = ranked.filter((salon) => isSalonInCity(salon, browseCity))
-    const others = ranked.filter((salon) => !isSalonInCity(salon, browseCity))
-    const ordered = local.length > 0 ? [...local, ...others] : ranked
-
-    return ordered.slice(0, maxSlides)
+  const { slides, usedNearbyFallback } = useMemo(() => {
+    return pickHeroSalonSlides({
+      salons,
+      latitude: origin.latitude,
+      longitude: origin.longitude,
+      browseCity,
+      maxSlides,
+    })
   }, [salons, origin.latitude, origin.longitude, browseCity, maxSlides])
 
   const slideIdsKey = slides.map((slide) => slide.id).join("|")
@@ -221,13 +226,19 @@ export function HeroSalonSlider({
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         )}
         aria-roledescription="carousel"
-        aria-label="Nearby salons"
+        aria-label={usedNearbyFallback ? "Nearby salons" : "Featured salons"}
       >
         {slides.map((salon, index) => (
           <div key={salon.id} className="w-full shrink-0 snap-center">
             <HeroSalonSlide
               salon={salon}
-              badge={badgeForSalon(salon, index, hasPreciseOrigin, browseCity)}
+              badge={badgeForSalon(
+                salon,
+                index,
+                hasPreciseOrigin,
+                browseCity,
+                usedNearbyFallback,
+              )}
               showDistance={showDistance}
               isActive={index === activeIndex}
             />

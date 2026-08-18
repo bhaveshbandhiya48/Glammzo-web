@@ -6,8 +6,10 @@ import {
   calendarMonthKey,
   canCancelWithNotice,
   CUSTOMER_CANCEL_ENTITY_TYPE,
-  CUSTOMER_CANCEL_MIN_NOTICE_HOURS,
+  getCustomerCancelBlockedMessage,
   HIGH_CANCELLATION_MONTHLY_THRESHOLD,
+  parseSalonCancelPolicyFromSettings,
+  resolveCustomerCancelNoticeHours,
 } from "@/lib/bookings/cancel-policy"
 import { formatSlotLabel } from "@/lib/bookings/crm/availability"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
@@ -99,11 +101,12 @@ export async function cancelCrmWebBooking(
     return { success: false, error: "This booking can no longer be cancelled.", code: "invalid" }
   }
 
-  const notice = canCancelWithNotice(row.starts_at)
-  if (!notice.allowed) {
+  const noticeHours = await loadSalonCancelNoticeHours(supabase, row.salon_id)
+  const notice = canCancelWithNotice(row.starts_at, noticeHours)
+  if (!notice.allowed && notice.reason !== "missing_start") {
     return {
       success: false,
-      error: `Cancellations must be made at least ${CUSTOMER_CANCEL_MIN_NOTICE_HOURS} hours before your appointment.`,
+      error: getCustomerCancelBlockedMessage(noticeHours),
       code: "too_soon",
     }
   }
@@ -175,6 +178,22 @@ export async function cancelCrmWebBooking(
   })
 
   return { success: true }
+}
+
+async function loadSalonCancelNoticeHours(
+  supabase: ReturnType<typeof createAdminClient>,
+  salonId: string,
+) {
+  const { data } = await supabase
+    .from("salons")
+    .select("settings")
+    .eq("id", salonId)
+    .maybeSingle()
+
+  const policy = parseSalonCancelPolicyFromSettings(
+    (data as { settings?: unknown } | null)?.settings,
+  )
+  return resolveCustomerCancelNoticeHours(policy)
 }
 
 function resolveServiceNames(row: {
