@@ -172,46 +172,59 @@ export function computeBookingSubtotal({
   )
 }
 
+function extrasSubtotal(
+  serviceById: Map<string, SalonService>,
+  selectedServiceIds: string[],
+  packageServiceIds: Set<string>,
+) {
+  return selectedServiceIds
+    .filter((serviceId) => !packageServiceIds.has(serviceId))
+    .reduce((sum, serviceId) => sum + (serviceById.get(serviceId)?.price ?? 0), 0)
+}
+
 function getDiscountableSubtotal(
   offer: SalonOffer,
   input: BookingPricingInput,
 ) {
   const serviceById = new Map(input.services.map((service) => [service.id, service]))
+  const packageIds = offer.packageIds ?? []
+
+  if (offer.appliesTo === "all_services_and_packages") {
+    return computeBookingSubtotal(input)
+  }
 
   if (offer.appliesTo === "all_services") {
+    if (input.selectedPackage) {
+      const packageServiceIds = new Set(
+        input.selectedPackage.items.map((item) => item.serviceId),
+      )
+      return extrasSubtotal(serviceById, input.selectedServiceIds, packageServiceIds)
+    }
     return computeBookingSubtotal(input)
   }
 
   const eligibleIds = new Set(offer.serviceIds)
+  const eligiblePackageIds = new Set(packageIds)
 
   if (input.selectedPackage) {
     const packageServiceIds = input.selectedPackage.items.map((item) => item.serviceId)
-    const overlap = packageServiceIds.filter((serviceId) => eligibleIds.has(serviceId))
+    const extrasTotal = extrasSubtotal(
+      serviceById,
+      input.selectedServiceIds.filter((serviceId) => eligibleIds.has(serviceId)),
+      new Set(packageServiceIds),
+    )
 
+    if (eligiblePackageIds.has(input.selectedPackage.id)) {
+      return input.selectedPackage.packagePrice + extrasTotal
+    }
+
+    const overlap = packageServiceIds.filter((serviceId) => eligibleIds.has(serviceId))
     if (overlap.length === 0) {
-      const extraEligible = input.selectedServiceIds.filter(
-        (serviceId) => eligibleIds.has(serviceId),
-      )
-      return extraEligible.reduce(
-        (sum, serviceId) => sum + (serviceById.get(serviceId)?.price ?? 0),
-        0,
-      )
+      return extrasTotal
     }
 
     const packageEligibleShare =
       (overlap.length / packageServiceIds.length) * input.selectedPackage.packagePrice
-    const extraEligible = input.selectedServiceIds
-      .filter((serviceId) => eligibleIds.has(serviceId))
-      .filter(
-        (serviceId) =>
-          !input.selectedPackage!.items.some((item) => item.serviceId === serviceId),
-      )
-
-    const extrasTotal = extraEligible.reduce(
-      (sum, serviceId) => sum + (serviceById.get(serviceId)?.price ?? 0),
-      0,
-    )
-
     return Math.round(packageEligibleShare) + extrasTotal
   }
 
@@ -290,7 +303,12 @@ export function estimateOfferDiscountAmount(
 }
 
 export function isServiceEligibleForOffer(offer: SalonOffer, serviceId: string) {
-  if (offer.appliesTo === "all_services") return true
+  if (
+    offer.appliesTo === "all_services" ||
+    offer.appliesTo === "all_services_and_packages"
+  ) {
+    return true
+  }
   return offer.serviceIds.includes(serviceId)
 }
 
@@ -323,7 +341,10 @@ export function bestOfferForService(
 }
 
 export function eligibleServicesForOffer(offer: SalonOffer, services: SalonService[]) {
-  if (offer.appliesTo === "all_services") {
+  if (
+    offer.appliesTo === "all_services" ||
+    offer.appliesTo === "all_services_and_packages"
+  ) {
     return services
   }
   const eligibleIds = new Set(offer.serviceIds)
@@ -378,7 +399,12 @@ export function countOffersForServices(
 
   const serviceIds = new Set(services.map((service) => service.id))
   return bookable.filter((offer) => {
-    if (offer.appliesTo === "all_services") return true
+    if (
+      offer.appliesTo === "all_services" ||
+      offer.appliesTo === "all_services_and_packages"
+    ) {
+      return true
+    }
     return offer.serviceIds.some((id) => serviceIds.has(id))
   }).length
 }

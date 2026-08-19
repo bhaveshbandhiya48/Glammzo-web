@@ -26,7 +26,12 @@ type OfferTermRow = {
 }
 
 function offerAppliesToAllServices(offer: SalonOffer, services: SalonService[]) {
-  if (offer.appliesTo === "all_services") return true
+  if (
+    offer.appliesTo === "all_services" ||
+    offer.appliesTo === "all_services_and_packages"
+  ) {
+    return true
+  }
   if (services.length === 0) return false
   const eligible = eligibleServicesForOffer(offer, services)
   return eligible.length > 0 && eligible.length === services.length
@@ -54,14 +59,28 @@ function buildOfferTerms(offer: SalonOffer, services: SalonService[]): OfferTerm
   }
 
   if (offerAppliesToAllServices(offer, services)) {
-    items.push({ label: "Applied to all services" })
+    items.push({
+      label:
+        offer.appliesTo === "all_services_and_packages"
+          ? "Applied to all services and packages"
+          : "Applied to all services",
+    })
   } else {
     const eligible = eligibleServicesForOffer(offer, services)
-    if (eligible.length === 0) {
+    const packageCount = offer.packageIds?.length ?? 0
+    if (eligible.length === 0 && packageCount === 0) {
       items.push({ label: "Applies to selected services" })
     } else {
+      const serviceLabel =
+        eligible.length === 0
+          ? null
+          : `Applies to ${eligible.length} service${eligible.length === 1 ? "" : "s"}`
+      const packageLabel =
+        packageCount === 0
+          ? null
+          : `${packageCount} package${packageCount === 1 ? "" : "s"}`
       items.push({
-        label: `Applies to ${eligible.length} service${eligible.length === 1 ? "" : "s"}`,
+        label: [serviceLabel, packageLabel].filter(Boolean).join(" and ") || "Applies to selected services",
       })
       for (const service of eligible) {
         items.push({ label: service.name, indent: true })

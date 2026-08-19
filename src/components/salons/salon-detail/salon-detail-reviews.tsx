@@ -1,11 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { BadgeCheckIcon, StarIcon, ThumbsUpIcon } from "lucide-react"
+import { useMemo } from "react"
+import { BadgeCheckIcon, StarIcon } from "lucide-react"
 
 import type { SalonReview } from "@/types/salon"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 
 function StarRating({ value, className }: { value: number; className?: string }) {
   return (
@@ -42,8 +41,6 @@ function guestInitials(authorName: string) {
 }
 
 function ReviewCard({ review }: { review: SalonReview }) {
-  const [helpful, setHelpful] = useState(false)
-
   return (
     <article className="rounded-2xl border border-border/70 bg-card/90 p-6 shadow-sm transition duration-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
@@ -90,19 +87,6 @@ function ReviewCard({ review }: { review: SalonReview }) {
           ) : null}
         </div>
       ) : null}
-
-      <div className="mt-4 flex items-center gap-3">
-        <Button
-          type="button"
-          variant={helpful ? "secondary" : "outline"}
-          size="sm"
-          className="h-8 gap-1.5"
-          onClick={() => setHelpful(true)}
-        >
-          <ThumbsUpIcon className="size-3.5" />
-          Helpful
-        </Button>
-      </div>
     </article>
   )
 }

@@ -78,6 +78,31 @@ export function getCartItemCount(cart: BookingCart | null): number {
   return cart.serviceIds.length
 }
 
+/** Drop one cart line. Clearing the last item returns null. */
+export function removeLineFromCart(cart: BookingCart, lineId: string): BookingCart | null {
+  if (cart.packageId && lineId === cart.packageId) {
+    const extraLines = (cart.lines ?? []).filter((line) => line.id !== cart.packageId)
+    const extraIds = extraLines.map((line) => line.id)
+    if (extraIds.length === 0) return null
+    return {
+      salonId: cart.salonId,
+      salonName: cart.salonName,
+      serviceIds: extraIds,
+      lines: extraLines,
+    }
+  }
+
+  const serviceIds = cart.serviceIds.filter((id) => id !== lineId)
+  if (serviceIds.length === 0) return null
+
+  const lines = (cart.lines ?? []).filter((line) => line.id !== lineId)
+  return {
+    ...cart,
+    serviceIds,
+    lines: lines.length > 0 ? lines : undefined,
+  }
+}
+
 export function getCartLines(cart: BookingCart | null): BookingCartLine[] {
   if (!cart) return []
 

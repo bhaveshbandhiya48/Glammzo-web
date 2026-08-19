@@ -90,6 +90,7 @@ function previewOfferFromBadge(
     discountValue: badge.discountValue,
     appliesTo: "all_services",
     serviceIds: [],
+    packageIds: [],
     startsAt: null,
     endsAt: null,
     maxRedemptions: null,

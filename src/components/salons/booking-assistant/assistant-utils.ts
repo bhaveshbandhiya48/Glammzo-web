@@ -159,6 +159,7 @@ function glammzoOfferAsSalonShape(offer: GlammzoOffer): SalonOffer {
     discountValue: offer.cashbackRupees,
     appliesTo: "all_services",
     serviceIds: [],
+    packageIds: [],
     startsAt: null,
     endsAt: offer.endsAt,
     maxRedemptions: offer.maxClaims,

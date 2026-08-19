@@ -118,6 +118,9 @@ export type CrmSalonReviewRow = {
   service?: { name?: string | null } | null
 }
 
+export const CRM_SALON_OFFER_SELECT =
+  "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id), salon_offer_packages(package_id)"
+
 export type CrmOfferRow = {
   id: string
   salon_id: string
@@ -126,7 +129,7 @@ export type CrmOfferRow = {
   description: string | null
   discount_type: "percent" | "fixed"
   discount_value: string | number
-  applies_to: "all_services" | "selected_services"
+  applies_to: "all_services_and_packages" | "all_services" | "selected_services"
   starts_at: string | null
   ends_at: string | null
   max_redemptions: number | null
@@ -137,6 +140,7 @@ export type CrmOfferRow = {
   terms?: string | null
   cta_label?: string | null
   salon_offer_services?: Array<{ service_id: string }> | null
+  salon_offer_packages?: Array<{ package_id: string }> | null
 }
 
 export type CrmPackageRow = {

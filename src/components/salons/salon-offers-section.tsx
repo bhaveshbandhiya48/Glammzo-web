@@ -40,14 +40,22 @@ type UnifiedOfferItem =
   | { kind: "salon"; id: string; title: string; offer: SalonOffer }
 
 function servicesLine(offer: SalonOffer, services: SalonService[]) {
+  if (offer.appliesTo === "all_services_and_packages") return "All services and packages"
   if (offer.appliesTo === "all_services") return "All services"
+  const packageCount = offer.packageIds?.length ?? 0
   if (services.length > 0) {
     const eligible = eligibleServicesForOffer(offer, services)
-    if (eligible.length > 0 && eligible.length === services.length) {
+    if (eligible.length > 0 && eligible.length === services.length && packageCount === 0) {
       return "All services"
     }
-    if (eligible.length === 1) return eligible[0]!.name
-    if (eligible.length > 1) return `${eligible.length} services`
+    const parts: string[] = []
+    if (eligible.length === 1) parts.push(eligible[0]!.name)
+    else if (eligible.length > 1) parts.push(`${eligible.length} services`)
+    if (packageCount === 1) parts.push("1 package")
+    else if (packageCount > 1) parts.push(`${packageCount} packages`)
+    if (parts.length > 0) return parts.join(" · ")
+  } else if (packageCount > 0) {
+    return packageCount === 1 ? "1 package" : `${packageCount} packages`
   }
   return "Selected services"
 }

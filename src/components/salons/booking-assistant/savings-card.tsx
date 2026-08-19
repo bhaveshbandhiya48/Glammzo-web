@@ -24,6 +24,7 @@ export type SavingsCardProps = {
   items: SavingsOfferState[]
   /** True when the bag has at least one service or package. */
   hasCart?: boolean
+  applyingOfferId?: string | null
   onApply: (offer: SalonOffer) => void
   onClear?: () => void
   onViewEligibleServices?: (offer: SalonOffer) => void
@@ -33,12 +34,14 @@ export type SavingsCardProps = {
 function OfferPanelBody({
   item,
   hasCart,
+  applying,
   onApply,
   onClear,
   onViewEligibleServices,
 }: {
   item: SavingsOfferState
   hasCart: boolean
+  applying: boolean
   onApply: (offer: SalonOffer) => void
   onClear?: () => void
   onViewEligibleServices?: (offer: SalonOffer) => void
@@ -57,9 +60,14 @@ function OfferPanelBody({
   const isEligibleToApply = hasCart && !ineligible && !applied
   const coverageBlocked =
     Boolean(applyError) && /covered|eligible service/i.test(applyError ?? "")
+  const customerBlocked =
+    Boolean(applyError) &&
+    /new customer|first-time|sign in|already used|already applied/i.test(
+      applyError ?? "",
+    )
   const showApplyError =
-    Boolean(applyError || (ineligible && coverageBlocked)) &&
-    (!showMinOrderProgress || coverageBlocked)
+    Boolean(applyError) &&
+    (customerBlocked || coverageBlocked || !showMinOrderProgress)
   const accentCode = isGlammzo
     ? "border-foreground/30 text-foreground"
     : "border-primary/30 text-primary"
@@ -79,6 +87,9 @@ function OfferPanelBody({
           {offer.code}
         </code>
         {minSpend ? <span>Min spend {formatInr(minSpend)}</span> : null}
+        {!isGlammzo && offer.customerEligibility === "new_customers_only" ? (
+          <span>New customers only</span>
+        ) : null}
         {daysLeft != null ? (
           <span>
             {daysLeft <= 0
@@ -97,7 +108,10 @@ function OfferPanelBody({
         </p>
       ) : (
         <EligibleServicesList
-          appliesToAll={offer.appliesTo === "all_services"}
+          appliesToAll={
+            offer.appliesTo === "all_services" ||
+            offer.appliesTo === "all_services_and_packages"
+          }
           services={eligibleServices}
         />
       )}
@@ -168,9 +182,9 @@ function OfferPanelBody({
               type="button"
               className={cn("w-full", applyBtnClass)}
               onClick={() => onApply(offer)}
-              disabled={!hasCart || ineligible}
+              disabled={!hasCart || ineligible || applying}
             >
-              Apply
+              {applying ? "Checking…" : "Apply"}
             </Button>
             {showApplyError ? (
               <p
@@ -194,6 +208,7 @@ function OfferPanelBody({
 export function SavingsCard({
   items,
   hasCart = false,
+  applyingOfferId = null,
   onApply,
   onClear,
   onViewEligibleServices,
@@ -360,6 +375,7 @@ export function SavingsCard({
                     <OfferPanelBody
                       item={item}
                       hasCart={hasCart}
+                      applying={applyingOfferId === offerId}
                       onApply={onApply}
                       onClear={applied ? onClear : undefined}
                       onViewEligibleServices={onViewEligibleServices}

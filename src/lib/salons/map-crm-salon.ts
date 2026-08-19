@@ -370,7 +370,7 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
   }
 }
 
-function mapOffer(row: CrmOfferRow): SalonOffer {
+export function mapCrmOffer(row: CrmOfferRow): SalonOffer {
   const minPaise = row.min_order_paise
   return {
     id: row.id,
@@ -381,6 +381,7 @@ function mapOffer(row: CrmOfferRow): SalonOffer {
     discountValue: Number.parseFloat(String(row.discount_value)) || 0,
     appliesTo: row.applies_to,
     serviceIds: (row.salon_offer_services ?? []).map((link) => link.service_id),
+    packageIds: (row.salon_offer_packages ?? []).map((link) => link.package_id),
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     maxRedemptions: row.max_redemptions,
@@ -451,7 +452,7 @@ export function mapCrmSalonToWeb(
     .map((pkg) => mapPackage(pkg, imageUrl))
 
   const activeOffers = filterBookableOffers(
-    offers.filter((offer) => offer.is_active).map(mapOffer),
+    offers.filter((offer) => offer.is_active).map(mapCrmOffer),
   ).sort((a, b) => a.title.localeCompare(b.title))
 
   const shortDescription = marketplaceProfile?.short_description?.trim() || ""

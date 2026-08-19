@@ -38,8 +38,9 @@ export type SalonOffer = {
   description: string | null
   discountType: "percent" | "fixed"
   discountValue: number
-  appliesTo: "all_services" | "selected_services"
+  appliesTo: "all_services_and_packages" | "all_services" | "selected_services"
   serviceIds: string[]
+  packageIds: string[]
   startsAt: string | null
   endsAt: string | null
   maxRedemptions: number | null

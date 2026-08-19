@@ -12,9 +12,9 @@ import {
 import { boundingBoxDeltas, haversineKm } from "@/lib/maps/haversine"
 import type { NearbySalonRecord, NearbySalonsRequest, NearbySalonsResponse } from "@/lib/maps/nearby-salon.types"
 import { isSalonOpenNow } from "@/lib/salons/business-hours"
-import { parseBusinessTypeFromSettings } from "@/lib/salons/map-crm-salon"
+import { parseBusinessTypeFromSettings, mapCrmOffer } from "@/lib/salons/map-crm-salon"
 import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
-import type { CrmOfferRow, CrmSalonRow, CrmServiceRow } from "@/lib/salons/crm-types"
+import { CRM_SALON_OFFER_SELECT, type CrmOfferRow, type CrmSalonRow, type CrmServiceRow } from "@/lib/salons/crm-types"
 import { pickBestSalonOffer } from "@/lib/salons/offer-utils"
 import type { SalonOffer } from "@/types/salon"
 
@@ -134,9 +134,7 @@ async function fetchActiveOffers(salonIds: string[]) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("salon_offers")
-    .select(
-      "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id)",
-    )
+    .select(CRM_SALON_OFFER_SELECT)
     .in("salon_id", salonIds)
     .eq("is_active", true)
     .is("deleted_at", null)
@@ -149,32 +147,7 @@ async function fetchActiveOffers(salonIds: string[]) {
   const bySalon = new Map<string, SalonOffer[]>()
 
   for (const row of (data ?? []) as CrmOfferRow[]) {
-    const minPaise = row.min_order_paise
-    const offer: SalonOffer = {
-      id: row.id,
-      code: row.code.trim().toUpperCase(),
-      title: row.title,
-      description: row.description?.trim() || null,
-      discountType: row.discount_type,
-      discountValue: Number.parseFloat(String(row.discount_value)) || 0,
-      appliesTo: row.applies_to,
-      serviceIds: (row.salon_offer_services ?? []).map((link) => link.service_id),
-      startsAt: row.starts_at,
-      endsAt: row.ends_at,
-      maxRedemptions: row.max_redemptions,
-      redemptionCount: row.redemption_count ?? 0,
-      isActive: row.is_active,
-      minOrderRupees:
-        minPaise != null && Number.isFinite(minPaise) && minPaise > 0
-          ? Math.round(minPaise / 100)
-          : null,
-      customerEligibility:
-        row.customer_eligibility === "new_customers_only"
-          ? "new_customers_only"
-          : "all_customers",
-      terms: row.terms?.trim() || null,
-      ctaLabel: row.cta_label?.trim() || "Book now",
-    }
+    const offer = mapCrmOffer(row)
     const list = bySalon.get(row.salon_id) ?? []
     list.push(offer)
     bySalon.set(row.salon_id, list)

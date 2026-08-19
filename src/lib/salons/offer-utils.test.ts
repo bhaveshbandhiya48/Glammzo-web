@@ -24,6 +24,7 @@ function makeOffer(overrides: Partial<SalonOffer> = {}): SalonOffer {
     discountValue: 20,
     appliesTo: "selected_services",
     serviceIds: ["svc-1"],
+    packageIds: [],
     startsAt: null,
     endsAt: null,
     maxRedemptions: null,
@@ -157,6 +158,79 @@ describe("offer eligibility helpers", () => {
     expect(result.discountAmount).toBe(200)
     expect(result.subtotal).toBe(1800)
     expect(result.finalTotal).toBe(1600)
+  })
+
+  it("applies selected-package offers to the full package price", () => {
+    const offer = makeOffer({
+      serviceIds: [],
+      packageIds: ["pkg-1"],
+      discountValue: 10,
+    })
+    const result = applyOfferDiscount(offer, {
+      services: [makeService({ id: "svc-1", price: 2000 })],
+      selectedServiceIds: ["svc-1"],
+      selectedPackage: {
+        id: "pkg-1",
+        name: "Bridal",
+        description: "",
+        shortDescription: "",
+        detailedDescription: "",
+        imageUrl: "",
+        packagePrice: 5000,
+        comparePrice: 6000,
+        amountSaved: 1000,
+        discountPercent: 16,
+        totalDurationMin: 120,
+        showComparePrice: true,
+        showSavings: true,
+        allowOnlineBooking: true,
+        servicePreviewCount: 3,
+        badge: null,
+        isFeatured: false,
+        sortOrder: 0,
+        items: [{ serviceId: "svc-1", serviceName: "Hair Spa", quantity: 1 }],
+      },
+    })
+
+    expect("error" in result).toBe(false)
+    if ("error" in result) return
+    expect(result.discountAmount).toBe(500)
+    expect(result.subtotal).toBe(5000)
+  })
+
+  it("does not discount a package for all-services offers", () => {
+    const offer = makeOffer({
+      appliesTo: "all_services",
+      serviceIds: [],
+      discountValue: 10,
+    })
+    const result = applyOfferDiscount(offer, {
+      services: [makeService({ id: "svc-1", price: 2000 })],
+      selectedServiceIds: ["svc-1"],
+      selectedPackage: {
+        id: "pkg-1",
+        name: "Bridal",
+        description: "",
+        shortDescription: "",
+        detailedDescription: "",
+        imageUrl: "",
+        packagePrice: 5000,
+        comparePrice: 6000,
+        amountSaved: 1000,
+        discountPercent: 16,
+        totalDurationMin: 120,
+        showComparePrice: true,
+        showSavings: true,
+        allowOnlineBooking: true,
+        servicePreviewCount: 3,
+        badge: null,
+        isFeatured: false,
+        sortOrder: 0,
+        items: [{ serviceId: "svc-1", serviceName: "Hair Spa", quantity: 1 }],
+      },
+    })
+
+    expect(result).toEqual({ error: "no_eligible_services" })
   })
 
   it("picks the strongest bookable salon offer for explore badges", () => {

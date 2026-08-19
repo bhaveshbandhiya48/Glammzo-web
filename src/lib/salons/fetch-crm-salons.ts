@@ -3,15 +3,16 @@ import "server-only"
 import { cache } from "react"
 
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin"
-import type {
-  CrmMarketplaceProfileRow,
-  CrmSalonGalleryImageRow,
-  CrmSalonReviewRow,
-  CrmSalonRow,
-  CrmOfferRow,
-  CrmPackageRow,
-  CrmServiceRow,
-  CrmStaffRow,
+import {
+  CRM_SALON_OFFER_SELECT,
+  type CrmMarketplaceProfileRow,
+  type CrmSalonGalleryImageRow,
+  type CrmSalonReviewRow,
+  type CrmSalonRow,
+  type CrmOfferRow,
+  type CrmPackageRow,
+  type CrmServiceRow,
+  type CrmStaffRow,
 } from "@/lib/salons/crm-types"
 import { mapCrmSalonToWeb } from "@/lib/salons/map-crm-salon"
 import { fetchCompletedSalonBookingCounts, fetchCompletedServiceBookingCounts } from "@/lib/salons/service-booking-counts"
@@ -499,9 +500,7 @@ async function fetchOffersForSalons(salonIds: string[]): Promise<CrmOfferRow[]> 
     const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("salon_offers")
-      .select(
-        "id, salon_id, code, title, description, discount_type, discount_value, applies_to, starts_at, ends_at, max_redemptions, redemption_count, is_active, min_order_paise, customer_eligibility, terms, cta_label, salon_offer_services(service_id)",
-      )
+      .select(CRM_SALON_OFFER_SELECT)
       .in("salon_id", salonIds)
       .eq("is_active", true)
       .is("deleted_at", null)

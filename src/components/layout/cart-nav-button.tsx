@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ArrowRightIcon, ShoppingBagIcon } from "lucide-react"
+import { ArrowRightIcon, ShoppingBagIcon, XIcon } from "lucide-react"
 
 import { useBookingCart } from "@/hooks/use-booking-cart"
 import { useSalonCatalog } from "@/hooks/use-salon-catalog"
-import { getCartLines, type BookingCartLine } from "@/lib/bookings/cart"
+import { getCartLines, removeLineFromCart, type BookingCartLine } from "@/lib/bookings/cart"
 import { formatDuration, resolveServices, sumServiceDuration } from "@/lib/bookings/utils"
 import { serviceIdsMatchPackage } from "@/lib/salons/catalog-utils"
 import { cn } from "@/lib/utils"
@@ -29,7 +29,7 @@ function toCartLines(
 }
 
 export function CartNavButton({ className }: CartNavButtonProps) {
-  const { cart, count, href } = useBookingCart()
+  const { cart, count, href, updateCart } = useBookingCart()
   const { salons } = useSalonCatalog()
   const [open, setOpen] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -74,6 +74,11 @@ export function CartNavButton({ className }: CartNavButtonProps) {
   )
 
   const displayCount = matchedPackage ? 1 + extraLineCount : count
+
+  function removeLine(lineId: string) {
+    if (!cart) return
+    updateCart(removeLineFromCart(cart, lineId))
+  }
 
   const label =
     displayCount > 0
@@ -180,12 +185,26 @@ export function CartNavButton({ className }: CartNavButtonProps) {
                         {line.name}
                       </span>
                     </div>
-                    <span className="shrink-0 text-right text-foreground/55 tabular-nums">
-                      {line.price > 0 ? `₹${line.price}` : "—"}
-                      {line.durationMin > 0 ? (
-                        <span className="block text-xs">{formatDuration(line.durationMin)}</span>
-                      ) : null}
-                    </span>
+                    <div className="flex shrink-0 items-start gap-1">
+                      <span className="text-right text-foreground/55 tabular-nums">
+                        {line.price > 0 ? `₹${line.price}` : "—"}
+                        {line.durationMin > 0 ? (
+                          <span className="block text-xs">{formatDuration(line.durationMin)}</span>
+                        ) : null}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${line.name}`}
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/45 transition-colors hover:bg-muted hover:text-foreground"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          removeLine(line.id)
+                        }}
+                      >
+                        <XIcon className="size-3.5" strokeWidth={2.2} aria-hidden />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
