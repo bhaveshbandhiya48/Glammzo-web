@@ -50,7 +50,8 @@ export async function getCartOfferEligibilityAction(input: {
   }
 
   const salon = await getSalonById(input.salonId)
-  if (!salon?.crmSalonId) return blocked
+  const crmSalonId = salon?.crmSalonId
+  if (!crmSalonId) return blocked
 
   await Promise.all(
     input.items.map(async (item) => {
@@ -69,7 +70,7 @@ export async function getCartOfferEligibilityAction(input: {
         phone,
         offerId: item.id,
         code: item.code,
-        salonId: salon.crmSalonId,
+        salonId: crmSalonId,
         customerEligibility: item.customerEligibility ?? "all_customers",
       })
       if (!eligibility.ok) blocked[item.id] = eligibility.message
