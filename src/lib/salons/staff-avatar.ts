@@ -3,14 +3,12 @@ import { sanitizeSalonImageUrl } from "@/lib/salons/image-url"
 
 export type StaffGender = "male" | "female"
 
+/** Photo when present; otherwise a simple head-and-shoulders placeholder. */
 export function resolveStaffImageUrl(
   avatarUrl: string | null | undefined,
-  gender: string | null | undefined,
+  _gender?: string | null,
 ): string {
   const photo = sanitizeSalonImageUrl(avatarUrl)
   if (photo) return photo
-
-  if (gender === "male") return media.staffAvatars.male
-  if (gender === "female") return media.staffAvatars.female
   return media.staffAvatars.neutral
 }

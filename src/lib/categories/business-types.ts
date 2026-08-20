@@ -10,7 +10,6 @@ export const BUSINESS_TYPES = [
   "Unisex Salon",
   "Beauty Parlour",
   "Spa",
-  "Barber Shop",
   "Nail Art Studio",
   "Yoga Center",
 ] as const
@@ -82,17 +81,6 @@ export const BUSINESS_TYPE_CATALOG: readonly BusinessTypePresentation[] = [
     imageUrl: getCategoryImage("spa"),
     overlayBadge: "Relax",
     variant: "sand",
-  },
-  {
-    label: "Barber Shop",
-    slug: "barber-shop",
-    title: "Barber shops on your schedule",
-    description:
-      "Haircuts, fades, and beard work from barbers who keep the chair moving.",
-    icon: "user",
-    imageUrl: getCategoryImage("grooming"),
-    overlayBadge: "Quick",
-    variant: "light",
   },
   {
     label: "Nail Art Studio",

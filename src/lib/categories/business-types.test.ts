@@ -9,7 +9,7 @@ import {
 describe("business-types", () => {
   it("normalizes CRM labels to slugs", () => {
     expect(normalizeBusinessTypeSlug("Nail Art Studio")).toBe("nail-art-studio")
-    expect(businessTypeSlugFromLabel("Barber Shop")).toBe("barber-shop")
+    expect(businessTypeSlugFromLabel("Nail Art Studio")).toBe("nail-art-studio")
     expect(businessTypeSlugFromLabel("unisex-salon")).toBe("unisex-salon")
   })
 

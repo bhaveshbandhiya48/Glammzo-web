@@ -173,7 +173,7 @@ export type Salon = {
    * Null = not enough history; treated as neutral (full credit) in recommended sort.
    */
   marketplaceResponseScore?: number | null
-  /** Signup business type from CRM settings (Salon, Barber Shop, …). */
+  /** Signup business type from CRM settings (Salon, Spa, …). */
   businessType?: string | null
   /** Calendar year the business started (CRM established_year). */
   establishedYear?: number | null

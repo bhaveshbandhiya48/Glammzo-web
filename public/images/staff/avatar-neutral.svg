@@ -1,5 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Staff avatar">
-  <rect width="160" height="160" fill="#ECEAE7"/>
-  <circle cx="80" cy="62" r="28" fill="#B4AFA8"/>
-  <path d="M40 138c6-28 24-42 40-42s34 14 40 42" fill="#B4AFA8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 192" role="img" aria-label="Staff avatar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F3F0EB"/>
+      <stop offset="100%" stop-color="#E8E3DB"/>
+    </linearGradient>
+    <linearGradient id="figure" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#C4BCB2"/>
+      <stop offset="100%" stop-color="#A89F94"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="192" fill="url(#bg)"/>
+  <circle cx="120" cy="96" r="54" fill="#FFFCF8" opacity="0.7"/>
+  <circle cx="120" cy="78" r="22" fill="url(#figure)"/>
+  <path d="M78 148c8-26 26-40 42-40s34 14 42 40" fill="url(#figure)"/>
 </svg>

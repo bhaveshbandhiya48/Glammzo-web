@@ -12,8 +12,10 @@ import {
   resolveCustomerCancelNoticeHours,
 } from "@/lib/bookings/cancel-policy"
 import { formatSlotLabel } from "@/lib/bookings/crm/availability"
+import { triggerCrmExpiredWebBookingsCron } from "@/lib/bookings/crm/trigger-crm-expire-cron"
 import { normalizeCustomerPhoneDigits } from "@/lib/phone/normalize"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { after } from "next/server"
 
 export async function cancelCrmWebBooking(
   appointmentId: string,
@@ -175,6 +177,13 @@ export async function cancelCrmWebBooking(
     startTimeLabel: timeLabel,
   }).catch((error) => {
     console.error("[bookings] cancel notify failed:", error)
+  })
+
+  // glamzzo-crm sends owner + customer Meta WhatsApp for cancelled_by_customer.
+  after(() => {
+    void triggerCrmExpiredWebBookingsCron().catch((error) => {
+      console.error("[bookings] cancel WhatsApp cron trigger failed:", error)
+    })
   })
 
   return { success: true }

@@ -9,7 +9,6 @@ export const BUSINESS_TYPES = [
   "Unisex Salon",
   "Beauty Parlour",
   "Spa",
-  "Barber Shop",
   "Nail Art Studio",
   "Yoga Center",
 ] as const

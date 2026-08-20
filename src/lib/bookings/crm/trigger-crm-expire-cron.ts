@@ -6,6 +6,7 @@ import { getGlamzzoCrmUrl } from "@/lib/crm/glamzzo-crm-url"
  * Ask glamzzo-crm to:
  * - expire past-deadline pending web bookings
  * - send pending-owner / auto-confirmed WhatsApp via Meta
+ * - send owner + customer WhatsApp for recent customer cancels
  *
  * Uses the same CRON_SECRET as CRM. No-ops if secret is missing.
  */
@@ -39,6 +40,7 @@ export async function triggerCrmExpiredWebBookingsCron(): Promise<void> {
     const body = (await response.json().catch(() => null)) as {
       autoConfirmedNotifies?: number
       ownerPendingNotifies?: number
+      customerCancelSalons?: number
     } | null
 
     if (body) {
@@ -46,6 +48,7 @@ export async function triggerCrmExpiredWebBookingsCron(): Promise<void> {
         "[bookings] CRM expire cron ok:",
         `autoConfirmed=${body.autoConfirmedNotifies ?? "?"}`,
         `ownerPending=${body.ownerPendingNotifies ?? "?"}`,
+        `customerCancelSalons=${body.customerCancelSalons ?? "?"}`,
       )
     }
   } catch (error) {
