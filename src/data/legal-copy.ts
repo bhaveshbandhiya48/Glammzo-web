@@ -8,7 +8,7 @@ export type LegalSection = {
 export const LEGAL_ENTITY = {
   companyName: "Fixxzo Technologies Private Limited",
   brandName: "Glammzo",
-  contactEmail: "hello@glammzo.com",
+  contactEmail: "support@glammzo.com",
   supportHours: "Monday to Saturday, 9:00 AM – 7:00 PM (IST)",
   governingLaw: "laws of India",
   jurisdiction: "courts in India",
@@ -124,7 +124,7 @@ export const PRIVACY_POLICY = {
         "Delete your Glammzo account from Profile → Profile information in the app or website, or visit https://glammzo.com/delete-account.",
         "Manage booking actions such as cancellation or rescheduling through My Appointments, subject to Platform and salon rules.",
         "Withdraw location permissions through your device/browser settings.",
-        "Contact us at hello@glammzo.com to request support with privacy preferences or data requests.",
+        "Contact us at support@glammzo.com to request support with privacy preferences or data requests.",
       ],
     },
     {
@@ -460,7 +460,7 @@ export const ACCOUNT_DELETION_GUIDE = {
       bullets: [
         "In the Glammzo app: Profile → My profile → Delete account → type DELETE to confirm.",
         "On the website: sign in → Profile → Profile information → Delete account → type DELETE to confirm.",
-        "If you cannot access your account, email hello@glammzo.com from a reachable number/email and request deletion with your registered mobile number.",
+        "If you cannot access your account, email support@glammzo.com from a reachable number/email and request deletion with your registered mobile number.",
       ],
     },
     {

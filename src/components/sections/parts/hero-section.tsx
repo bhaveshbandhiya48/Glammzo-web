@@ -5,23 +5,15 @@ import { ArrowRightIcon, SparklesIcon } from "lucide-react"
 
 import { FloatingGradientBlob } from "@/components/hero/FloatingGradientBlob"
 import { siteCopy } from "@/data/site-copy"
-import { media } from "@/data/media"
 import { HeroLiveBadge } from "@/components/explore/explore-location-copy"
 import { HeroLaunchOfferCallout } from "@/components/sections/parts/hero-launch-offer-callout"
 import { HeroVisual } from "@/components/sections/parts/hero-visual"
 import { Container } from "@/components/layout/container"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { HeroSearchForm } from "@/components/search/hero-search-form"
 import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/motion"
 
 const { hero } = siteCopy
-
-const earlyUsers = [
-  { src: media.testimonials.t1, alt: "Glammzo user" },
-  { src: media.testimonials.t2, alt: "Glammzo user" },
-  { src: media.testimonials.t3, alt: "Glammzo user" },
-]
 
 export function HeroSection() {
   return (
@@ -74,22 +66,6 @@ export function HeroSection() {
             </div>
 
             <HeroSearchForm />
-
-            <div className="relative z-0 mt-10 flex items-center gap-4">
-              <div className="flex -space-x-2.5">
-                {earlyUsers.map((user, i) => (
-                  <Avatar
-                    key={`${user.src}-${i}`}
-                    className="relative size-10 border-2 border-background ring-0"
-                    style={{ zIndex: i + 1 }}
-                  >
-                    <AvatarImage src={user.src} alt={user.alt} />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-              <p className="text-sm text-foreground/60">{hero.socialProof}</p>
-            </div>
           </MotionDiv>
 
           <MotionDiv

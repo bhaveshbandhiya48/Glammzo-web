@@ -126,7 +126,7 @@ export const WHY_GLAMMZO_PAGE = {
         "Use the Help Center for step-by-step booking and account guides.",
         "Browse FAQs for common customer and partner questions.",
         "Read the Cancellation Policy before you change an appointment.",
-        "Email hello@glammzo.com Mon–Sat, 9:00 AM – 7:00 PM (IST).",
+        "Email support@glammzo.com Mon–Sat, 9:00 AM – 7:00 PM (IST).",
       ],
     },
   ],

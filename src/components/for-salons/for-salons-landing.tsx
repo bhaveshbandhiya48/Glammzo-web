@@ -267,14 +267,14 @@ export function ForSalonsLanding() {
           className="section-y bg-muted/15"
         >
           <Container>
-            <MotionDiv variants={fadeUp} className="max-w-2xl">
+            <MotionDiv variants={fadeUp}>
               <p className="section-eyebrow">{faq.eyebrow}</p>
               <h2 className="display-section mt-3">{faq.title}</h2>
             </MotionDiv>
-            <MotionDiv variants={fadeUp} className="mx-auto max-w-3xl">
-              <ForSalonsFaqAccordion items={faq.items} />
-            </MotionDiv>
           </Container>
+          <MotionDiv variants={fadeUp} className="mt-10">
+            <ForSalonsFaqAccordion items={faq.items} />
+          </MotionDiv>
         </MotionSection>
 
         <MotionSection

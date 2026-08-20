@@ -21,6 +21,7 @@ import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
 import { BookingPriceBreakdownCard } from "@/components/booking/booking-price-breakdown"
 import { BookingSuccessConfetti } from "@/components/booking/booking-success-confetti"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics/track-event"
 import {
   formatBookingDate,
   formatBookingNotesForDisplay,
@@ -148,6 +149,18 @@ export function BookingConfirmationContent({ booking }: BookingConfirmationConte
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  useEffect(() => {
+    if (tone === "negative") return
+    const key = `glammzo-meta-schedule-${booking.id}`
+    if (sessionStorage.getItem(key)) return
+    sessionStorage.setItem(key, "1")
+    trackEvent("Schedule", {
+      content_name: booking.salonName,
+      value: booking.price,
+      currency: "INR",
+    })
+  }, [booking.id, booking.price, booking.salonName, tone])
 
   return (
     <div className="relative mx-auto flex w-full max-w-5xl flex-col">

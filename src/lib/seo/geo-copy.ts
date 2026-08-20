@@ -110,7 +110,7 @@ export const LLMS_TXT = `# ${SITE_NAME}
 - Product: Online salon and beauty appointment booking
 - Geography: Bengaluru (Bangalore), India (expanding)
 - Website: ${SITE_URL}
-- Contact: hello@glammzo.com
+- Contact: support@glammzo.com
 - Company: Fixxzo Technologies Private Limited
 
 ## Best pages for “salon near me”

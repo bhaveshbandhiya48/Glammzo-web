@@ -5,8 +5,8 @@ export const SITE_URL =
 
 export const SITE_NAME = "Glammzo"
 
-/** App Router OG route — PNG suitable for WhatsApp / iMessage / social previews. */
-export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image"
+/** Static brand OG asset in `public/og.png` (1200×630). */
+export const DEFAULT_OG_IMAGE_PATH = "/og.png"
 
 export const DEFAULT_OG_IMAGE = {
   url: DEFAULT_OG_IMAGE_PATH,
@@ -74,7 +74,7 @@ export const SEO_ORGANIZATION = {
   legalName: "Fixxzo Technologies Private Limited",
   url: SITE_URL,
   logo: `${SITE_URL}/brand/glamzzo-icon.svg`,
-  email: "hello@glammzo.com",
+  email: "support@glammzo.com",
   sameAs: [
     "https://instagram.com/glammzo",
     "https://facebook.com/glammzo",

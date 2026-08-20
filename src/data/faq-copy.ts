@@ -15,7 +15,7 @@ export const FAQ_PAGE = {
   subtitle:
     "Answers about booking salons, managing appointments, payments, and partnering with Glammzo.",
   contactPrompt: "Still need help?",
-  contactEmail: "hello@glammzo.com",
+  contactEmail: "support@glammzo.com",
   categories: [
     {
       id: "getting-started",

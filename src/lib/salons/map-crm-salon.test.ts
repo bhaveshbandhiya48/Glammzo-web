@@ -186,7 +186,7 @@ describe("mapCrmSalonToWeb", () => {
   it("excludes services and staff that no longer satisfy Marketplace readiness", () => {
     const incompleteService = {
       ...service,
-      description: "Too short",
+      duration_minutes: 0,
       image_url: null,
     }
     const incompleteStaff: CrmStaffRow = {

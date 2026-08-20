@@ -60,7 +60,7 @@ export default async function ForSalonsStartPage({ searchParams }: PageProps) {
           <PageHeader
             eyebrow="For salons"
             title="Create your salon account"
-            subtitle="Same quick signup as Glammzo CRM — then finish your business profile inside the dashboard."
+            subtitle="Same quick signup as Glammzo CRM, then finish your business profile inside the dashboard."
           />
         </PageSection>
 

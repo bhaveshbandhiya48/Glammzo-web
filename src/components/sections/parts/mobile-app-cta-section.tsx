@@ -22,8 +22,8 @@ export function MobileAppCtaSection() {
     >
       <Container>
         <MotionDiv variants={fadeUp}>
-          <div className="grid overflow-hidden rounded-3xl bg-foreground text-background lg:grid-cols-2">
-            <div className="flex flex-col justify-center p-8 sm:p-12 lg:p-16">
+          <div className="grid overflow-hidden rounded-3xl lg:grid-cols-2">
+            <div className="flex flex-col justify-center bg-foreground p-8 text-background sm:p-12 lg:p-16">
               <p className="inline-flex w-fit items-center gap-2 rounded-full border border-background/20 bg-background/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-background/60">
                 <SmartphoneIcon className="size-3.5" />
                 {mobile.eyebrow}
@@ -45,7 +45,7 @@ export function MobileAppCtaSection() {
                   size="lg"
                   className="border-background/30 bg-transparent px-8 text-background hover:border-primary hover:bg-primary hover:text-primary-foreground"
                 >
-                  <Link href="mailto:hello@glammzo.com?subject=Mobile%20app%20waitlist">
+                  <Link href="mailto:support@glammzo.com?subject=Mobile%20app%20waitlist">
                     {mobile.secondaryCta}
                   </Link>
                 </Button>
@@ -54,10 +54,10 @@ export function MobileAppCtaSection() {
             <div className="relative min-h-[280px] lg:min-h-full">
               <Image
                 src={media.sections.mobileApp}
-                alt="Using Glammzo on a smartphone"
+                alt="Glammzo mobile app on iPhone showing salon browse and booking screens"
                 fill
-                className="object-cover object-[center_22%]"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-center"
+                sizes="(max-width: 1024px) 100vw, 640px"
               />
             </div>
           </div>

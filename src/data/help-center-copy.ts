@@ -21,7 +21,7 @@ export const HELP_CENTER = {
   title: "Help Center",
   subtitle:
     "Guides for booking, managing appointments, payments, your account, and partnering with Glammzo.",
-  supportEmail: "hello@glammzo.com",
+  supportEmail: "support@glammzo.com",
   supportHours: "Monday to Saturday, 9:00 AM – 7:00 PM (IST)",
   topics: [
     {

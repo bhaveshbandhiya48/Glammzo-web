@@ -48,7 +48,7 @@ export function NearbySalonsSection() {
   const { salons: catalog, browseCity, cityFallback } = useCitySalonCatalog()
   const origin = useExploreDistanceOrigin({})
   const nearbySalons = useMemo(
-    () => applySalonDistances(catalog, origin).slice(0, 4).map(toNearbyPreview),
+    () => applySalonDistances(catalog, origin).slice(0, 3).map(toNearbyPreview),
     [catalog, origin],
   )
   const exploreHref = cityFallback

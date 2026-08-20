@@ -61,10 +61,8 @@ const assets = {
     url: "https://images.pexels.com/photos/3998394/pexels-photo-3998394.jpeg?auto=compress&cs=tinysrgb&w=1920",
     credit: "Pexels — hair styling appointment",
   },
-  "public/images/sections/mobile-app-v2.jpg": {
-    url: "https://images.unsplash.com/photo-1599149535927-36b3fc68a1d6?w=1920&q=85&auto=format&fit=crop",
-    credit: "Unsplash — woman using a smartphone (mobile booking lifestyle)",
-  },
+  // Custom Glammzo app mockup — do not overwrite via download script.
+  // Recommended: 1280×960 (4:3 landscape).
   "public/images/sections/partner-salon.jpg": {
     url: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=85&auto=format&fit=crop",
     credit: "Unsplash — modern luxury hair salon interior",

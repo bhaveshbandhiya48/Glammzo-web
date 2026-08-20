@@ -24,7 +24,6 @@ export const siteCopy = {
     secondaryCta: "See how it works",
     searchPlaceholder: "Service or salon",
     locationPlaceholder: "Area",
-    socialProof: "Trusted by early users across the city",
   },
   launchOfferCta: {
     eyebrow: "Glammzo offers",
@@ -53,13 +52,13 @@ export const siteCopy = {
     eyebrow: "Why choose Glammzo",
     title: "Booking that feels simple and clear",
     subtitle:
-      "Verified salons, upfront prices, launch discounts, and loyalty rewards — without the phone tag.",
+      "Verified salons, upfront prices, launch discounts, and loyalty rewards, without the phone tag.",
   },
   categories: {
     eyebrow: "Services",
     title: "Find the right kind of place",
     subtitle:
-      "Browse by salon, spa, barber shop, and more — then book with clear pricing.",
+      "Browse by salon, spa, barber shop, and more, then book with clear pricing.",
   },
   salons: {
     eyebrow: "Featured partners",

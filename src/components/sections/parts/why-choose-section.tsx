@@ -4,7 +4,7 @@ import {
   BadgeCheckIcon,
   CalendarCheckIcon,
   GiftIcon,
-  ReceiptIcon,
+  IndianRupeeIcon,
 } from "lucide-react"
 
 import { siteCopy, whyChooseReasons } from "@/data/site-copy"
@@ -16,7 +16,7 @@ const { whyChoose } = siteCopy
 
 const ICONS = {
   verified: BadgeCheckIcon,
-  pricing: ReceiptIcon,
+  pricing: IndianRupeeIcon,
   booking: CalendarCheckIcon,
   rewards: GiftIcon,
 } as const

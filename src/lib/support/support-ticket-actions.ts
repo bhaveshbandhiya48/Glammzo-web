@@ -80,7 +80,7 @@ export async function submitSupportTicketAction(
     console.error("[support] ticket insert failed:", error.message)
     return {
       ok: false,
-      message: "We could not submit your ticket. Please try again or email hello@glammzo.com.",
+      message: "We could not submit your ticket. Please try again or email support@glammzo.com.",
     }
   }
 

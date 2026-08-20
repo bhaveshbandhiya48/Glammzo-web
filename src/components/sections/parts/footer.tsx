@@ -46,7 +46,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
       { label: "Help Center", href: "/help" },
       { label: "FAQs", href: "/faqs" },
       { label: "Cancellation Policy", href: "/cancellation-policy" },
-      { label: "Contact Us", href: "mailto:hello@glammzo.com" },
+      { label: "Contact Us", href: "mailto:support@glammzo.com" },
     ],
   },
   {
@@ -147,10 +147,10 @@ export function Footer() {
                 Need Help?
               </p>
               <a
-                href="mailto:hello@glammzo.com"
+                href="mailto:support@glammzo.com"
                 className="mt-2 block font-heading text-lg font-semibold tracking-tight text-background transition-colors duration-200 hover:text-primary focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
-                hello@glammzo.com
+                support@glammzo.com
               </a>
               <p className="mt-2 text-sm text-background/50">
                 Mon – Sat
