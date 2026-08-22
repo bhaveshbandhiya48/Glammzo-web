@@ -5,7 +5,8 @@ import dynamic from "next/dynamic"
 import { LayoutListIcon, XIcon } from "lucide-react"
 
 import { MapSkeleton } from "@/components/maps/map-skeleton"
-import { SalonCard } from "@/components/salons/salon-card"
+import { MapListingCard } from "@/components/maps/map-listing-card"
+import type { MapViewportBounds } from "@/components/maps/customer-salon-map-canvas"
 import { useExploreDistanceOrigin } from "@/hooks/use-explore-distance-origin"
 import { applySalonDistances } from "@/lib/explore-distance"
 import {
@@ -38,8 +39,33 @@ type ExploreMobileMapOverlayProps = {
   onClose: () => void
 }
 
+/** Same edge pad as Glammzo-mobile MapOverlay `isPinInRegion`. */
+function isSalonInViewport(
+  salon: { latitude?: number | null; longitude?: number | null },
+  bounds: MapViewportBounds,
+  padRatio = 0.08,
+) {
+  if (
+    salon.latitude == null ||
+    salon.longitude == null ||
+    !Number.isFinite(salon.latitude) ||
+    !Number.isFinite(salon.longitude)
+  ) {
+    return false
+  }
+  const latPad = (bounds.north - bounds.south) * padRatio
+  const lngPad = (bounds.east - bounds.west) * padRatio
+  return (
+    salon.latitude >= bounds.south - latPad &&
+    salon.latitude <= bounds.north + latPad &&
+    salon.longitude >= bounds.west - lngPad &&
+    salon.longitude <= bounds.east + lngPad
+  )
+}
+
 /**
  * Airbnb-style fullscreen map for mobile Explore: pins + bottom card carousel + Show list.
+ * Bottom cards track salons visible in the current map camera (same as the mobile app).
  */
 export function ExploreMobileMapOverlay({
   salons,
@@ -52,6 +78,7 @@ export function ExploreMobileMapOverlay({
   const origin = useExploreDistanceOrigin({ nearFromUrl, urlLatitude, urlLongitude })
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null)
   const [showAllRegistered, setShowAllRegistered] = useState(false)
+  const [viewportBounds, setViewportBounds] = useState<MapViewportBounds | null>(null)
   const carouselRef = useRef<HTMLDivElement | null>(null)
 
   const mapCenter = getExploreMapCenter(origin)
@@ -74,26 +101,32 @@ export function ExploreMobileMapOverlay({
   )
 
   const carouselSalons = useMemo(() => {
-    const onMap = new Set(mapSalons.map((salon) => salon.slug || salon.id))
-    return salonsWithDistance.filter((salon) => onMap.has(salon.id))
-  }, [mapSalons, salonsWithDistance])
+    const onMap = new Map(mapSalons.map((salon) => [salon.slug || salon.id, salon]))
+    const candidates = salonsWithDistance.filter((salon) => onMap.has(salon.id))
+    if (!viewportBounds) return candidates
+    return candidates.filter((salon) => {
+      const pin = onMap.get(salon.id)
+      return pin ? isSalonInViewport(pin, viewportBounds) : false
+    })
+  }, [mapSalons, salonsWithDistance, viewportBounds])
 
   useEffect(() => {
     setShowAllRegistered(false)
+    setViewportBounds(null)
   }, [locationCity])
 
   useEffect(() => {
-    if (mapSalons.length === 0) {
+    if (carouselSalons.length === 0) {
       setSelectedSalonId(null)
       return
     }
     setSelectedSalonId((current) => {
-      if (current && mapSalons.some((salon) => salon.id === current)) return current
-      return mapSalons.reduce((closest, salon) =>
+      if (current && carouselSalons.some((salon) => salon.id === current)) return current
+      return carouselSalons.reduce((closest, salon) =>
         salon.distanceKm < closest.distanceKm ? salon : closest,
       ).id
     })
-  }, [mapSalons])
+  }, [carouselSalons])
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -177,33 +210,32 @@ export function ExploreMobileMapOverlay({
               window.dispatchEvent(new CustomEvent(LOCATION_UPDATED_EVENT))
             }}
             onZoomChanged={() => setShowAllRegistered(true)}
+            onViewportChanged={setViewportBounds}
             autoFitBounds={!showAllRegistered}
             showMapPopover={false}
             mapHeightClass="h-full"
             mapFrameClassName="rounded-none border-0 shadow-none"
-            locateButtonClassName="bottom-[calc(22rem+env(safe-area-inset-bottom))] right-3"
+            locateButtonClassName="bottom-[calc(8.5rem+env(safe-area-inset-bottom))] right-3"
           />
         </div>
       </div>
 
       {carouselSalons.length > 0 ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
           <div
             ref={carouselRef}
-            className="pointer-events-auto flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="pointer-events-auto flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {carouselSalons.map((salon) => (
               <div
                 key={salon.id}
                 data-salon-id={salon.id}
-                className="w-[min(78vw,18.5rem)] shrink-0 snap-center"
+                className="w-[min(82vw,18.75rem)] shrink-0 snap-center"
               >
-                <SalonCard
+                <MapListingCard
                   salon={salon}
-                  density="compact"
-                  selected={salon.id === selectedSalonId}
-                  onSelect={() => setSelectedSalonId(salon.id)}
-                  className="h-full shadow-lg shadow-black/15"
+                  active={salon.id === selectedSalonId}
+                  onFocus={() => setSelectedSalonId(salon.id)}
                 />
               </div>
             ))}

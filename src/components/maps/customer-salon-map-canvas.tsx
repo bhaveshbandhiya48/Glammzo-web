@@ -16,6 +16,13 @@ import { SALON_MAP_OPTIONS } from "@/lib/maps/salon-map-styles"
 import type { NearbySalonRecord } from "@/lib/maps/nearby-salon.types"
 import { cn } from "@/lib/utils"
 
+type MapViewportBounds = {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
 type CustomerSalonMapCanvasProps = {
   center: google.maps.LatLngLiteral
   salons: NearbySalonRecord[]
@@ -25,6 +32,8 @@ type CustomerSalonMapCanvasProps = {
   onUserLocationFound?: (coords: { latitude: number; longitude: number }) => void
   /** Fires when the user changes zoom (in or out). */
   onZoomChanged?: (zoom: number) => void
+  /** Fires when the visible map camera settles (pan / zoom / fit). */
+  onViewportChanged?: (bounds: MapViewportBounds) => void
   /** When false, marker updates do not re-fit the map viewport. */
   autoFitBounds?: boolean
   children?: ReactNode
@@ -38,6 +47,8 @@ type CustomerSalonMapCanvasProps = {
   locateButtonClassName?: string
 }
 
+export type { MapViewportBounds }
+
 export function CustomerSalonMapCanvas({
   center,
   salons,
@@ -46,6 +57,7 @@ export function CustomerSalonMapCanvas({
   onClearSelection,
   onUserLocationFound,
   onZoomChanged,
+  onViewportChanged,
   autoFitBounds = true,
   children,
   showMapPopover = false,
@@ -62,14 +74,17 @@ export function CustomerSalonMapCanvas({
   const userMarkerRef = useRef<google.maps.Marker | null>(null)
   const lastBoundsKeyRef = useRef("")
   const zoomListenerRef = useRef<google.maps.MapsEventListener | null>(null)
+  const idleListenerRef = useRef<google.maps.MapsEventListener | null>(null)
   const suppressZoomCallbackRef = useRef(false)
   const onZoomChangedRef = useRef(onZoomChanged)
+  const onViewportChangedRef = useRef(onViewportChanged)
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
 
   onZoomChangedRef.current = onZoomChanged
+  onViewportChangedRef.current = onViewportChanged
 
   const selectedSalon = useMemo(
     () => salons.find((salon) => salon.id === selectedSalonId) ?? null,
@@ -194,6 +209,20 @@ export function CustomerSalonMapCanvas({
           if (typeof zoom === "number") {
             onZoomChangedRef.current?.(zoom)
           }
+        })
+
+        idleListenerRef.current?.remove()
+        idleListenerRef.current = mapRef.current.addListener("idle", () => {
+          const bounds = mapRef.current?.getBounds()
+          if (!bounds) return
+          const ne = bounds.getNorthEast()
+          const sw = bounds.getSouthWest()
+          onViewportChangedRef.current?.({
+            north: ne.lat(),
+            south: sw.lat(),
+            east: ne.lng(),
+            west: sw.lng(),
+          })
         })
 
         setMapInstance(mapRef.current)
