@@ -26,6 +26,7 @@ import { MotionDiv, MotionSection, fadeUp, stagger } from "@/components/shared/m
 import { Button } from "@/components/ui/button"
 
 const START_TRIAL_HREF = "/for-salons/start?plan=pro"
+const BOOK_DEMO_HREF = "/book-demo"
 
 const trustIcons = [UsersIcon, CalendarCheckIcon, StoreIcon, MonitorSmartphoneIcon]
 
@@ -71,7 +72,7 @@ export function ForSalonsLanding() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="px-8">
-                    <Link href="#how-it-works">{hero.secondaryCta}</Link>
+                    <Link href={BOOK_DEMO_HREF}>{hero.secondaryCta}</Link>
                   </Button>
                 </div>
                 <ul className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-5 sm:gap-y-2">
@@ -351,7 +352,7 @@ export function ForSalonsLanding() {
                       variant="ghost"
                       className="border border-white/25 bg-white/5 px-8 text-white hover:bg-white/12 hover:text-white"
                     >
-                      <Link href="#how-it-works">{closing.secondaryCta}</Link>
+                      <Link href={BOOK_DEMO_HREF}>{closing.secondaryCta}</Link>
                     </Button>
                   </div>
 

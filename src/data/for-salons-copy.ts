@@ -5,7 +5,7 @@ export const forSalonsCopy = {
     subtitle:
       "Start with a 30-day Pro trial. Get discovered by nearby customers, run bookings in one CRM, and put Glammzo on your storefront after you publish.",
     primaryCta: "Start 30-day Pro trial",
-    secondaryCta: "See how it works",
+    secondaryCta: "Book a demo",
     trust: ["No credit card required", "Full Pro for 30 days", "CRM stays free after trial"],
   },
   offer: {
@@ -130,7 +130,7 @@ export const forSalonsCopy = {
     subtitle:
       "Start your 30 day Pro trial today. Publish when you are ready, then get your flange sign.",
     primaryCta: "Start 30-day Pro trial",
-    secondaryCta: "See how it works",
+    secondaryCta: "Book a demo",
     highlights: [
       "30 days of Pro included",
       "No credit card required",
