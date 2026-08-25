@@ -33,18 +33,7 @@ export function ServiceCardSkeleton() {
 }
 
 export function PackageCardSkeleton() {
-  return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-border/60 bg-card/60">
-      <div className="h-[210px] bg-muted/40" />
-      <div className="space-y-3 p-5">
-        <div className="h-4 w-1/3 rounded-md bg-muted/50" />
-        <div className="h-6 w-4/5 rounded-md bg-muted/50" />
-        <div className="h-4 w-full rounded-md bg-muted/40" />
-        <div className="h-8 w-1/2 rounded-md bg-muted/50" />
-        <div className="h-10 w-full rounded-full bg-muted/50" />
-      </div>
-    </div>
-  )
+  return <ServiceCatalogRowSkeleton />
 }
 
 export function FeaturedServicesSkeleton({ count = 4 }: { count?: number }) {
@@ -89,7 +78,7 @@ export function CatalogServicesSkeleton({ count = 4 }: { count?: number }) {
 
 export function CatalogPackagesSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-card/60">
       {Array.from({ length: count }).map((_, index) => (
         <PackageCardSkeleton key={index} />
       ))}

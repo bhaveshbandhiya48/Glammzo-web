@@ -11,7 +11,7 @@ import {
 import { CatalogSearchBar } from "@/components/salons/booking-catalog/catalog-search-bar"
 import { CategoryFilterChips } from "@/components/salons/booking-catalog/category-filter-chips"
 import { FeaturedServicesSlider } from "@/components/salons/booking-catalog/featured-services-slider"
-import { PackageCard } from "@/components/salons/booking-catalog/package-card"
+import { PackageCatalogRow } from "@/components/salons/booking-catalog/package-catalog-row"
 import { PackageDetailSheet } from "@/components/salons/booking-catalog/package-detail-sheet"
 import { ServiceDetailSheet } from "@/components/salons/booking-catalog/service-detail-sheet"
 import { BookingAssistantSidebar } from "@/components/salons/booking-assistant/booking-assistant-sidebar"
@@ -45,7 +45,6 @@ import type {
   SalonService,
 } from "@/types/salon"
 import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
-import { MotionDiv, MotionSection, stagger } from "@/components/shared/motion"
 
 type SalonBookingCatalogSectionProps = {
   services: SalonService[]
@@ -388,35 +387,38 @@ export function SalonBookingCatalogSection({
           {showPackages ? (
             <section className="space-y-4">
               <div>
-                <h3 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
+                <h3 className="font-heading text-xl font-semibold text-foreground">
                   Recommended Packages
                 </h3>
-                <p className="mt-1 text-sm text-foreground/60">
-                  Save more when you book together, handpicked packages with exclusive pricing.
+                <p className="mt-1 hidden text-sm text-foreground/60 md:block">
+                  Save more when you book together. Use Add to select a package, or open a row for
+                  details.
                 </p>
               </div>
 
               {isLoading ? (
-                <CatalogPackagesSkeleton count={Math.min(filteredPackages.length, 2)} />
+                <CatalogPackagesSkeleton count={Math.min(filteredPackages.length || 3, 4)} />
               ) : (
-                <MotionSection variants={stagger} whileInView="show" viewport={{ once: true }}>
-                  <div className="grid auto-rows-fr gap-5 lg:grid-cols-2">
-                    {filteredPackages.map((pkg) => (
-                      <MotionDiv key={pkg.id} className="h-full">
-                        <PackageCard
-                          pkg={pkg}
-                          services={services}
-                          salonName={salonName}
-                          salonCoverImageUrl={salonCoverImageUrl}
-                          badge={packageBadges.get(pkg.id)}
-                          selected={selectedPackage?.id === pkg.id}
-                          onViewDetails={() => openPackageDetails(pkg.id)}
-                          onAddPackage={() => addPackage(pkg)}
-                        />
-                      </MotionDiv>
-                    ))}
-                  </div>
-                </MotionSection>
+                <div className="overflow-hidden rounded-xl border border-border/70 bg-card/70 shadow-sm shadow-black/[0.02]">
+                  {filteredPackages.map((pkg) => (
+                    <PackageCatalogRow
+                      key={pkg.id}
+                      pkg={pkg}
+                      services={services}
+                      salonCoverImageUrl={salonCoverImageUrl}
+                      badge={packageBadges.get(pkg.id)}
+                      selected={selectedPackage?.id === pkg.id}
+                      onOpen={() => openPackageDetails(pkg.id)}
+                      onToggle={() => {
+                        if (selectedPackage?.id === pkg.id) {
+                          handleClearPackage()
+                        } else {
+                          addPackage(pkg)
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
               )}
             </section>
           ) : null}
