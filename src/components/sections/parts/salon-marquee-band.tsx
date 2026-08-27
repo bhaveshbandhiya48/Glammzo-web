@@ -21,7 +21,7 @@ export function SalonMarqueeBand({ salons, className }: SalonMarqueeBandProps) {
     return (
       <div className={cn("bg-muted/20 px-6 py-10 text-center", className)}>
         <p className="text-sm text-foreground/60">
-          No salons within 10 km right now. Try exploring the full city list.
+          No salons near you right now. Try exploring the full city list.
         </p>
         <Link
           href="/explore"

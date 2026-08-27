@@ -70,7 +70,7 @@ export const siteCopy = {
   nearbySalonsMarquee: {
     eyebrow: "Salon near me",
     title: "Salons near you",
-    subtitle: "Live listings within 10 km. Find a salon nearby and book online.",
+    subtitle: "Live listings near you, closest first. Find a salon and book online.",
     viewAllCta: "View all salons",
   },
   experience: {

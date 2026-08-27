@@ -24,7 +24,7 @@ export function SalonGalleryMasonry({ gallery, salonName, className }: SalonGall
     <>
       <div
         className={cn(
-          "grid grid-cols-2 items-start gap-4 sm:grid-cols-3 sm:gap-5",
+          "columns-2 gap-4 sm:columns-3 sm:gap-5 [column-fill:_balance]",
           className,
         )}
       >
@@ -32,7 +32,7 @@ export function SalonGalleryMasonry({ gallery, salonName, className }: SalonGall
           <button
             key={`${src}-${index}`}
             type="button"
-            className="group block w-full overflow-hidden rounded-2xl border border-border/70 bg-muted/30 text-left shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="group mb-4 block w-full break-inside-avoid overflow-hidden rounded-2xl border border-border/70 bg-muted/30 text-left shadow-sm shadow-black/[0.03] transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:mb-5"
             onClick={() => openAt(index)}
             aria-label={`View ${salonName} gallery photo ${index + 1}`}
           >
