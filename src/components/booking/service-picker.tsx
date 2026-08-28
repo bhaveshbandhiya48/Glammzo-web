@@ -20,6 +20,7 @@ type ServicePickerProps = {
   onToggle: (id: string) => void
   variant?: "list" | "cards"
   mode?: "select" | "cart"
+  unstaffedIds?: string[]
 }
 
 export function ServicePicker({
@@ -28,6 +29,7 @@ export function ServicePicker({
   onToggle,
   variant = "cards",
   mode = "select",
+  unstaffedIds = [],
 }: ServicePickerProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -51,7 +53,11 @@ export function ServicePicker({
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
-                <CompactCartServiceRow service={svc} onRemove={() => onToggle(svc.id)} />
+                <CompactCartServiceRow
+                  service={svc}
+                  unstaffed={unstaffedIds.includes(svc.id)}
+                  onRemove={() => onToggle(svc.id)}
+                />
               </motion.li>
             ))}
           </AnimatePresence>
@@ -101,13 +107,20 @@ export function ServicePicker({
 
 function CompactCartServiceRow({
   service,
+  unstaffed = false,
   onRemove,
 }: {
   service: SalonService
+  unstaffed?: boolean
   onRemove: () => void
 }) {
   return (
-    <div className="flex h-[4.75rem] items-center gap-3 px-3 sm:px-4">
+    <div
+      className={cn(
+        "flex items-center gap-3 px-3 py-3 sm:px-4",
+        unstaffed && "bg-destructive/[0.04]",
+      )}
+    >
       <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30">
         <Image src={service.imageUrl} alt="" fill className="object-cover" sizes="48px" />
       </div>
@@ -116,6 +129,11 @@ function CompactCartServiceRow({
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {service.category} · {service.durationMin} min
         </p>
+        {unstaffed ? (
+          <p className="mt-1 text-xs font-medium text-destructive" role="alert">
+            This service has no staff. Remove it to continue.
+          </p>
+        ) : null}
       </div>
       <p className="shrink-0 text-sm font-semibold text-foreground">
         <ServicePriceText service={service} />

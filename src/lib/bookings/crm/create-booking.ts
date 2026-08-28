@@ -2,7 +2,7 @@ import "server-only"
 
 import { after } from "next/server"
 
-import { pickStaffForSlot, uniqueServiceIds } from "@/lib/bookings/crm/availability"
+import { pickStaffForSlot, uniqueServiceIds, servicesWithoutEligibleStaff, formatUnstaffedServicesMessage } from "@/lib/bookings/crm/availability"
 import { validateAppointmentBusinessHours } from "@/lib/bookings/crm/business-hours"
 import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
 import type { CreateCrmBookingInput, CreateCrmBookingResult } from "@/lib/bookings/crm/types"
@@ -177,6 +177,18 @@ export async function createCrmWebBooking(
     return {
       success: false,
       error: "One or more selected services are inactive.",
+      code: "invalid",
+    }
+  }
+
+  const unstaffedIds = servicesWithoutEligibleStaff(context, uniqueIds)
+  if (unstaffedIds.length > 0) {
+    const names = unstaffedIds
+      .map((serviceId) => services.find((service) => service.id === serviceId)?.name)
+      .filter((name): name is string => Boolean(name))
+    return {
+      success: false,
+      error: formatUnstaffedServicesMessage(names),
       code: "invalid",
     }
   }

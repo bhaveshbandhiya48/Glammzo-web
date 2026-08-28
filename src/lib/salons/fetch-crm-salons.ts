@@ -121,13 +121,13 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, category_id, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
 
 const SERVICE_SELECT_WITH_IMAGE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, category_id, service_categories(name, is_active, sort_order)"
 
 const SERVICE_SELECT_WITHOUT_IMAGE =
-  "id, salon_id, name, description, duration_minutes, price, offer_price, is_active, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, duration_minutes, price, offer_price, is_active, category_id, service_categories(name, is_active, sort_order)"
 
 function isMissingServiceImageColumn(message: string) {
   return message.toLowerCase().includes("image_url")

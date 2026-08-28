@@ -207,13 +207,27 @@ function mapService(
   }
 }
 
-function isMarketplaceReadyService(row: CrmServiceRow) {
+function isMarketplaceReadyService(row: CrmServiceRow, coveredCategoryIds: Set<string>) {
+  const categoryId = row.category_id?.trim() || ""
   return (
     row.is_active &&
     Number(row.price) > 0 &&
     Number(row.duration_minutes) > 0 &&
-    Boolean(relationCategory(row.service_categories))
+    Boolean(relationCategory(row.service_categories)) &&
+    categoryId.length > 0 &&
+    coveredCategoryIds.has(categoryId)
   )
+}
+
+function coveredCategoryIdsForStaff(staff: CrmStaffRow[]) {
+  const ids = new Set<string>()
+  for (const member of staff) {
+    if (!member.is_active || !member.is_bookable) continue
+    for (const categoryId of member.category_ids) {
+      if (categoryId) ids.add(categoryId)
+    }
+  }
+  return ids
 }
 
 function isMarketplaceReadyStaff(row: CrmStaffRow) {
@@ -414,9 +428,14 @@ export function mapCrmSalonToWeb(
 ): Salon {
   const listUrl = sanitizeSalonImageUrl(row.list_image_url)
   const coverUrl = sanitizeSalonImageUrl(row.cover_image_url)
+  const coveredCategoryIds = coveredCategoryIdsForStaff(staff)
 
-  const activeServices = services
-    .filter(isMarketplaceReadyService)
+  const marketplaceServiceRows = services.filter((serviceRow) =>
+    isMarketplaceReadyService(serviceRow, coveredCategoryIds),
+  )
+  const visibleServiceIds = new Set(marketplaceServiceRows.map((serviceRow) => serviceRow.id))
+
+  const activeServices = marketplaceServiceRows
     .map((serviceRow) =>
       mapService(serviceRow, serviceBookingCounts.get(serviceRow.id) ?? 0),
     )
@@ -444,6 +463,11 @@ export function mapCrmSalonToWeb(
   const activePackages = packages
     .filter((pkg) => pkg.is_active && (pkg.status == null || pkg.status === "active"))
     .filter((pkg) => pkg.marketplace_visible !== false)
+    .filter((pkg) => {
+      const items = pkg.salon_package_items ?? []
+      if (items.length === 0) return true
+      return items.every((item) => visibleServiceIds.has(item.service_id))
+    })
     .sort((a, b) => {
       const featuredDiff = Number(b.is_featured) - Number(a.is_featured)
       if (featuredDiff !== 0) return featuredDiff

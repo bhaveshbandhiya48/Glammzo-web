@@ -9,6 +9,9 @@ import {
   formatSlotLabel,
   getAvailableSlotsForDate,
   isStaffEligibleForServices,
+  servicesWithoutEligibleStaff,
+  staffedServiceIdsForBooking,
+  formatUnstaffedServicesMessage,
 } from "@/lib/bookings/crm/availability"
 import { BOOKING_ENGINE_CONFIG } from "@/lib/bookings/crm/booking-confirmation-engine"
 import { loadSalonBookingContext } from "@/lib/bookings/crm/salon-context"
@@ -62,9 +65,20 @@ export async function GET(request: Request) {
       return jsonError(503, "Availability is not ready for this salon.")
     }
 
+    const unstaffedIds = servicesWithoutEligibleStaff(context, resolvedServiceIds)
+    const staffedIds = staffedServiceIdsForBooking(context, resolvedServiceIds)
+    const slotServiceIds =
+      selectedPackage || staffedIds.length === 0 ? resolvedServiceIds : staffedIds
+    const slotServices = resolveServices(salon.services, slotServiceIds)
+
     const durationMinutes = selectedPackage
       ? selectedPackage.totalDurationMin || sumServiceDuration(services)
-      : sumServiceDuration(services)
+      : sumServiceDuration(slotServices.length > 0 ? slotServices : services)
+
+    const unstaffedServices = resolveServices(salon.services, unstaffedIds).map((service) => ({
+      id: service.id,
+      name: service.name,
+    }))
 
     const packageBooking = Boolean(selectedPackage)
     const preferredStaffId = packageBooking ? null : staffId || null
@@ -79,7 +93,7 @@ export async function GET(request: Request) {
         context,
         date,
         durationMinutes || 30,
-        resolvedServiceIds,
+        slotServiceIds,
         preferredStaffId,
         { packageBooking },
       )
@@ -95,7 +109,7 @@ export async function GET(request: Request) {
       date =
         findFirstAvailableDate(
           context,
-          resolvedServiceIds,
+          slotServiceIds,
           durationMinutes || 30,
           preferredStaffId,
           maxDays,
@@ -107,7 +121,7 @@ export async function GET(request: Request) {
       context,
       date,
       durationMinutes || 30,
-      resolvedServiceIds,
+      slotServiceIds,
       preferredStaffId,
       { packageBooking },
     )
@@ -116,7 +130,7 @@ export async function GET(request: Request) {
       ? []
       : context.staffMembers
           .filter((member) =>
-            isStaffEligibleForServices(context, member.id, resolvedServiceIds),
+            isStaffEligibleForServices(context, member.id, slotServiceIds),
           )
           .map((member) => ({
             id: member.id,
@@ -125,10 +139,15 @@ export async function GET(request: Request) {
             imageUrl: member.imageUrl,
           }))
 
+    const allUnstaffed = unstaffedIds.length > 0 && unstaffedIds.length === resolvedServiceIds.length
+
     return jsonOk({
       date,
-      closed: Boolean(slotResult.closed),
-      closedMessage: slotResult.closedMessage ?? null,
+      closed: Boolean(slotResult.closed) || allUnstaffed,
+      closedMessage: allUnstaffed
+        ? formatUnstaffedServicesMessage(unstaffedServices.map((service) => service.name))
+        : slotResult.closedMessage ?? null,
+      unstaffedServices,
       days,
       slots: slotResult.slots.map((value) => ({
         value,

@@ -44,6 +44,8 @@ const salon: CrmSalonRow = {
   listing_status: "published",
 }
 
+const HAIR_CATEGORY_ID = "00000000-0000-4000-8000-0000000000aa"
+
 const service: CrmServiceRow = {
   id: "00000000-0000-4000-8000-000000000002",
   salon_id: salon.id,
@@ -53,7 +55,23 @@ const service: CrmServiceRow = {
   duration_minutes: 45,
   price: "500",
   is_active: true,
+  category_id: HAIR_CATEGORY_ID,
   service_categories: { name: "Hair", is_active: true, sort_order: 1 },
+}
+
+const hairStaff: CrmStaffRow = {
+  id: "staff-hair",
+  salon_id: salon.id,
+  full_name: "A Stylist",
+  designation: "Stylist",
+  gender: "female",
+  bio: null,
+  avatar_url: "https://images.unsplash.com/staff.jpg",
+  specialties: [],
+  is_active: true,
+  is_bookable: true,
+  category_ids: [HAIR_CATEGORY_ID],
+  staff_roles: null,
 }
 
 const profile: CrmMarketplaceProfileRow = {
@@ -88,7 +106,7 @@ describe("mapCrmSalonToWeb", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
       [service],
-      [],
+      [hairStaff],
       [],
       [],
       [],
@@ -136,7 +154,7 @@ describe("mapCrmSalonToWeb", () => {
   })
 
   it("retains legacy settings fallbacks when canonical rows are absent", () => {
-    const mapped = mapCrmSalonToWeb(salon, [service], [])
+    const mapped = mapCrmSalonToWeb(salon, [service], [hairStaff])
 
     expect(mapped.businessType).toBe("Unisex Salon")
     expect(mapped.amenities?.categories[0]?.name).toBe("Legacy amenity")
@@ -150,7 +168,7 @@ describe("mapCrmSalonToWeb", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
       [{ ...service, price: "800", offer_price: "650" }],
-      [],
+      [hairStaff],
     )
 
     expect(mapped.services[0]?.price).toBe(650)
@@ -159,7 +177,7 @@ describe("mapCrmSalonToWeb", () => {
   })
 
   it("keeps original price only when offer is missing", () => {
-    const mapped = mapCrmSalonToWeb(salon, [service], [])
+    const mapped = mapCrmSalonToWeb(salon, [service], [hairStaff])
 
     expect(mapped.services[0]?.price).toBe(500)
     expect(mapped.services[0]?.compareAtPrice).toBeUndefined()
@@ -169,7 +187,7 @@ describe("mapCrmSalonToWeb", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
       [service],
-      [],
+      [hairStaff],
       [],
       [],
       [],
@@ -217,11 +235,35 @@ describe("mapCrmSalonToWeb", () => {
     expect(mapped.team).toEqual([])
   })
 
+  it("hides services that have no assigned staff until staff is added", () => {
+    const unstaffed = {
+      ...service,
+      id: "00000000-0000-4000-8000-000000000099",
+      name: "Hair Keratin",
+      category_id: "00000000-0000-4000-8000-0000000000bb",
+      service_categories: { name: "Hair Treatments", is_active: true, sort_order: 2 },
+    }
+
+    const withoutStaff = mapCrmSalonToWeb(salon, [service, unstaffed], [hairStaff])
+    expect(withoutStaff.services.map((entry) => entry.name)).toEqual(["Haircut"])
+
+    const coveringStaff: CrmStaffRow = {
+      ...hairStaff,
+      id: "staff-treatments",
+      category_ids: [HAIR_CATEGORY_ID, "00000000-0000-4000-8000-0000000000bb"],
+    }
+    const withStaff = mapCrmSalonToWeb(salon, [service, unstaffed], [coveringStaff])
+    expect(withStaff.services.map((entry) => entry.name).sort()).toEqual([
+      "Hair Keratin",
+      "Haircut",
+    ])
+  })
+
   it("keeps services without images and uses category stock (not salon list/cover)", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
       [{ ...service, image_url: null }],
-      [],
+      [hairStaff],
     )
 
     expect(mapped.services).toHaveLength(1)
@@ -232,7 +274,7 @@ describe("mapCrmSalonToWeb", () => {
     const mapped = mapCrmSalonToWeb(
       { ...salon, list_image_url: null },
       [{ ...service, image_url: null }],
-      [],
+      [hairStaff],
     )
 
     expect(mapped.services[0]?.imageUrl).toBe("/images/categories/hair.png")

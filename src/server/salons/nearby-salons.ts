@@ -22,7 +22,7 @@ const SALON_SELECT =
   "id, name, slug, phone, address_line1, address_line2, city, state, postal_code, country, latitude, longitude, list_image_url, cover_image_url, logo_url, settings, timezone, listing_status"
 
 const SERVICE_SELECT =
-  "id, salon_id, name, duration_minutes, price, is_active, service_categories(name)"
+  "id, salon_id, name, duration_minutes, price, is_active, category_id, service_categories(name)"
 
 function clampRadius(radiusKm?: number) {
   const value = radiusKm ?? DEFAULT_NEARBY_RADIUS_KM
@@ -102,22 +102,54 @@ async function fetchActiveServices(salonIds: string[]) {
   }
 
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from("services")
-    .select(SERVICE_SELECT)
-    .in("salon_id", salonIds)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("sort_order", { ascending: true })
+  const [{ data, error }, { data: staffRows }, { data: categoryRows }] = await Promise.all([
+    supabase
+      .from("services")
+      .select(SERVICE_SELECT)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("staff")
+      .select("id")
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .eq("is_bookable", true)
+      .is("deleted_at", null),
+    supabase
+      .from("staff_service_categories")
+      .select("staff_id, category_id, salon_id")
+      .in("salon_id", salonIds),
+  ])
 
   if (error) {
     console.error("[nearby-salons] services fetch failed:", error.message)
     return new Map<string, CrmServiceRow[]>()
   }
 
+  const bookableStaffIds = new Set(
+    ((staffRows ?? []) as Array<{ id: string }>).map((row) => row.id),
+  )
+  const coveredCategoriesBySalon = new Map<string, Set<string>>()
+  for (const row of (categoryRows ?? []) as Array<{
+    staff_id: string
+    category_id: string
+    salon_id: string
+  }>) {
+    if (!bookableStaffIds.has(row.staff_id)) continue
+    const current = coveredCategoriesBySalon.get(row.salon_id) ?? new Set<string>()
+    current.add(row.category_id)
+    coveredCategoriesBySalon.set(row.salon_id, current)
+  }
+
   const bySalon = new Map<string, CrmServiceRow[]>()
 
   for (const row of (data ?? []) as CrmServiceRow[]) {
+    const covered = coveredCategoriesBySalon.get(row.salon_id)
+    if (!row.category_id || !covered?.has(row.category_id)) {
+      continue
+    }
     const list = bySalon.get(row.salon_id) ?? []
     list.push(row)
     bySalon.set(row.salon_id, list)

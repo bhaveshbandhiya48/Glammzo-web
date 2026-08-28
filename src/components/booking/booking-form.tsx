@@ -19,6 +19,9 @@ import {
   getTimeSlotOptionsForDate,
   hasEligibleStaffForServices,
   isStaffEligibleForServices,
+  servicesWithoutEligibleStaff,
+  staffedServiceIdsForBooking,
+  formatUnstaffedServicesMessage,
   slotStatusHint,
 } from "@/lib/bookings/crm/availability"
 import { BOOKING_ENGINE_CONFIG, getMaxBookableDateKey } from "@/lib/bookings/crm/booking-confirmation-engine"
@@ -236,10 +239,37 @@ export function BookingForm({
     [bookingContext],
   )
 
+  const unstaffedIds = useMemo(() => {
+    if (!bookingContext || selectedIds.length === 0) return []
+    return servicesWithoutEligibleStaff(bookingContext, selectedIds)
+  }, [bookingContext, selectedIds])
+
+  const staffedIds = useMemo(() => {
+    if (!bookingContext) return selectedIds
+    return staffedServiceIdsForBooking(bookingContext, selectedIds)
+  }, [bookingContext, selectedIds])
+
+  const unstaffedServices = useMemo(
+    () => resolveServices(salon.services, unstaffedIds),
+    [salon.services, unstaffedIds],
+  )
+
+  const availabilityServiceIds = staffedIds.length > 0 ? staffedIds : selectedIds
+  const availabilityDuration = useMemo(() => {
+    if (staffedIds.length === 0 || staffedIds.length === selectedIds.length) {
+      return totalDuration
+    }
+    return sumServiceDuration(resolveServices(salon.services, staffedIds))
+  }, [salon.services, selectedIds.length, staffedIds, totalDuration])
+
   const bookableStaff = useMemo(() => {
     if (bookingContext) {
       return bookingContext.staffMembers.filter((member) =>
-        isStaffEligibleForServices(bookingContext, member.id, selectedIds),
+        isStaffEligibleForServices(
+          bookingContext,
+          member.id,
+          availabilityServiceIds,
+        ),
       )
     }
 
@@ -249,18 +279,19 @@ export function BookingForm({
       role: member.role,
       imageUrl: member.imageUrl,
     }))
-  }, [bookingContext, salon.team, selectedIds])
+  }, [availabilityServiceIds, bookingContext, salon.team])
 
   const multiServiceNoSingleStaff = useMemo(() => {
-    if (!bookingContext || packageMode || selectedIds.length < 2) return false
-    return !hasEligibleStaffForServices(bookingContext, selectedIds)
-  }, [bookingContext, packageMode, selectedIds])
+    if (!bookingContext || packageMode || staffedIds.length < 2) return false
+    if (unstaffedIds.length > 0) return false
+    return !hasEligibleStaffForServices(bookingContext, staffedIds)
+  }, [bookingContext, packageMode, staffedIds, unstaffedIds.length])
 
   const noEligibleStaff = Boolean(
     !packageMode &&
       selectedIds.length > 0 &&
       bookingContext &&
-      bookableStaff.length === 0,
+      staffedIds.length === 0,
   )
 
   useEffect(() => {
@@ -279,14 +310,14 @@ export function BookingForm({
 
     if (!bookingContext) return
 
-    const duration = totalDuration || 30
+    const duration = availabilityDuration || 30
 
     setDate((current) => {
       if (!current) {
         return (
           findFirstAvailableDate(
             bookingContext,
-            selectedIds,
+            availabilityServiceIds,
             duration,
             preferredStaffId,
             BOOKING_ENGINE_CONFIG.maxAdvanceBookingDays,
@@ -299,7 +330,7 @@ export function BookingForm({
         bookingContext,
         current,
         duration,
-        selectedIds,
+        availabilityServiceIds,
         preferredStaffId,
         availabilityOptions,
       )
@@ -311,7 +342,7 @@ export function BookingForm({
       return (
         findFirstAvailableDate(
           bookingContext,
-          selectedIds,
+          availabilityServiceIds,
           duration,
           preferredStaffId,
           BOOKING_ENGINE_CONFIG.maxAdvanceBookingDays,
@@ -319,7 +350,7 @@ export function BookingForm({
         ) ?? current
       )
     })
-  }, [availabilityOptions, bookingContext, preferredStaffId, selectedIds, totalDuration, useCrmSlots])
+  }, [availabilityDuration, availabilityOptions, availabilityServiceIds, bookingContext, preferredStaffId, selectedIds.length, useCrmSlots])
 
   useEffect(() => {
     if (!time) return
@@ -334,8 +365,8 @@ export function BookingForm({
     const result = getTimeSlotOptionsForDate(
       bookingContext,
       date,
-      totalDuration || 30,
-      selectedIds,
+      availabilityDuration || 30,
+      availabilityServiceIds,
       preferredStaffId,
       availabilityOptions,
     )
@@ -345,13 +376,14 @@ export function BookingForm({
       setTime("")
     }
   }, [
+    availabilityDuration,
     availabilityOptions,
+    availabilityServiceIds,
     bookingContext,
     date,
     preferredStaffId,
-    selectedIds,
+    selectedIds.length,
     time,
-    totalDuration,
     useCrmSlots,
   ])
 
@@ -363,12 +395,20 @@ export function BookingForm({
     return getTimeSlotOptionsForDate(
       bookingContext,
       date,
-      totalDuration || 30,
-      selectedIds,
+      availabilityDuration || 30,
+      availabilityServiceIds,
       preferredStaffId,
       availabilityOptions,
     )
-  }, [availabilityOptions, bookingContext, date, preferredStaffId, selectedIds, totalDuration])
+  }, [
+    availabilityDuration,
+    availabilityOptions,
+    availabilityServiceIds,
+    bookingContext,
+    date,
+    preferredStaffId,
+    selectedIds.length,
+  ])
 
   const timeSlotOptions = useMemo(() => {
     if (!date) return []
@@ -408,6 +448,7 @@ export function BookingForm({
           ),
         )) &&
       (!staffId || packageMode || bookableStaff.some((member) => member.id === staffId)) &&
+      unstaffedIds.length === 0 &&
       !(multiServiceNoSingleStaff && !staffId),
   )
 
@@ -434,7 +475,12 @@ export function BookingForm({
             : undefined,
       date: date ? undefined : "Select a date.",
       time: time ? undefined : "Select a time.",
-      services: selectedServices.length > 0 ? undefined : "Add at least one service.",
+      services:
+        selectedServices.length === 0
+          ? "Add at least one service."
+          : unstaffedIds.length > 0
+            ? formatUnstaffedServicesMessage(unstaffedServices.map((service) => service.name))
+            : undefined,
       staff:
         multiServiceNoSingleStaff && !staffId
           ? "Adjust services or pick a team member who can do all of them."
@@ -456,6 +502,8 @@ export function BookingForm({
     selectedServices.length,
     staffId,
     time,
+    unstaffedIds.length,
+    unstaffedServices,
     useCrmSlots,
   ])
 
@@ -632,6 +680,7 @@ export function BookingForm({
                 onToggle={handleToggle}
                 variant="list"
                 mode="cart"
+                unstaffedIds={unstaffedIds}
               />
             ) : null}
           </>
@@ -642,6 +691,7 @@ export function BookingForm({
             onToggle={handleToggle}
             variant="list"
             mode="cart"
+            unstaffedIds={unstaffedIds}
           />
         )}
 
@@ -841,10 +891,9 @@ export function BookingForm({
           </div>
         ) : null}
 
-        {!packageMode && selectedIds.length > 0 && bookingContext && bookableStaff.length === 0 ? (
+        {unstaffedIds.length > 0 ? (
           <p className="text-sm leading-relaxed text-destructive" role="alert">
-            This category has no staff assigned, so date and time can&apos;t be selected. Choose
-            another service or contact the salon.
+            {formatUnstaffedServicesMessage(unstaffedServices.map((service) => service.name))}
           </p>
         ) : null}
 
@@ -889,7 +938,9 @@ export function BookingForm({
               closed={useCrmSlots ? Boolean(crmSlotResult?.closed) || noEligibleStaff : noEligibleStaff}
               closedMessage={
                 noEligibleStaff
-                  ? "This category has no staff assigned, so date and time can’t be selected. Choose another service or contact the salon."
+                  ? formatUnstaffedServicesMessage(
+                      unstaffedServices.map((service) => service.name),
+                    )
                   : crmSlotResult?.closedMessage
               }
               emptyMessage="No time slots for this day."

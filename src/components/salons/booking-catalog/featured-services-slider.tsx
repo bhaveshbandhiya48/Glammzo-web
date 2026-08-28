@@ -34,7 +34,7 @@ export function FeaturedServicesSlider({
 }: FeaturedServicesSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const canScroll = services.length > 1
+  const showSlider = services.length > 2
 
   const syncActiveIndex = useCallback(() => {
     const container = scrollRef.current
@@ -48,20 +48,22 @@ export function FeaturedServicesSlider({
 
     const index = Math.round(container.scrollLeft / stride)
     setActiveIndex(Math.min(Math.max(index, 0), services.length - 1))
-  }, [services.length])
+  }, [services])
 
   useEffect(() => {
+    if (!showSlider) return
     const container = scrollRef.current
     if (!container) return
 
     container.addEventListener("scroll", syncActiveIndex, { passive: true })
     return () => container.removeEventListener("scroll", syncActiveIndex)
-  }, [syncActiveIndex])
+  }, [showSlider, syncActiveIndex])
 
   useEffect(() => {
+    if (!showSlider) return
     setActiveIndex(0)
     scrollRef.current?.scrollTo({ left: 0, behavior: "instant" })
-  }, [services])
+  }, [services, showSlider])
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current
@@ -77,39 +79,26 @@ export function FeaturedServicesSlider({
 
   if (services.length === 0) return null
 
-  if (services.length === 1) {
-    const service = services[0]!
-    return (
-      <div className={cn("w-[calc((100%-1.5rem)/2.5)] max-w-xs", className)}>
-        <FeaturedServiceCard
-          service={service}
-          badge={badges.get(service.id)}
-          offer={bestOfferForService(offers, service.id, service.price)}
-          selected={selectedIds.includes(service.id)}
-          onOpenDetails={() => onOpenDetails(service)}
-          onToggle={() => onToggleService(service.id)}
-        />
-      </div>
-    )
-  }
-
   return (
     <div className={cn("group relative", className)}>
       <div
-        ref={scrollRef}
+        ref={showSlider ? scrollRef : undefined}
         className={cn(
-          "flex gap-3 overflow-x-auto scroll-smooth",
-          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-          "snap-x snap-mandatory",
+          "flex gap-3",
+          showSlider && [
+            "overflow-x-auto scroll-smooth",
+            "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+            "snap-x snap-mandatory",
+          ],
         )}
-        aria-roledescription="carousel"
+        aria-roledescription={showSlider ? "carousel" : undefined}
         aria-label="Most booked services"
       >
         {services.map((service) => (
           <div
             key={service.id}
             data-featured-card
-            className={cn("shrink-0 snap-start", CARD_WIDTH)}
+            className={cn("shrink-0", CARD_WIDTH, showSlider && "snap-start")}
           >
             <FeaturedServiceCard
               service={service}
@@ -123,7 +112,7 @@ export function FeaturedServicesSlider({
         ))}
       </div>
 
-      {canScroll ? (
+      {showSlider ? (
         <>
           <button
             type="button"

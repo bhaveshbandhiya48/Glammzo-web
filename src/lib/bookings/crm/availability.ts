@@ -124,6 +124,36 @@ export function hasEligibleStaffForServices(
   return getEligibleStaffIds(context, serviceIds).length > 0
 }
 
+/** Selected services that no bookable team member can perform. */
+export function servicesWithoutEligibleStaff(
+  context: SalonBookingContext,
+  serviceIds: string[],
+) {
+  return uniqueServiceIds(serviceIds).filter(
+    (serviceId) => !hasEligibleStaffForServices(context, [serviceId]),
+  )
+}
+
+export function staffedServiceIdsForBooking(
+  context: SalonBookingContext,
+  serviceIds: string[],
+) {
+  return uniqueServiceIds(serviceIds).filter((serviceId) =>
+    hasEligibleStaffForServices(context, [serviceId]),
+  )
+}
+
+export function formatUnstaffedServicesMessage(names: string[]) {
+  const labeled = names.map((name) => name.trim()).filter(Boolean)
+  if (labeled.length === 0) {
+    return "Remove this service — it has no staff assigned."
+  }
+  if (labeled.length === 1) {
+    return `Remove ${labeled[0]} — this service has no staff assigned.`
+  }
+  return `Remove ${labeled.join(", ")} — these services have no staff assigned.`
+}
+
 /** True when at least one team member can cover some of the cart. */
 export function hasAssignableStaffForServices(
   context: SalonBookingContext,
@@ -414,7 +444,7 @@ export function getTimeSlotOptionsForDate(
       closed: true,
       closedMessage: preferredStaffId
         ? "This team member can’t take the selected services. Choose another person or clear the preference."
-        : "This category has no staff assigned, so date and time can’t be selected. Choose another service or contact the salon.",
+        : "This service has no staff assigned. Remove it to continue with the other services.",
     }
   }
 
