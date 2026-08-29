@@ -34,7 +34,8 @@ import {
 import { buildBookHref } from "@/lib/bookings/utils"
 import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 import { formatInr } from "@/lib/salons/catalog-utils"
-import type { SalonOffer, SalonPackage, SalonService } from "@/types/salon"
+import { calculateGstAmount, resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
+import type { SalonOffer, SalonPackage, SalonService, SalonTaxInfo } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 export type BookingAssistantSidebarProps = {
@@ -47,6 +48,7 @@ export type BookingAssistantSidebarProps = {
   selectedPackage: SalonPackage | null
   salonId: string
   salonCoverImageUrl: string
+  tax?: SalonTaxInfo | null
   authenticated: boolean
   onRemoveService: (id: string) => void
   onClearPackage: () => void
@@ -67,6 +69,7 @@ export function BookingAssistantSidebar({
   selectedPackage,
   salonId,
   salonCoverImageUrl,
+  tax = null,
   authenticated,
   onRemoveService,
   onClearPackage,
@@ -331,7 +334,12 @@ export function BookingAssistantSidebar({
   }, [appliedSpotlight, hasCart, customerBlocked])
 
   const discount = discountResult?.discountAmount ?? 0
-  const estimatedTotal = Math.max(0, subtotal - discount)
+  const afterDiscount = Math.max(0, subtotal - discount)
+  const salonTax = resolveSalonTaxInfo(tax)
+  const gstAmount = salonTax
+    ? calculateGstAmount(afterDiscount, salonTax.ratePercent)
+    : 0
+  const estimatedTotal = Math.round((afterDiscount + gstAmount) * 100) / 100
   const lines = useMemo(
     () =>
       buildBookingLineItems({
@@ -388,6 +396,8 @@ export function BookingAssistantSidebar({
         lines={lines}
         subtotal={subtotal}
         discount={discount}
+        tax={salonTax}
+        gstAmount={gstAmount}
         estimatedTotal={estimatedTotal}
         bookHref={bookHref}
         onRemoveLine={(id, kind) => {

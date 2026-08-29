@@ -113,6 +113,13 @@ export type SalonCancellationPolicy = {
   summary?: string
 }
 
+/** Present only when the salon enabled GST and saved a GSTIN in CRM. */
+export type SalonTaxInfo = {
+  enabled: boolean
+  ratePercent: number
+  gstNumber: string
+}
+
 export type SalonSocialLinks = {
   instagram?: string
   facebook?: string
@@ -203,4 +210,6 @@ export type Salon = {
   team: SalonTeamMember[]
   amenities?: SalonAmenities
   cancellationPolicy?: SalonCancellationPolicy
+  /** GST for pay-at-salon estimates when enabled with GSTIN in CRM. */
+  tax?: SalonTaxInfo | null
 }

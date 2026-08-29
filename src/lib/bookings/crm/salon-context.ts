@@ -13,6 +13,26 @@ import { parseWebBookingSettings } from "@/lib/bookings/crm/web-booking-sla"
 import { getSalonDateKey } from "@/lib/bookings/crm/time"
 import { shiftIsoDate } from "@/lib/date-utils"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
+import type { SalonTaxInfo } from "@/types/salon"
+
+function parseSalonTaxFromSettings(settings: unknown): SalonTaxInfo | null {
+  if (!settings || typeof settings !== "object") return null
+  const tax = (settings as { tax?: unknown }).tax
+  if (!tax || typeof tax !== "object") return null
+
+  const row = tax as {
+    gstEnabled?: unknown
+    gstNumber?: unknown
+    defaultTaxRate?: unknown
+  }
+
+  return resolveSalonTaxInfo({
+    enabled: row.gstEnabled === true,
+    ratePercent: Number(row.defaultTaxRate) || 0,
+    gstNumber: typeof row.gstNumber === "string" ? row.gstNumber : "",
+  })
+}
 
 export async function loadSalonBookingContext(
   crmSalonId: string,
@@ -238,6 +258,7 @@ export async function loadSalonBookingContext(
         (salonData as { booking_confirmation_mode?: string | null })
           .booking_confirmation_mode,
       ),
+      tax: parseSalonTaxFromSettings((salonData as { settings?: unknown }).settings),
       booked,
     }
 }

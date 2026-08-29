@@ -10,20 +10,20 @@ type BookingStatusBadgeProps = {
 function statusClasses(status: BookingStatus) {
   switch (status) {
     case "pending":
-      return "border-amber-300/90 bg-amber-50 text-amber-950 ring-amber-200/60"
+      return "border-amber-400 bg-amber-50 text-amber-800"
     case "confirmed":
     case "upcoming":
-      return "border-emerald-300/90 bg-emerald-50 text-emerald-950 ring-emerald-200/60"
+      return "border-blue-400 bg-blue-50 text-blue-800"
     case "completed":
-      return "border-border/80 bg-muted/80 text-foreground/75 ring-border/50"
+      return "border-emerald-400 bg-emerald-50 text-emerald-800"
     case "cancelled":
-      return "border-border/80 bg-secondary text-foreground/65 ring-border/40"
+      return "border-rose-400 bg-rose-50 text-rose-800"
     case "declined":
-      return "border-red-300/80 bg-red-50 text-red-900 ring-red-200/50"
+      return "border-red-400 bg-red-50 text-red-800"
     case "expired":
-      return "border-orange-300/80 bg-orange-50 text-orange-950 ring-orange-200/50"
+      return "border-orange-400 bg-orange-50 text-orange-800"
     default:
-      return "border-border/70 bg-secondary text-foreground/70 ring-border/40"
+      return "border-border bg-secondary text-foreground/70"
   }
 }
 
@@ -33,11 +33,11 @@ function statusDotClasses(status: BookingStatus) {
       return "bg-amber-500"
     case "confirmed":
     case "upcoming":
-      return "bg-emerald-500"
+      return "bg-blue-500"
     case "completed":
-      return "bg-foreground/35"
+      return "bg-emerald-500"
     case "cancelled":
-      return "bg-foreground/30"
+      return "bg-rose-500"
     case "declined":
       return "bg-red-500"
     case "expired":
@@ -53,7 +53,7 @@ export function BookingStatusBadge({ status, className }: BookingStatusBadgeProp
       data-slot="badge"
       role="status"
       className={cn(
-        "inline-flex h-8 w-fit max-w-full shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold tracking-[0.01em] whitespace-nowrap shadow-sm ring-1 ring-inset transition-colors duration-200",
+        "inline-flex h-8 w-fit max-w-full shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold tracking-[0.01em] whitespace-nowrap shadow-sm transition-colors duration-200",
         statusClasses(status),
         className,
       )}

@@ -29,6 +29,7 @@ import type {
   SalonReviewType,
   SalonService,
   SalonAmenityCategory,
+  SalonTaxInfo,
   SalonTeamMember,
 } from "@/types/salon"
 
@@ -295,6 +296,32 @@ function parseAmenities(settings: unknown): SalonAmenities | undefined {
   return { categories }
 }
 
+function parseSalonTaxInfo(settings: unknown): SalonTaxInfo | null {
+  if (!settings || typeof settings !== "object") return null
+  const tax = (settings as { tax?: unknown }).tax
+  if (!tax || typeof tax !== "object") return null
+
+  const row = tax as {
+    gstEnabled?: unknown
+    gstNumber?: unknown
+    defaultTaxRate?: unknown
+  }
+
+  const gstNumber =
+    typeof row.gstNumber === "string" ? row.gstNumber.trim().toUpperCase() : ""
+  const rateRaw = Number(row.defaultTaxRate)
+  const ratePercent = Number.isFinite(rateRaw) ? rateRaw : 0
+  const enabled = row.gstEnabled === true
+
+  if (!enabled || !gstNumber || !(ratePercent > 0)) return null
+
+  return {
+    enabled: true,
+    ratePercent,
+    gstNumber,
+  }
+}
+
 function parseCancellationPolicy(settings: unknown): SalonCancellationPolicy | undefined {
   if (!settings || typeof settings !== "object") return undefined
   const raw = settings as {
@@ -553,6 +580,7 @@ export function mapCrmSalonToWeb(
   const cancellationPolicy = marketplaceProfile
     ? parseCancellationPolicy({ policies: marketplaceProfile.policies })
     : parseCancellationPolicy(row.settings)
+  const tax = parseSalonTaxInfo(row.settings)
   const metadata =
     marketplaceProfile?.metadata &&
     typeof marketplaceProfile.metadata === "object"
@@ -628,6 +656,7 @@ export function mapCrmSalonToWeb(
     team: activeStaff,
     amenities,
     cancellationPolicy,
+    tax,
     languages:
       marketplaceProfile?.languages?.filter((language) => language.trim()) ??
       undefined,

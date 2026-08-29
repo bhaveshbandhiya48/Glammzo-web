@@ -98,6 +98,7 @@ export function SalonDetailView({
             customerReviews={salon.customerReviews}
             offers={salon.offers}
             glammzoOffers={glammzoOffers}
+            tax={salon.tax}
           />
         </SalonDetailSection>
 

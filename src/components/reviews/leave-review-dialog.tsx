@@ -10,20 +10,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { LeaveReviewForm } from "@/components/reviews/leave-review-form"
+import { cn } from "@/lib/utils"
 
 export function LeaveReviewDialog({
   appointmentId,
   salonName,
   staffName,
+  className,
 }: {
   appointmentId: string
   salonName: string
   staffName?: string
+  className?: string
 }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" size="sm" className="h-9 min-w-0 flex-1 rounded-full px-4">
+        <Button
+          type="button"
+          size="sm"
+          className={cn("h-9 w-full rounded-full px-4", className)}
+        >
           Leave a review
         </Button>
       </DialogTrigger>

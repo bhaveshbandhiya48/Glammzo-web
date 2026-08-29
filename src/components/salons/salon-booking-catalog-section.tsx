@@ -43,6 +43,7 @@ import type {
   SalonPackage,
   SalonReview,
   SalonService,
+  SalonTaxInfo,
 } from "@/types/salon"
 import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 
@@ -56,6 +57,7 @@ type SalonBookingCatalogSectionProps = {
   customerReviews?: SalonReview[]
   offers?: SalonOffer[]
   glammzoOffers?: GlammzoOffer[]
+  tax?: SalonTaxInfo | null
 }
 
 export function SalonBookingCatalogSection({
@@ -68,6 +70,7 @@ export function SalonBookingCatalogSection({
   customerReviews = [],
   offers = [],
   glammzoOffers = [],
+  tax = null,
 }: SalonBookingCatalogSectionProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState<CatalogFilterId>("all")
@@ -361,6 +364,7 @@ export function SalonBookingCatalogSection({
     selectedPackage,
     salonId,
     salonCoverImageUrl,
+    tax,
     authenticated,
     onRemoveService: handleRemoveService,
     onClearPackage: handleClearPackage,

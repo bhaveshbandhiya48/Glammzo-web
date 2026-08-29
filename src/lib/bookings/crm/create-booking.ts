@@ -55,6 +55,7 @@ import {
   remainingConfirmationSeconds,
 } from "@/lib/bookings/crm/booking-confirmation-engine"
 import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
+import { calculateGstAmount } from "@/lib/salons/tax-utils"
 import {
   computeWalletRedeemPaise,
   debitCustomerWallet,
@@ -525,20 +526,28 @@ export async function createCrmWebBooking(
     Math.round((payableBeforeWallet - loyaltyPick.discountRupees) * 100) / 100,
   )
 
+  const gstAmount = context.tax
+    ? calculateGstAmount(afterLoyaltyPayable, context.tax.ratePercent)
+    : 0
+  const amountBeforeWallet = Math.round((afterLoyaltyPayable + gstAmount) * 100) / 100
+
   const wallet = await getCustomerWallet(customerPhone)
   const walletPaise = computeWalletRedeemPaise({
-    payablePaise: Math.round(afterLoyaltyPayable * 100),
+    payablePaise: Math.round(amountBeforeWallet * 100),
     walletBalancePaise: wallet?.balancePaise ?? 0,
     useWallet: Boolean(input.useWallet),
     requestedPaise: input.walletAmountPaise,
   })
   const walletRupees = walletPaise / 100
-  const payAtSalon = Math.max(0, Math.round((afterLoyaltyPayable - walletRupees) * 100) / 100)
+  const payAtSalon = Math.max(0, Math.round((amountBeforeWallet - walletRupees) * 100) / 100)
 
   if (loyaltyPick.service) {
     noteParts.push(
       `Loyalty credit: ₹${loyaltyPick.discountRupees.toFixed(0)} off (up to ₹${LOYALTY_DISCOUNT_CAP_PAISE / 100})`,
     )
+  }
+  if (gstAmount > 0 && context.tax) {
+    noteParts.push(`GST (${context.tax.ratePercent}%): ₹${gstAmount.toFixed(2)}`)
   }
   if (walletPaise > 0) {
     noteParts.push(`Glammzo wallet used: ₹${walletRupees.toFixed(0)}`)
@@ -559,6 +568,9 @@ export async function createCrmWebBooking(
       glammzoCashbackOffer.id,
       glammzoCashbackOffer.promoCode ?? input.promoCode ?? "",
     )}`
+  }
+  if (gstAmount > 0) {
+    internalNotes += `|tax_rupees:${gstAmount}`
   }
   if (walletPaise > 0) {
     internalNotes += `|wallet_paise:${walletPaise}`

@@ -9,12 +9,16 @@ import type { BookingLineItem } from "@/components/salons/booking-assistant/assi
 import { Button } from "@/components/ui/button"
 import { formatDuration } from "@/lib/bookings/utils"
 import { formatInr } from "@/lib/salons/catalog-utils"
+import { formatGstLineLabel } from "@/lib/salons/tax-utils"
+import type { SalonTaxInfo } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 export type BookingSummaryCardProps = {
   lines: BookingLineItem[]
   subtotal: number
   discount: number
+  tax?: SalonTaxInfo | null
+  gstAmount?: number
   estimatedTotal: number
   bookHref: string
   onRemoveLine?: (id: string, kind: BookingLineItem["kind"]) => void
@@ -25,12 +29,15 @@ export function BookingSummaryCard({
   lines,
   subtotal,
   discount,
+  tax = null,
+  gstAmount = 0,
   estimatedTotal,
   bookHref,
   onRemoveLine,
   className,
 }: BookingSummaryCardProps) {
   const hasSelection = lines.length > 0
+  const showGst = Boolean(tax && gstAmount > 0)
 
   return (
     <section
@@ -132,10 +139,17 @@ export function BookingSummaryCard({
                   </span>
                 </div>
               ) : null}
-              <div className="flex items-center justify-between gap-3 text-foreground/45">
-                <span>Taxes</span>
-                <span className="text-xs">Included where applicable</span>
-              </div>
+              {showGst && tax ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground/55">{formatGstLineLabel(tax)}</span>
+                  <AnimatedPrice value={gstAmount} className="font-medium text-foreground" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 text-foreground/45">
+                  <span>Taxes</span>
+                  <span className="text-xs">Not applicable</span>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-2.5">
                 <span className="text-xs font-semibold tracking-[0.12em] text-foreground/45 uppercase">
                   Estimated total

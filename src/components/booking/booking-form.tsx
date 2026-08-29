@@ -27,6 +27,7 @@ import {
 import { BOOKING_ENGINE_CONFIG, getMaxBookableDateKey } from "@/lib/bookings/crm/booking-confirmation-engine"
 import {
   buildPackageServiceIds,
+  formatInr,
   getExtraServiceIds,
   packageServiceIdsIncluded,
   removePackageServiceIds,
@@ -38,6 +39,7 @@ import type { Salon } from "@/types/salon"
 import { BookingFormCard } from "@/components/booking/booking-form-card"
 import { BookingFormSubmitButtons } from "@/components/booking/booking-form-submit"
 import { BookingSummary, getBookingPayableTotal } from "@/components/booking/booking-summary"
+import { calculateGstAmount, resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
 import { PromoCodeField, type CashbackClaim } from "@/components/booking/promo-code-field"
 import { WalletLoyaltyFields } from "@/components/booking/wallet-loyalty-fields"
 import { computeWalletRedeemPaise, pickLoyaltyDiscountLine } from "@/lib/wallet/wallet-math"
@@ -58,7 +60,6 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DATE_INPUT_PLACEHOLDER, toIsoDate } from "@/lib/date-utils"
-import { formatInr } from "@/lib/salons/catalog-utils"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -558,15 +559,20 @@ export function BookingForm({
   )
 
   const afterLoyaltyTotal = Math.max(0, payableTotal - loyaltyPick.discountRupees)
+  const salonTax = resolveSalonTaxInfo(salon.tax)
+  const gstAmount = salonTax
+    ? calculateGstAmount(afterLoyaltyTotal, salonTax.ratePercent)
+    : 0
+  const amountBeforeWallet = Math.round((afterLoyaltyTotal + gstAmount) * 100) / 100
   const walletAppliedRupees =
     computeWalletRedeemPaise({
-      payablePaise: Math.round(afterLoyaltyTotal * 100),
+      payablePaise: Math.round(amountBeforeWallet * 100),
       walletBalancePaise: Math.round(walletBalanceRupees * 100),
       useWallet,
     }) / 100
   const payAtSalonRupees = Math.max(
     0,
-    Math.round((afterLoyaltyTotal - walletAppliedRupees) * 100) / 100,
+    Math.round((amountBeforeWallet - walletAppliedRupees) * 100) / 100,
   )
 
   const submitLabel =
@@ -1015,6 +1021,8 @@ export function BookingForm({
           appliedOffer={appliedOffer}
           cashbackClaim={cashbackClaim}
           cancellationPolicy={salon.cancellationPolicy}
+          tax={salonTax}
+          gstAmount={gstAmount}
           totalDurationMin={totalDuration}
           walletAppliedRupees={walletAppliedRupees}
           freeServiceAppliedRupees={loyaltyPick.discountRupees}

@@ -12,6 +12,7 @@ import {
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge"
 import { BookingPriceBreakdownCard } from "@/components/booking/booking-price-breakdown"
 import { CancelBookingButton } from "@/components/booking/cancel-booking-button"
+import { DownloadInvoiceButton } from "@/components/booking/download-invoice-button"
 import { LeaveReviewDialog } from "@/components/reviews/leave-review-dialog"
 import { Button } from "@/components/ui/button"
 import {
@@ -78,6 +79,8 @@ export function BookingOrderSummary({
   })
   const isCompleted =
     Boolean(booking.isCrmCompleted) || booking.status === "completed"
+  /** Invoice PDFs are created only when CRM status is truly `completed`. */
+  const canDownloadInvoice = Boolean(booking.isCrmCompleted && booking.crmAppointmentId)
   const displayNotes = formatBookingNotesForDisplay(booking.notes)
   const breakdown = parseBookingPriceBreakdown(booking)
   const showSalonPaymentLabel =
@@ -88,6 +91,7 @@ export function BookingOrderSummary({
     canCancel ||
     canRebook ||
     canLeaveReview ||
+    canDownloadInvoice ||
     Boolean(cancelBlockedReason) ||
     Boolean(rescheduleBlockedReason)
 
@@ -259,35 +263,59 @@ export function BookingOrderSummary({
             {cancelBlockedReason ? (
               <p className="mb-3 text-sm text-foreground/65">{cancelBlockedReason}</p>
             ) : null}
-            <div className="flex flex-wrap gap-2">
-              {canLeaveReview && booking.crmAppointmentId ? (
-                <LeaveReviewDialog
+            <div className="flex flex-col gap-2">
+              {canDownloadInvoice && booking.crmAppointmentId ? (
+                <DownloadInvoiceButton
                   appointmentId={booking.crmAppointmentId}
-                  salonName={booking.salonName}
-                  staffName={booking.staffName}
+                  variant={canLeaveReview || canRebook ? "outline" : "default"}
                 />
               ) : null}
-              {canReschedule ? (
-                <Button asChild variant="outline" className="min-w-0 flex-1 rounded-full">
-                  <Link href={`/dashboard/bookings/${rescheduleAppointmentId}/reschedule`}>
-                    Reschedule
-                  </Link>
-                </Button>
-              ) : null}
-              {canCancel ? (
-                <CancelBookingButton
-                  bookingId={booking.crmAppointmentId ?? booking.id}
-                  noticeHours={cancelNoticeHours}
-                />
-              ) : null}
-              {canRebook ? (
-                <Button
-                  asChild
-                  variant={canLeaveReview ? "outline" : "default"}
-                  className="min-w-0 flex-1 rounded-full"
+              {canLeaveReview || canReschedule || canCancel || canRebook ? (
+                <div
+                  className={cn(
+                    "grid gap-2",
+                    [canLeaveReview, canReschedule, canCancel, canRebook].filter(Boolean)
+                      .length > 1
+                      ? "grid-cols-2"
+                      : "grid-cols-1",
+                  )}
                 >
-                  <Link href={rebookHref}>Book again</Link>
-                </Button>
+                  {canLeaveReview && booking.crmAppointmentId ? (
+                    <LeaveReviewDialog
+                      appointmentId={booking.crmAppointmentId}
+                      salonName={booking.salonName}
+                      staffName={booking.staffName}
+                    />
+                  ) : null}
+                  {canReschedule ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-9 w-full rounded-full px-4"
+                    >
+                      <Link href={`/dashboard/bookings/${rescheduleAppointmentId}/reschedule`}>
+                        Reschedule
+                      </Link>
+                    </Button>
+                  ) : null}
+                  {canCancel ? (
+                    <CancelBookingButton
+                      bookingId={booking.crmAppointmentId ?? booking.id}
+                      noticeHours={cancelNoticeHours}
+                    />
+                  ) : null}
+                  {canRebook ? (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant={canLeaveReview || canDownloadInvoice ? "outline" : "default"}
+                      className="h-9 w-full rounded-full px-4"
+                    >
+                      <Link href={rebookHref}>Book again</Link>
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           </div>

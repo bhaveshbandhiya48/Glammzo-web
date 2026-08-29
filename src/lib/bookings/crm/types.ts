@@ -52,6 +52,8 @@ export type SalonBookingContext = {
     confirmationRequired: boolean
     responseSlaMinutes: number
   }
+  /** Present when salon GST is enabled with a GSTIN. */
+  tax: import("@/types/salon").SalonTaxInfo | null
   booked: BookedAppointment[]
 }
 

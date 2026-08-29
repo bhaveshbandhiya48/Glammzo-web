@@ -7,7 +7,13 @@ import { formatDuration } from "@/lib/bookings/utils"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import { formatInr, formatPackageDuration } from "@/lib/salons/catalog-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
-import type { SalonCancellationPolicy, SalonPackage, SalonService } from "@/types/salon"
+import { formatGstLineLabel } from "@/lib/salons/tax-utils"
+import type {
+  SalonCancellationPolicy,
+  SalonPackage,
+  SalonService,
+  SalonTaxInfo,
+} from "@/types/salon"
 
 type BookingSummaryProps = {
   services: SalonService[]
@@ -17,6 +23,8 @@ type BookingSummaryProps = {
   emptyLabel?: string
   compact?: boolean
   cancellationPolicy?: SalonCancellationPolicy | null
+  tax?: SalonTaxInfo | null
+  gstAmount?: number
   totalDurationMin?: number
   walletAppliedRupees?: number
   freeServiceAppliedRupees?: number
@@ -72,6 +80,8 @@ export function BookingSummary({
   emptyLabel = "Select at least one service to see your estimate.",
   compact = false,
   cancellationPolicy,
+  tax = null,
+  gstAmount = 0,
   totalDurationMin,
   walletAppliedRupees = 0,
   freeServiceAppliedRupees = 0,
@@ -96,7 +106,10 @@ export function BookingSummary({
     ? formatPackageDuration(selectedPackage!, services) || formatDuration(duration)
     : formatDuration(duration)
   const hasDiscount = Boolean(appliedOffer && appliedOffer.discountAmount > 0)
-  const payAtSalon = payAtSalonRupees ?? Math.max(0, total - walletAppliedRupees - freeServiceAppliedRupees)
+  const showGst = Boolean(tax && gstAmount > 0)
+  const payAtSalon =
+    payAtSalonRupees ??
+    Math.max(0, total + gstAmount - walletAppliedRupees - freeServiceAppliedRupees)
 
   if (compact) {
     return (
@@ -112,6 +125,11 @@ export function BookingSummary({
         ) : cashbackClaim ? (
           <p className="text-sm text-emerald-700">
             {cashbackClaim.code}: {formatInr(cashbackClaim.cashbackRupees)} cashback after visit
+          </p>
+        ) : null}
+        {showGst && tax ? (
+          <p className="text-sm text-muted-foreground">
+            Includes {formatGstLineLabel(tax)} {formatInr(gstAmount)}
           </p>
         ) : null}
         <p className="text-sm text-muted-foreground">
@@ -249,6 +267,15 @@ export function BookingSummary({
             <p className="text-sm text-emerald-700">Loyalty credit</p>
             <p className="text-sm font-semibold tabular-nums text-emerald-700">
               −{formatInr(freeServiceAppliedRupees)}
+            </p>
+          </div>
+        ) : null}
+
+        {showGst && tax ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">{formatGstLineLabel(tax)}</p>
+            <p className="text-sm font-medium tabular-nums text-foreground">
+              {formatInr(gstAmount)}
             </p>
           </div>
         ) : null}

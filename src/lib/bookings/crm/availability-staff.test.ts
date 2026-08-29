@@ -44,6 +44,7 @@ function context(overrides: Partial<SalonBookingContext> = {}): SalonBookingCont
       confirmationRequired: false,
       responseSlaMinutes: 30,
     },
+    tax: null,
     booked: [],
     ...overrides,
   }
