@@ -2,16 +2,28 @@ import "server-only"
 
 import { cache } from "react"
 
+import { getSession } from "@/lib/auth/session"
 import { businessTypeSlugFromLabel } from "@/lib/categories/business-types"
 import { demoSalons } from "@/data/demo-salons"
+import {
+  canViewerSeeDemoSalons,
+  filterDemoSalonsForViewer,
+  isRestrictedDemoSalon,
+} from "@/lib/salons/demo-salon-access"
 import { fetchCrmSalonById, fetchCrmSalons } from "@/lib/salons/fetch-crm-salons"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
 import type { Salon } from "@/types/salon"
 
 export const getSalons = cache(async (): Promise<Salon[]> => {
-  if (!isSupabaseConfigured()) return demoSalons
+  const session = await getSession()
+  const phone = session?.phone
 
-  return fetchCrmSalons()
+  if (!isSupabaseConfigured()) {
+    return filterDemoSalonsForViewer(demoSalons, phone)
+  }
+
+  const salons = await fetchCrmSalons()
+  return filterDemoSalonsForViewer(salons, phone)
 })
 
 export type SalonLookupOptions = {
@@ -20,13 +32,26 @@ export type SalonLookupOptions = {
 
 export const getSalonById = cache(
   async (id: string, options: SalonLookupOptions = {}): Promise<Salon | undefined> => {
+    const session = await getSession()
+    const phone = session?.phone
+
+    let salon: Salon | undefined
+
     if (isSupabaseConfigured()) {
-      return (
-        (await fetchCrmSalonById(id, { allowUnpublished: options.preview })) ?? undefined
-      )
+      salon =
+        (await fetchCrmSalonById(id, { allowUnpublished: options.preview })) ??
+        undefined
+    } else {
+      salon = demoSalons.find((s) => s.id === id)
     }
 
-    return demoSalons.find((s) => s.id === id)
+    if (!salon) return undefined
+
+    if (isRestrictedDemoSalon(salon) && !canViewerSeeDemoSalons(phone)) {
+      return undefined
+    }
+
+    return salon
   },
 )
 

@@ -29,6 +29,8 @@ export type NearbySalonRecord = {
 }
 
 export type NearbySalonsRequest = {
+  /** When set, allowlisted phones can see restricted demo salons. */
+  viewerPhone?: string | null
   latitude: number
   longitude: number
   radiusKm?: number

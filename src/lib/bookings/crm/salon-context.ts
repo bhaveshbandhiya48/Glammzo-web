@@ -13,6 +13,11 @@ import { parseWebBookingSettings } from "@/lib/bookings/crm/web-booking-sla"
 import { getSalonDateKey } from "@/lib/bookings/crm/time"
 import { shiftIsoDate } from "@/lib/date-utils"
 import { createAdminClient } from "@/lib/supabase/admin"
+import {
+  canViewerSeeDemoSalons,
+  isRestrictedDemoSalonIdentifier,
+} from "@/lib/salons/demo-salon-access"
+import { getSession } from "@/lib/auth/session"
 import { resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
 import type { SalonTaxInfo } from "@/types/salon"
 
@@ -43,7 +48,7 @@ export async function loadSalonBookingContext(
     const { data: salonData, error: salonError } = await supabase
       .from("salons")
       .select(
-        "id, name, timezone, settings, listing_status, is_active, status, booking_confirmation_mode",
+        "id, name, slug, timezone, settings, listing_status, is_active, status, booking_confirmation_mode",
       )
       .eq("id", crmSalonId)
       .eq("is_active", true)
@@ -54,6 +59,15 @@ export async function loadSalonBookingContext(
 
     if (salonError || !salonData) {
       return null
+    }
+
+    const salonId = (salonData as { id: string }).id
+    const salonSlug = (salonData as { slug?: string | null }).slug
+    if (isRestrictedDemoSalonIdentifier(salonId, salonSlug)) {
+      const session = await getSession()
+      if (!canViewerSeeDemoSalons(session?.phone)) {
+        return null
+      }
     }
 
     const timezone = (salonData as { timezone?: string }).timezone ?? "Asia/Kolkata"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { getSession } from "@/lib/auth/session"
 import { DEFAULT_NEARBY_RADIUS_KM } from "@/lib/maps/config"
 import { fetchNearbySalons } from "@/server/salons/nearby-salons"
 
@@ -19,16 +20,18 @@ export async function GET(request: Request) {
     )
   }
 
+  const session = await getSession()
   const data = await fetchNearbySalons({
     latitude,
     longitude,
     radiusKm: Number.isFinite(radiusKm) ? radiusKm : DEFAULT_NEARBY_RADIUS_KM,
     query,
+    viewerPhone: session?.phone,
   })
 
   return NextResponse.json(data, {
     headers: {
-      "Cache-Control": "private, max-age=30, stale-while-revalidate=120",
+      "Cache-Control": "private, no-store",
     },
   })
 }

@@ -15,6 +15,7 @@ import { isSalonOpenNow } from "@/lib/salons/business-hours"
 import { parseBusinessTypeFromSettings, mapCrmOffer } from "@/lib/salons/map-crm-salon"
 import { resolveSalonArea } from "@/lib/salons/resolve-salon-area"
 import { CRM_SALON_OFFER_SELECT, type CrmOfferRow, type CrmSalonRow, type CrmServiceRow } from "@/lib/salons/crm-types"
+import { filterDemoSalonRowsForViewer } from "@/lib/salons/demo-salon-access"
 import { pickBestSalonOffer } from "@/lib/salons/offer-utils"
 import type { SalonOffer } from "@/types/salon"
 
@@ -302,7 +303,10 @@ export const fetchNearbySalons = cache(async (
     }
   }
 
-  const rows = (data ?? []) as CrmSalonRow[]
+  const rows = filterDemoSalonRowsForViewer(
+    (data ?? []) as CrmSalonRow[],
+    input.viewerPhone,
+  )
   const withinRadius = rows
     .map((row) => {
       const salonLat = Number(row.latitude)
