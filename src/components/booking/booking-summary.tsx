@@ -3,11 +3,16 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { CheckCircleIcon } from "lucide-react"
 
-import { formatDuration } from "@/lib/bookings/utils"
+import { formatDuration, sumServiceDuration, sumServicePrice } from "@/lib/bookings/utils"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import { formatInr, formatPackageDuration } from "@/lib/salons/catalog-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
 import { formatGstLineLabel } from "@/lib/salons/tax-utils"
+import {
+  formatPricingUnitQuantityCaption,
+  parsePricingUnit,
+  quantityForService,
+} from "@/lib/salons/pricing-unit"
 import type {
   SalonCancellationPolicy,
   SalonPackage,
@@ -18,6 +23,7 @@ import type {
 type BookingSummaryProps = {
   services: SalonService[]
   selectedPackage?: SalonPackage | null
+  quantities?: Record<string, number>
   appliedOffer?: AppliedOfferDiscount | null
   cashbackClaim?: { code: string; cashbackRupees: number } | null
   emptyLabel?: string
@@ -75,6 +81,7 @@ function BookingTrustSection({
 export function BookingSummary({
   services,
   selectedPackage = null,
+  quantities = {},
   appliedOffer = null,
   cashbackClaim = null,
   emptyLabel = "Select at least one service to see your estimate.",
@@ -92,16 +99,24 @@ export function BookingSummary({
   }
 
   const packageMode = Boolean(selectedPackage)
+  const extrasOrServices = packageMode
+    ? services.filter(
+        (svc) =>
+          !selectedPackage!.items.some((item) => item.serviceId === svc.id),
+      )
+    : services
   const subtotal =
     appliedOffer?.subtotal ??
-    (packageMode ? selectedPackage!.packagePrice : services.reduce((sum, svc) => sum + svc.price, 0))
+    (packageMode
+      ? selectedPackage!.packagePrice + sumServicePrice(extrasOrServices, quantities)
+      : sumServicePrice(services, quantities))
   const total = appliedOffer?.finalTotal ?? subtotal
   const duration =
     totalDurationMin ??
     (packageMode
       ? selectedPackage!.totalDurationMin ||
-        services.reduce((sum, svc) => sum + svc.durationMin, 0)
-      : services.reduce((sum, svc) => sum + svc.durationMin, 0))
+        sumServiceDuration(services, quantities)
+      : sumServiceDuration(services, quantities))
   const durationLabel = packageMode
     ? formatPackageDuration(selectedPackage!, services) || formatDuration(duration)
     : formatDuration(duration)
@@ -204,19 +219,25 @@ export function BookingSummary({
             </p>
           </div>
         ) : (
-          services.map((svc) => (
+          services.map((svc) => {
+            const quantity = quantityForService(svc, quantities)
+            const unit = parsePricingUnit(svc.pricingUnit)
+            const caption = formatPricingUnitQuantityCaption(unit, quantity)
+            return (
             <div key={svc.id} className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">{svc.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatServiceDuration(svc.durationMin)}
+                  {caption ? `${caption} · ` : ""}
+                  {formatServiceDuration(svc.durationMin * quantity)}
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold">
-                <ServicePriceText service={svc} />
+              <p className="shrink-0 text-sm font-semibold tabular-nums">
+                {quantity > 1 ? formatInr(svc.price * quantity) : <ServicePriceText service={svc} />}
               </p>
             </div>
-          ))
+            )
+          })
         )}
 
         <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
@@ -320,15 +341,22 @@ export function getBookingPayableTotal({
   services,
   selectedPackage = null,
   appliedOffer = null,
-}: Pick<BookingSummaryProps, "services" | "selectedPackage" | "appliedOffer">): number {
+  quantities = {},
+}: Pick<BookingSummaryProps, "services" | "selectedPackage" | "appliedOffer" | "quantities">): number {
   if (services.length === 0) return 0
 
   const packageMode = Boolean(selectedPackage)
+  const extrasOrServices = packageMode
+    ? services.filter(
+        (svc) =>
+          !selectedPackage!.items.some((item) => item.serviceId === svc.id),
+      )
+    : services
   const subtotal =
     appliedOffer?.subtotal ??
     (packageMode
-      ? selectedPackage!.packagePrice
-      : services.reduce((sum, svc) => sum + svc.price, 0))
+      ? selectedPackage!.packagePrice + sumServicePrice(extrasOrServices, quantities)
+      : sumServicePrice(services, quantities))
 
   return appliedOffer?.finalTotal ?? subtotal
 }

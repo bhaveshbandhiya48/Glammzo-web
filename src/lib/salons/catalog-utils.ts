@@ -297,7 +297,7 @@ const CATEGORY_MEDIA_MAP: Array<{ keywords: string[]; image: string }> = [
   { keywords: ["skin", "facial", "face"], image: media.categories.spa },
 ]
 
-/** Last-resort stock image when no service or salon photo exists. */
+/** Last-resort stock image for non-service surfaces (e.g. packages without a photo). */
 export function resolveCategoryStockImage(name: string, category: string) {
   const haystack = normalizeText(`${name} ${category}`)
   for (const entry of CATEGORY_MEDIA_MAP) {
@@ -308,9 +308,10 @@ export function resolveCategoryStockImage(name: string, category: string) {
   return media.categories.spa
 }
 
-export function resolveServiceThumbnail(service: SalonService) {
-  if (service.imageUrl?.trim()) return service.imageUrl.trim()
-  return resolveCategoryStockImage(service.name, service.category)
+/** Owner-uploaded service photo only — no category stock fallback. */
+export function resolveServiceThumbnail(service: SalonService): string | null {
+  const url = service.imageUrl?.trim()
+  return url ? url : null
 }
 
 export function getCategoryIconName(category: string): "hair" | "spa" | "nails" | "makeup" | "grooming" {

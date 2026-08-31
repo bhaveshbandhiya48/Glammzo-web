@@ -100,6 +100,7 @@ export function BookingSummaryCard({
                     <p className="truncate text-sm font-medium text-foreground">{line.name}</p>
                     <p className="mt-0.5 text-xs text-foreground/55">
                       {line.kind === "package" ? "Package · " : ""}
+                      {line.quantityCaption ? `${line.quantityCaption} · ` : ""}
                       {formatDuration(line.durationMin)}
                     </p>
                   </div>

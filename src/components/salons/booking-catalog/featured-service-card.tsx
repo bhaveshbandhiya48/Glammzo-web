@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ServiceOfferBadge } from "@/components/salons/offers/service-offer-badge"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
+import {
+  ServiceQuantityStepper,
+  serviceUsesQuantity,
+} from "@/components/salons/booking-catalog/service-quantity-stepper"
 import { resolveServiceThumbnail, type ServiceBadge } from "@/lib/salons/catalog-utils"
 import type { SalonOffer, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
@@ -16,8 +20,10 @@ type FeaturedServiceCardProps = {
   badge?: ServiceBadge
   offer?: Pick<SalonOffer, "discountType" | "discountValue" | "code"> | null
   selected?: boolean
+  quantity?: number
   onOpenDetails: () => void
   onToggle: () => void
+  onQuantityChange?: (quantity: number) => void
   className?: string
 }
 
@@ -26,11 +32,14 @@ export function FeaturedServiceCard({
   badge,
   offer = null,
   selected = false,
+  quantity = 1,
   onOpenDetails,
   onToggle,
+  onQuantityChange,
   className,
 }: FeaturedServiceCardProps) {
   const thumbnail = resolveServiceThumbnail(service)
+  const showQuantity = selected && serviceUsesQuantity(service) && Boolean(onQuantityChange)
 
   return (
     <article
@@ -51,13 +60,15 @@ export function FeaturedServiceCard({
       aria-label={`View details for ${service.name}`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/20">
-        <Image
-          src={thumbnail}
-          alt=""
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 640px) 40vw, 22vw"
-        />
+        {thumbnail ? (
+          <Image
+            src={thumbnail}
+            alt=""
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 40vw, 22vw"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
         <div className="absolute top-1.5 left-1.5 z-10 flex flex-col items-start gap-1">
           {offer ? <ServiceOfferBadge offer={offer} /> : null}
@@ -87,22 +98,36 @@ export function FeaturedServiceCard({
             </p>
           </div>
 
-          <Button
-            type="button"
-            variant={selected ? "outline" : "default"}
-            size="sm"
-            className={cn(
-              "relative z-10 h-8 w-full text-xs",
-              selected &&
-                "border-border/80 bg-background text-foreground/75 hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive",
-            )}
-            onClick={(event) => {
-              event.stopPropagation()
-              onToggle()
-            }}
-          >
-            {selected ? "Remove" : "Add"}
-          </Button>
+          {showQuantity ? (
+            <div
+              className="relative z-10 flex justify-center"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <ServiceQuantityStepper
+                service={service}
+                quantity={quantity}
+                onQuantityChange={onQuantityChange!}
+                onRemove={onToggle}
+              />
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant={selected ? "outline" : "default"}
+              size="sm"
+              className={cn(
+                "relative z-10 h-8 w-full text-xs",
+                selected &&
+                  "border-border/80 bg-background text-foreground/75 hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive",
+              )}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggle()
+              }}
+            >
+              {selected ? "Remove" : "Add"}
+            </Button>
+          )}
         </div>
       </div>
     </article>

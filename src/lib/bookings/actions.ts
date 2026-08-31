@@ -10,9 +10,11 @@ import { formatSlotLabel } from "@/lib/bookings/crm/availability"
 import { getSalonById } from "@/lib/salons"
 import {
   parseServiceIds,
+  parseServiceQuantities,
   resolveServices,
   sumServiceDuration,
 } from "@/lib/bookings/utils"
+import { quantityForService } from "@/lib/salons/pricing-unit"
 import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
 import { addBooking } from "@/lib/bookings/store"
 import { getSession, updateSessionProfile } from "@/lib/auth/session"
@@ -54,6 +56,9 @@ export async function createBookingAction(formData: FormData) {
 
   const salonId = String(formData.get("salonId") ?? "")
   const serviceIdsRaw = String(formData.get("serviceIds") ?? "")
+  const serviceQuantities = parseServiceQuantities(
+    String(formData.get("serviceQuantities") ?? ""),
+  )
   const date = String(formData.get("date") ?? "")
   const time = String(formData.get("time") ?? "")
   const notes = String(formData.get("notes") ?? "").trim()
@@ -92,8 +97,9 @@ export async function createBookingAction(formData: FormData) {
     services: salon.services,
     selectedServiceIds: serviceIds,
     selectedPackage,
+    quantities: serviceQuantities,
   })
-  const totalDuration = sumServiceDuration(services)
+  const totalDuration = sumServiceDuration(services, serviceQuantities)
   const displayTime = time.includes("AM") || time.includes("PM") ? time : formatSlotLabel(time)
 
   if (isSupabaseConfigured() && salon.crmSalonId) {
@@ -119,6 +125,7 @@ export async function createBookingAction(formData: FormData) {
       marketingOptIn,
       useWallet,
       useFreeService,
+      serviceQuantities,
     })
 
     if (!result.success) {
@@ -143,12 +150,15 @@ export async function createBookingAction(formData: FormData) {
       salonId: salon.id,
       salonName: salon.name,
       salonArea: salon.area,
-      services: services.map((s) => ({
-        id: s.id,
-        name: s.name,
-        price: s.price,
-        durationMin: s.durationMin,
-      })),
+      services: services.map((s) => {
+        const quantity = quantityForService(s, serviceQuantities)
+        return {
+          id: s.id,
+          name: s.name,
+          price: s.price * quantity,
+          durationMin: s.durationMin * quantity,
+        }
+      }),
       date,
       time: displayTime,
       price: result.payAtSalonRupees,
@@ -192,12 +202,15 @@ export async function createBookingAction(formData: FormData) {
     salonId: salon.id,
     salonName: salon.name,
     salonArea: salon.area,
-    services: services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      price: s.price,
-      durationMin: s.durationMin,
-    })),
+    services: services.map((s) => {
+      const quantity = quantityForService(s, serviceQuantities)
+      return {
+        id: s.id,
+        name: s.name,
+        price: s.price * quantity,
+        durationMin: s.durationMin * quantity,
+      }
+    }),
     date,
     time: displayTime,
     price: totalPrice,

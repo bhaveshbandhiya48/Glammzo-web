@@ -3,7 +3,8 @@ import { resolveStaffImageUrl } from "@/lib/salons/staff-avatar"
 import { parseSalonCoordinate } from "@/lib/salon-coordinates"
 import { resolveAmenityIconId } from "@/lib/salons/amenity-catalog"
 import { formatSalonHours, isSalonOpenNow } from "@/lib/salons/business-hours"
-import { resolveServicePayablePrice, resolveCategoryStockImage } from "@/lib/salons/catalog-utils"
+import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
+import { parsePricingUnit } from "@/lib/salons/pricing-unit"
 import { sanitizeSalonImageUrl } from "@/lib/salons/image-url"
 import { buildSalonGalleryImages } from "@/lib/salons/salon-card-images"
 import type {
@@ -171,11 +172,9 @@ function mapService(
   if (!category) {
     return null
   }
-  // Never reuse salon list/cover/gallery photos for services — those belong to
-  // the venue. Missing service photos use category stock art only.
-  const imageUrl =
-    sanitizeSalonImageUrl(row.image_url) ||
-    resolveCategoryStockImage(row.name, category.name)
+  // Never reuse salon list/cover/gallery or category stock for services.
+  // Missing owner-uploaded photos stay blank.
+  const imageUrl = sanitizeSalonImageUrl(row.image_url) || ""
   const addOnIds = [...(row.service_add_ons ?? [])]
     .sort((left, right) => left.sort_order - right.sort_order)
     .map((entry) => entry.add_on_service_id)
@@ -190,6 +189,7 @@ function mapService(
     durationMin: row.duration_minutes,
     price,
     compareAtPrice,
+    pricingUnit: parsePricingUnit(row.pricing_unit) ?? undefined,
     category: category.name,
     categorySortOrder: category.sortOrder,
     imageUrl,

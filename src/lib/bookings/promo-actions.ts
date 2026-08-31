@@ -11,6 +11,7 @@ export async function validatePromoCodeAction(input: {
   code: string
   serviceIds: string[]
   packageId?: string | null
+  serviceQuantities?: Record<string, number>
 }) {
   const session = await getSession()
   return validatePromoCode({

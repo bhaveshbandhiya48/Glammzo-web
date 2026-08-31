@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils"
 
 export type RecommendationCardProps = {
   service: SalonService
-  fallbackImageUrl?: string
   added: boolean
   onAdd: () => void
   className?: string
@@ -19,12 +18,11 @@ export type RecommendationCardProps = {
 
 export function RecommendationCard({
   service,
-  fallbackImageUrl,
   added,
   onAdd,
   className,
 }: RecommendationCardProps) {
-  const imageSrc = service.imageUrl || fallbackImageUrl || ""
+  const imageSrc = service.imageUrl?.trim() || ""
   const compareAt =
     service.compareAtPrice && service.compareAtPrice > service.price
       ? service.compareAtPrice

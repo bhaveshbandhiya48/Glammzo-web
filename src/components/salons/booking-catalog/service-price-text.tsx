@@ -1,9 +1,10 @@
 import { formatInr } from "@/lib/salons/catalog-utils"
+import { formatPriceWithUnit, parsePricingUnit } from "@/lib/salons/pricing-unit"
 import type { SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
 type ServicePriceTextProps = {
-  service: Pick<SalonService, "price" | "compareAtPrice">
+  service: Pick<SalonService, "price" | "compareAtPrice" | "pricingUnit">
   className?: string
   compareClassName?: string
 }
@@ -16,7 +17,7 @@ export function ServicePriceText({
 }: ServicePriceTextProps) {
   return (
     <span className={cn("tabular-nums", className)}>
-      {formatInr(service.price)}
+      {formatPriceWithUnit(formatInr(service.price), parsePricingUnit(service.pricingUnit))}
       {service.compareAtPrice != null ? (
         <>
           {" "}

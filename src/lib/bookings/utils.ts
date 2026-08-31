@@ -1,4 +1,5 @@
 import type { SalonService } from "@/types/salon"
+import { quantityForService } from "@/lib/salons/pricing-unit"
 
 export function parseServiceIds(raw: string | null | undefined): string[] {
   if (!raw?.trim()) return []
@@ -6,6 +7,29 @@ export function parseServiceIds(raw: string | null | undefined): string[] {
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean)
+}
+
+/** `id:3,id:2` — only quantities above 1 need to be listed. */
+export function parseServiceQuantities(raw: string | null | undefined): Record<string, number> {
+  if (!raw?.trim()) return {}
+  const quantities: Record<string, number> = {}
+  for (const part of raw.split(",")) {
+    const trimmed = part.trim()
+    const colon = trimmed.lastIndexOf(":")
+    if (colon <= 0) continue
+    const id = trimmed.slice(0, colon).trim()
+    const parsed = Number(trimmed.slice(colon + 1))
+    if (!id || !Number.isFinite(parsed)) continue
+    quantities[id] = Math.max(1, Math.floor(parsed))
+  }
+  return quantities
+}
+
+export function serializeServiceQuantities(quantities: Record<string, number>): string {
+  return Object.entries(quantities)
+    .filter(([, quantity]) => quantity > 1)
+    .map(([id, quantity]) => `${id}:${quantity}`)
+    .join(",")
 }
 
 export function resolveServices(
@@ -27,12 +51,31 @@ export function removeOneServiceId(ids: string[], id: string): string[] {
   return [...ids.slice(0, index), ...ids.slice(index + 1)]
 }
 
-export function sumServicePrice(services: Pick<SalonService, "price">[]): number {
-  return services.reduce((sum, s) => sum + s.price, 0)
+export function serviceLineQuantity(
+  service: { id: string; pricingUnit?: string | null },
+  quantities?: Record<string, number> | null,
+) {
+  return quantityForService(service, quantities)
 }
 
-export function sumServiceDuration(services: Pick<SalonService, "durationMin">[]): number {
-  return services.reduce((sum, s) => sum + s.durationMin, 0)
+export function sumServicePrice(
+  services: Array<{ id: string; price: number; pricingUnit?: string | null }>,
+  quantities?: Record<string, number> | null,
+): number {
+  return services.reduce(
+    (sum, service) => sum + service.price * serviceLineQuantity(service, quantities),
+    0,
+  )
+}
+
+export function sumServiceDuration(
+  services: Array<{ id: string; durationMin: number; pricingUnit?: string | null }>,
+  quantities?: Record<string, number> | null,
+): number {
+  return services.reduce(
+    (sum, service) => sum + service.durationMin * serviceLineQuantity(service, quantities),
+    0,
+  )
 }
 
 export function formatDuration(totalMin: number): string {
@@ -49,6 +92,7 @@ export function buildBookHref(
   authenticated: boolean,
   packageId?: string | null,
   promoCode?: string | null,
+  quantities?: Record<string, number> | null,
 ): string {
   const params = new URLSearchParams()
   if (serviceIds.length > 0) {
@@ -59,6 +103,10 @@ export function buildBookHref(
   }
   if (promoCode?.trim()) {
     params.set("promo", promoCode.trim().toUpperCase())
+  }
+  const qty = quantities ? serializeServiceQuantities(quantities) : ""
+  if (qty) {
+    params.set("qty", qty)
   }
 
   const qs = params.toString()

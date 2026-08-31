@@ -21,10 +21,12 @@ type BrowseServicesAccordionProps = {
   offers?: SalonOffer[]
   openCategories: Set<string>
   selectedIds: string[]
+  quantities?: Record<string, number>
   highlightedServiceIds?: Set<string>
   onToggleCategory: (category: string) => void
   onOpenService: (service: SalonService) => void
   onToggleService: (serviceId: string) => void
+  onQuantityChange?: (serviceId: string, quantity: number) => void
   searchQuery: string
   registerCategoryRef: (category: string, node: HTMLDivElement | null) => void
   registerServiceRef?: (serviceId: string, node: HTMLDivElement | null) => void
@@ -35,10 +37,12 @@ export function BrowseServicesAccordion({
   offers = [],
   openCategories,
   selectedIds,
+  quantities = {},
   highlightedServiceIds,
   onToggleCategory,
   onOpenService,
   onToggleService,
+  onQuantityChange,
   searchQuery,
   registerCategoryRef,
   registerServiceRef,
@@ -109,6 +113,7 @@ export function BrowseServicesAccordion({
                         key={service.id}
                         service={service}
                         selected={selectedIds.includes(service.id)}
+                        quantity={quantities[service.id] ?? 1}
                         offerBadgeLabel={
                           bestOffer ? formatOfferDiscountBadge(bestOffer) : null
                         }
@@ -116,6 +121,11 @@ export function BrowseServicesAccordion({
                         registerRef={(node) => registerServiceRef?.(service.id, node)}
                         onOpen={() => onOpenService(service)}
                         onToggle={() => onToggleService(service.id)}
+                        onQuantityChange={
+                          onQuantityChange
+                            ? (quantity) => onQuantityChange(service.id, quantity)
+                            : undefined
+                        }
                       />
                     )
                   })}

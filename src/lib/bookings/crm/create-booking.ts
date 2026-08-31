@@ -57,6 +57,11 @@ import {
 import { resolveServicePayablePrice } from "@/lib/salons/catalog-utils"
 import { calculateGstAmount } from "@/lib/salons/tax-utils"
 import {
+  clampPricingUnitQuantity,
+  parsePricingUnit,
+  pricingUnitUsesQuantity,
+} from "@/lib/salons/pricing-unit"
+import {
   computeWalletRedeemPaise,
   debitCustomerWallet,
   LOYALTY_DISCOUNT_CAP_PAISE,
@@ -117,33 +122,29 @@ export async function createCrmWebBooking(
     price: string | number
     offer_price?: string | number | null
     is_active: boolean
+    pricing_unit?: string | null
   }
+
+  const SERVICE_SELECTS = [
+    "id, name, duration_minutes, price, offer_price, is_active, pricing_unit",
+    "id, name, duration_minutes, price, offer_price, is_active",
+    "id, name, duration_minutes, price, is_active",
+  ]
 
   let serviceRows: ServiceRow[] | null = null
   let serviceError: { message: string } | null = null
 
-  {
-    const primary = await supabase
+  for (const columns of SERVICE_SELECTS) {
+    const result = await supabase
       .from("services")
-      .select("id, name, duration_minutes, price, offer_price, is_active")
+      .select(columns)
       .eq("salon_id", input.crmSalonId)
       .in("id", uniqueIds)
       .is("deleted_at", null)
 
-    if (primary.error?.message.toLowerCase().includes("offer_price")) {
-      const fallback = await supabase
-        .from("services")
-        .select("id, name, duration_minutes, price, is_active")
-        .eq("salon_id", input.crmSalonId)
-        .in("id", uniqueIds)
-        .is("deleted_at", null)
-
-      serviceRows = (fallback.data ?? []) as ServiceRow[]
-      serviceError = fallback.error
-    } else {
-      serviceRows = (primary.data ?? []) as ServiceRow[]
-      serviceError = primary.error
-    }
+    serviceRows = (result.data ?? []) as unknown as ServiceRow[]
+    serviceError = result.error
+    if (!serviceError) break
   }
 
   if (serviceError) {
@@ -163,6 +164,7 @@ export async function createCrmWebBooking(
       duration_minutes: service.duration_minutes,
       price,
       is_active: service.is_active,
+      pricing_unit: parsePricingUnit(service.pricing_unit),
     }
   })
 
@@ -195,10 +197,6 @@ export async function createCrmWebBooking(
   }
 
   const serviceById = new Map(services.map((service) => [service.id, service]))
-  const durationMinutes = input.serviceIds.reduce(
-    (total, serviceId) => total + (serviceById.get(serviceId)?.duration_minutes ?? 0),
-    0,
-  )
 
   const selectedPackage = input.packageId
     ? (
@@ -213,16 +211,6 @@ export async function createCrmWebBooking(
           .maybeSingle()
       ).data
     : null
-
-  const webServices = services.map((service) => ({
-    id: service.id,
-    name: service.name,
-    durationMin: service.duration_minutes,
-    price: service.price,
-    category: "",
-    imageUrl: "",
-    includes: [] as string[],
-  }))
 
   const mappedPackage =
     selectedPackage && input.packageBooking
@@ -260,12 +248,41 @@ export async function createCrmWebBooking(
         }
       : null
 
+  const packageIncludedIds = new Set(
+    mappedPackage?.items.map((item) => item.serviceId) ?? [],
+  )
+
+  function quantityForId(serviceId: string) {
+    if (input.packageBooking && packageIncludedIds.has(serviceId)) return 1
+    const unit = serviceById.get(serviceId)?.pricing_unit ?? null
+    if (!pricingUnitUsesQuantity(unit)) return 1
+    return clampPricingUnitQuantity(unit, input.serviceQuantities?.[serviceId] ?? 1)
+  }
+
+  const durationMinutes = uniqueIds.reduce(
+    (total, serviceId) =>
+      total + (serviceById.get(serviceId)?.duration_minutes ?? 0) * quantityForId(serviceId),
+    0,
+  )
+
+  const webServices = services.map((service) => ({
+    id: service.id,
+    name: service.name,
+    durationMin: service.duration_minutes,
+    price: service.price,
+    category: "",
+    imageUrl: "",
+    includes: [] as string[],
+    pricingUnit: service.pricing_unit ?? undefined,
+  }))
+
   const offerResult = await resolveBookingOfferDiscount({
     salonId: input.crmSalonId,
     promoCode: input.promoCode,
     services: webServices,
     selectedServiceIds: uniqueIds,
     selectedPackage: mappedPackage,
+    quantities: input.serviceQuantities,
   })
 
   if (!offerResult.ok) {
@@ -401,7 +418,7 @@ export async function createCrmWebBooking(
     }
   }
 
-  const serviceNames = input.serviceIds
+  const serviceNames = uniqueIds
     .map((serviceId) => serviceById.get(serviceId)?.name)
     .filter((name): name is string => Boolean(name))
     .join(", ")
@@ -418,9 +435,17 @@ export async function createCrmWebBooking(
   const payableBeforeWallet =
     appliedOffer?.finalTotal ??
     (input.packageBooking && mappedPackage
-      ? mappedPackage.packagePrice
-      : input.serviceIds.reduce(
-          (sum, serviceId) => sum + (serviceById.get(serviceId)?.price ?? 0),
+      ? mappedPackage.packagePrice +
+        uniqueIds
+          .filter((serviceId) => !packageIncludedIds.has(serviceId))
+          .reduce(
+            (sum, serviceId) =>
+              sum + (serviceById.get(serviceId)?.price ?? 0) * quantityForId(serviceId),
+            0,
+          )
+      : uniqueIds.reduce(
+          (sum, serviceId) =>
+            sum + (serviceById.get(serviceId)?.price ?? 0) * quantityForId(serviceId),
           0,
         ))
 
@@ -491,12 +516,13 @@ export async function createCrmWebBooking(
     }
   }
 
-  const lineServices = input.serviceIds.map((serviceId) => {
+  const lineServices = uniqueIds.map((serviceId) => {
     const service = serviceById.get(serviceId)
+    const quantity = quantityForId(serviceId)
     return {
       id: serviceId,
-      price: service?.price ?? 0,
-      duration_minutes: service?.duration_minutes ?? 0,
+      price: (service?.price ?? 0) * quantity,
+      duration_minutes: (service?.duration_minutes ?? 0) * quantity,
     }
   })
 
@@ -664,25 +690,37 @@ export async function createCrmWebBooking(
 
   const appointmentId = (appointment as { id: string }).id
 
-  const appointmentServices = input.serviceIds.map((serviceId, index) => {
+  const appointmentServices = uniqueIds.map((serviceId, index) => {
     const service = serviceById.get(serviceId)
-    const basePrice = service?.price ?? 0
+    const quantity = quantityForId(serviceId)
+    const unitPrice = service?.price ?? 0
+    const lineTotal = unitPrice * quantity
     const isLoyaltyLine = loyaltyPick.service?.id === serviceId
-    const price = isLoyaltyLine
-      ? Math.max(0, Math.round((basePrice - loyaltyPick.discountRupees) * 100) / 100)
-      : basePrice
+    const payableLine = isLoyaltyLine
+      ? Math.max(0, Math.round((lineTotal - loyaltyPick.discountRupees) * 100) / 100)
+      : lineTotal
+    const price =
+      quantity > 0 ? Math.round((payableLine / quantity) * 100) / 100 : unitPrice
     return {
       appointment_id: appointmentId,
       service_id: serviceId,
       sort_order: index,
       price,
-      duration_minutes: service?.duration_minutes ?? 0,
+      duration_minutes: (service?.duration_minutes ?? 0) * quantity,
+      quantity,
     }
   })
 
-  const { error: servicesError } = await supabase
+  let { error: servicesError } = await supabase
     .from("appointment_services")
     .insert(appointmentServices)
+
+  if (servicesError?.message.toLowerCase().includes("quantity")) {
+    const withoutQuantity = appointmentServices.map(({ quantity: _quantity, ...row }) => row)
+    ;({ error: servicesError } = await supabase
+      .from("appointment_services")
+      .insert(withoutQuantity))
+  }
 
   if (servicesError) {
     console.error("[bookings] appointment_services insert failed:", servicesError.message)

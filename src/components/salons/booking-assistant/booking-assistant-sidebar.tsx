@@ -47,12 +47,13 @@ export type BookingAssistantSidebarProps = {
   extraServices: SalonService[]
   selectedPackage: SalonPackage | null
   salonId: string
-  salonCoverImageUrl: string
   tax?: SalonTaxInfo | null
   authenticated: boolean
+  quantities?: Record<string, number>
   onRemoveService: (id: string) => void
   onClearPackage: () => void
   onAddService: (id: string) => void
+  onQuantityChange?: (id: string, quantity: number) => void
   onViewEligibleServices?: (offer: SalonOffer) => void
   className?: string
   /** Render fixed mobile continue bar (only mount once). */
@@ -68,9 +69,9 @@ export function BookingAssistantSidebar({
   extraServices,
   selectedPackage,
   salonId,
-  salonCoverImageUrl,
   tax = null,
   authenticated,
+  quantities = {},
   onRemoveService,
   onClearPackage,
   onAddService,
@@ -100,8 +101,9 @@ export function BookingAssistantSidebar({
         services,
         selectedServiceIds: selectedIds,
         selectedPackage,
+        quantities,
       }),
-    [services, selectedIds, selectedPackage],
+    [services, selectedIds, selectedPackage, quantities],
   )
 
   const offerInput = useMemo(
@@ -109,9 +111,10 @@ export function BookingAssistantSidebar({
       services,
       selectedServiceIds: selectedIds,
       selectedPackage,
+      quantities,
       subtotal,
     }),
-    [services, selectedIds, selectedPackage, subtotal],
+    [services, selectedIds, selectedPackage, quantities, subtotal],
   )
 
   const hasCart = selectedIds.length > 0 || Boolean(selectedPackage)
@@ -346,8 +349,9 @@ export function BookingAssistantSidebar({
         selectedPackage,
         extraServices,
         selectedServices,
+        quantities,
       }),
-    [selectedPackage, extraServices, selectedServices],
+    [selectedPackage, extraServices, selectedServices, quantities],
   )
 
   const hasSelection = lines.length > 0
@@ -372,6 +376,7 @@ export function BookingAssistantSidebar({
     authenticated,
     selectedPackage?.id,
     appliedPromoCode,
+    quantities,
   )
 
   useEffect(() => {
@@ -479,6 +484,7 @@ export function BookingAssistantSidebar({
               code: offer.code,
               serviceIds: selectedIds,
               packageId: selectedPackage?.id ?? null,
+              serviceQuantities: quantities,
             })
 
             if (!result.success) {
@@ -553,7 +559,6 @@ export function BookingAssistantSidebar({
           >
             <RecommendationCard
               service={recommendation}
-              fallbackImageUrl={salonCoverImageUrl}
               added={selectedIds.includes(recommendation.id)}
               onAdd={() => {
                 onAddService(recommendation.id)

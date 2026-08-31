@@ -50,13 +50,15 @@ export function ServiceCard({
       aria-label={`View details for ${service.name}`}
     >
       <div className="relative size-[68px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/20">
-        <Image
-          src={thumbnail}
-          alt=""
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="68px"
-        />
+        {thumbnail ? (
+          <Image
+            src={thumbnail}
+            alt=""
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="68px"
+          />
+        ) : null}
       </div>
 
       <div className="min-w-0 flex-1">

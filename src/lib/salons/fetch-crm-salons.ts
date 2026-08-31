@@ -121,13 +121,13 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, category_id, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
 
 const SERVICE_SELECT_WITH_IMAGE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, is_active, category_id, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, service_categories(name, is_active, sort_order)"
 
 const SERVICE_SELECT_WITHOUT_IMAGE =
-  "id, salon_id, name, description, duration_minutes, price, offer_price, is_active, category_id, service_categories(name, is_active, sort_order)"
+  "id, salon_id, name, description, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, service_categories(name, is_active, sort_order)"
 
 function isMissingServiceImageColumn(message: string) {
   return message.toLowerCase().includes("image_url")
@@ -135,6 +135,18 @@ function isMissingServiceImageColumn(message: string) {
 
 function isMissingServiceOfferPriceColumn(message: string) {
   return message.toLowerCase().includes("offer_price")
+}
+
+function isMissingServicePricingUnitColumn(message: string) {
+  return message.toLowerCase().includes("pricing_unit")
+}
+
+function stripOfferPriceFromSelect(select: string) {
+  return select.replace(", offer_price", "").replace("offer_price, ", "")
+}
+
+function stripPricingUnitFromSelect(select: string) {
+  return select.replace(", pricing_unit", "").replace("pricing_unit, ", "")
 }
 
 function isMissingServiceMarketplaceColumns(message: string) {
@@ -146,10 +158,6 @@ function isMissingServiceMarketplaceColumns(message: string) {
     lower.includes("whats_included") ||
     lower.includes("service_add_ons")
   )
-}
-
-function stripOfferPriceFromSelect(select: string) {
-  return select.replace(", offer_price", "").replace("offer_price, ", "")
 }
 
 function normalizeServiceRows(rows: unknown[]): CrmServiceRow[] {
@@ -175,6 +183,17 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
     .eq("is_active", true)
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
+
+  if (error && isMissingServicePricingUnitColumn(error.message)) {
+    select = stripPricingUnitFromSelect(select)
+    ;({ data, error } = await supabase
+      .from("services")
+      .select(select)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }))
+  }
 
   if (error && isMissingServiceOfferPriceColumn(error.message)) {
     select = stripOfferPriceFromSelect(select)

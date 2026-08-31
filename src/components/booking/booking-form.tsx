@@ -11,6 +11,7 @@ import {
   resolveServices,
   toggleServiceId,
   sumServiceDuration,
+  serializeServiceQuantities,
 } from "@/lib/bookings/utils"
 import {
   formatSlotLabel,
@@ -38,8 +39,10 @@ import type { SalonBookingContext } from "@/lib/bookings/crm/types"
 import type { Salon } from "@/types/salon"
 import { BookingFormCard } from "@/components/booking/booking-form-card"
 import { BookingFormSubmitButtons } from "@/components/booking/booking-form-submit"
-import { BookingSummary, getBookingPayableTotal } from "@/components/booking/booking-summary"
+import { BookingSummary } from "@/components/booking/booking-summary"
 import { calculateGstAmount, resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
+import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
+import { quantityForService } from "@/lib/salons/pricing-unit"
 import { PromoCodeField, type CashbackClaim } from "@/components/booking/promo-code-field"
 import { WalletLoyaltyFields } from "@/components/booking/wallet-loyalty-fields"
 import { computeWalletRedeemPaise, pickLoyaltyDiscountLine } from "@/lib/wallet/wallet-math"
@@ -88,6 +91,7 @@ export function BookingForm({
   salon,
   initialServiceIds = [],
   initialPackageId = null,
+  initialQuantities = {},
   unavailableSlots = [],
   bookingContext = null,
   defaultCustomerName = "",
@@ -100,6 +104,7 @@ export function BookingForm({
   salon: Salon
   initialServiceIds?: string[]
   initialPackageId?: string | null
+  initialQuantities?: Record<string, number>
   unavailableSlots?: UnavailableSlot[]
   bookingContext?: SalonBookingContext | null
   defaultCustomerName?: string
@@ -118,13 +123,15 @@ export function BookingForm({
       ? initialPackageId
       : null
 
-  const [selectedIds, setSelectedIds, packageId, setPackageId] = useSalonCartSelection(
+  const [selectedIds, setSelectedIds, packageId, setPackageId, quantities, setServiceQuantity] =
+    useSalonCartSelection(
     salon.id,
     salon.name,
     salon.services,
     {
       serviceIds: validInitial,
       packageId: validPackageId,
+      quantities: initialQuantities,
     },
     salon.packages.map((pkg) => ({
       id: pkg.id,
@@ -195,7 +202,7 @@ export function BookingForm({
   const packageMode = Boolean(selectedPackage)
   const totalDuration = useMemo(() => {
     if (!selectedPackage) {
-      return sumServiceDuration(selectedServices)
+      return sumServiceDuration(selectedServices, quantities)
     }
 
     const packageDuration =
@@ -204,8 +211,8 @@ export function BookingForm({
         resolveServices(salon.services, buildPackageServiceIds(selectedPackage)),
       )
 
-    return packageDuration + sumServiceDuration(extraServices)
-  }, [extraServices, selectedPackage, selectedServices, salon.services])
+    return packageDuration + sumServiceDuration(extraServices, quantities)
+  }, [extraServices, quantities, selectedPackage, selectedServices, salon.services])
   const useCrmSlots = Boolean(bookingContext)
   const preferredStaffId = packageMode ? null : staffId || null
   const availabilityOptions = useMemo(
@@ -260,8 +267,8 @@ export function BookingForm({
     if (staffedIds.length === 0 || staffedIds.length === selectedIds.length) {
       return totalDuration
     }
-    return sumServiceDuration(resolveServices(salon.services, staffedIds))
-  }, [salon.services, selectedIds.length, staffedIds, totalDuration])
+    return sumServiceDuration(resolveServices(salon.services, staffedIds), quantities)
+  }, [quantities, salon.services, selectedIds.length, staffedIds, totalDuration])
 
   const bookableStaff = useMemo(() => {
     if (bookingContext) {
@@ -541,21 +548,26 @@ export function BookingForm({
 
   const payableTotal = useMemo(
     () =>
-      getBookingPayableTotal({
-        services: selectedServices,
+      appliedOffer?.finalTotal ??
+      computeBookingSubtotal({
+        services: salon.services,
+        selectedServiceIds: selectedIds,
         selectedPackage,
-        appliedOffer,
+        quantities,
       }),
-    [appliedOffer, selectedPackage, selectedServices],
+    [appliedOffer, quantities, salon.services, selectedIds, selectedPackage],
   )
 
   const loyaltyPick = useMemo(
     () =>
       pickLoyaltyDiscountLine(
-        selectedServices.map((s) => ({ id: s.id, price: s.price })),
+        selectedServices.map((s) => ({
+          id: s.id,
+          price: s.price * quantityForService(s, quantities),
+        })),
         useFreeService && !selectedPackage,
       ),
-    [selectedPackage, selectedServices, useFreeService],
+    [quantities, selectedPackage, selectedServices, useFreeService],
   )
 
   const afterLoyaltyTotal = Math.max(0, payableTotal - loyaltyPick.discountRupees)
@@ -618,6 +630,13 @@ export function BookingForm({
     >
       <input type="hidden" name="salonId" value={salon.id} />
       <input type="hidden" name="serviceIds" value={selectedIds.join(",")} />
+      {serializeServiceQuantities(quantities) ? (
+        <input
+          type="hidden"
+          name="serviceQuantities"
+          value={serializeServiceQuantities(quantities)}
+        />
+      ) : null}
       {selectedPackage ? <input type="hidden" name="packageId" value={selectedPackage.id} /> : null}
       {!packageMode ? <input type="hidden" name="preferredStaffId" value={staffId} /> : null}
 
@@ -683,7 +702,9 @@ export function BookingForm({
               <ServicePicker
                 services={extraServices}
                 selectedIds={selectedIds}
+                quantities={quantities}
                 onToggle={handleToggle}
+                onQuantityChange={setServiceQuantity}
                 variant="list"
                 mode="cart"
                 unstaffedIds={unstaffedIds}
@@ -694,7 +715,9 @@ export function BookingForm({
           <ServicePicker
             services={selectedServices}
             selectedIds={selectedIds}
+            quantities={quantities}
             onToggle={handleToggle}
+            onQuantityChange={setServiceQuantity}
             variant="list"
             mode="cart"
             unstaffedIds={unstaffedIds}
@@ -726,7 +749,9 @@ export function BookingForm({
               <ServicePicker
                 services={salon.services}
                 selectedIds={selectedIds}
+                quantities={quantities}
                 onToggle={handleToggle}
+                onQuantityChange={setServiceQuantity}
                 variant="list"
               />
             </div>
@@ -989,6 +1014,7 @@ export function BookingForm({
           salonId={salon.id}
           serviceIds={selectedIds}
           packageId={packageId}
+          serviceQuantities={quantities}
           value={appliedOffer}
           onChange={setAppliedOffer}
           onCashbackChange={setCashbackClaim}
@@ -1018,6 +1044,7 @@ export function BookingForm({
         <BookingSummary
           services={selectedServices}
           selectedPackage={selectedPackage}
+          quantities={quantities}
           appliedOffer={appliedOffer}
           cashbackClaim={cashbackClaim}
           cancellationPolicy={salon.cancellationPolicy}

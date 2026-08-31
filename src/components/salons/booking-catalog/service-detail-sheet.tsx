@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { CheckIcon, ClockIcon, StarIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,10 +18,20 @@ import { resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
 import { ServiceDetailOffers } from "@/components/salons/offers/service-detail-offers"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import {
+  ServiceQuantityStepper,
+  serviceUsesQuantity,
+} from "@/components/salons/booking-catalog/service-quantity-stepper"
+import {
   buildServiceDetailContent,
   type ServiceDetailContent,
 } from "@/lib/salons/service-detail-utils"
 import { offersForService } from "@/lib/salons/offer-utils"
+import {
+  formatDurationWithUnit,
+  formatPricingUnitQuantityCaption,
+  parsePricingUnit,
+  pricingUnitQuantityLabel,
+} from "@/lib/salons/pricing-unit"
 import type { SalonOffer, SalonReview, SalonService } from "@/types/salon"
 import { cn } from "@/lib/utils"
 
@@ -32,10 +43,12 @@ type ServiceDetailSheetProps = {
   authenticated: boolean
   offers?: SalonOffer[]
   selected: boolean
+  quantity?: number
   open: boolean
   onOpenChange: (open: boolean) => void
   onToggle: () => void
   onAddOnToggle: (id: string) => void
+  onQuantityChange?: (quantity: number) => void
   selectedIds: string[]
 }
 
@@ -47,23 +60,37 @@ function ServiceDetailSummaryPanel({
   selected,
   selectedIds,
   serviceOffers,
+  quantity,
   onToggle,
   onAddOnToggle,
+  onQuantityChange,
   onClose,
   compactImage = false,
 }: {
   service: SalonService
   content: ServiceDetailContent
-  thumbnail: string
+  thumbnail: string | null
   bookHref: string
   selected: boolean
   selectedIds: string[]
   serviceOffers: SalonOffer[]
+  quantity: number
   onToggle: () => void
   onAddOnToggle: (id: string) => void
+  onQuantityChange?: (quantity: number) => void
   onClose: () => void
   compactImage?: boolean
 }) {
+  const usesQuantity = serviceUsesQuantity(service)
+  const unit = parsePricingUnit(service.pricingUnit)
+  const [draftQuantity, setDraftQuantity] = useState(quantity)
+
+  useEffect(() => {
+    setDraftQuantity(quantity)
+  }, [service.id, quantity, selected])
+
+  const activeQuantity = selected ? quantity : draftQuantity
+  const quantityCaption = formatPricingUnitQuantityCaption(unit, activeQuantity)
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
@@ -72,14 +99,16 @@ function ServiceDetailSummaryPanel({
           compactImage ? "h-[160px] rounded-t-3xl" : "h-[200px]",
         )}
       >
-        <Image
-          src={thumbnail}
-          alt={service.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 1024px) 100vw, 420px"
-          priority
-        />
+        {thumbnail ? (
+          <Image
+            src={thumbnail}
+            alt={service.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 420px"
+            priority
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         <button
           type="button"
@@ -128,10 +157,32 @@ function ServiceDetailSummaryPanel({
               <p className="text-xs font-medium text-foreground/50">Duration</p>
               <p className="inline-flex items-center justify-end gap-1 text-sm font-medium text-foreground">
                 <ClockIcon className="size-3.5 text-foreground/50" />
-                {service.durationMin} min
+                {formatDurationWithUnit(`${service.durationMin} min`, unit)}
               </p>
             </div>
           </div>
+          {usesQuantity ? (
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+              <div>
+                <p className="text-xs font-medium text-foreground/50">
+                  {pricingUnitQuantityLabel(unit)}
+                </p>
+                {quantityCaption ? (
+                  <p className="text-sm font-medium text-foreground">{quantityCaption}</p>
+                ) : null}
+              </div>
+              <ServiceQuantityStepper
+                service={service}
+                quantity={activeQuantity}
+                compact={false}
+                onQuantityChange={(next) => {
+                  setDraftQuantity(next)
+                  if (selected) onQuantityChange?.(next)
+                }}
+                onRemove={selected ? onToggle : undefined}
+              />
+            </div>
+          ) : null}
         </div>
 
         <ServiceDetailOffers offers={serviceOffers} className="mt-5" />
@@ -201,7 +252,13 @@ function ServiceDetailSummaryPanel({
             variant="outline"
             size="md"
             className="w-full"
-            onClick={onToggle}
+            onClick={() => {
+              if (!selected && usesQuantity) {
+                onQuantityChange?.(draftQuantity)
+                return
+              }
+              onToggle()
+            }}
           >
             {selected ? "Remove from booking" : "Add to booking"}
           </Button>
@@ -222,10 +279,12 @@ export function ServiceDetailSheet({
   authenticated,
   offers = [],
   selected,
+  quantity = 1,
   open,
   onOpenChange,
   onToggle,
   onAddOnToggle,
+  onQuantityChange,
   selectedIds,
 }: ServiceDetailSheetProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)")
@@ -234,7 +293,14 @@ export function ServiceDetailSheet({
 
   const content = buildServiceDetailContent(service, allServices, salonReviews)
   const thumbnail = resolveServiceThumbnail(service)
-  const bookHref = buildBookHref(salonId, [service.id], authenticated)
+  const bookHref = buildBookHref(
+    salonId,
+    [service.id],
+    authenticated,
+    null,
+    null,
+    serviceUsesQuantity(service) ? { [service.id]: quantity } : undefined,
+  )
   const serviceOffers = offersForService(offers, service.id)
 
   return (
@@ -256,8 +322,10 @@ export function ServiceDetailSheet({
           selected={selected}
           selectedIds={selectedIds}
           serviceOffers={serviceOffers}
+          quantity={quantity}
           onToggle={onToggle}
           onAddOnToggle={onAddOnToggle}
+          onQuantityChange={onQuantityChange}
           onClose={() => onOpenChange(false)}
           compactImage={!isDesktop}
         />

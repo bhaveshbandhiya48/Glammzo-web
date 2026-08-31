@@ -6,6 +6,11 @@ import {
   isOfferBookableNow,
 } from "@/lib/salons/offer-utils"
 import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
+import {
+  formatPricingUnitQuantityCaption,
+  parsePricingUnit,
+  quantityForService,
+} from "@/lib/salons/pricing-unit"
 import type { SalonOffer, SalonPackage, SalonService } from "@/types/salon"
 
 export type BookingLineItem = {
@@ -14,6 +19,8 @@ export type BookingLineItem = {
   durationMin: number
   price: number
   kind: "service" | "package"
+  quantity?: number
+  quantityCaption?: string | null
 }
 
 export type SpotlightOffer = {
@@ -78,6 +85,7 @@ export function listSpotlightOffers(
     services: SalonService[]
     selectedServiceIds: string[]
     selectedPackage?: SalonPackage | null
+    quantities?: Record<string, number> | null
     subtotal: number
   },
 ): SpotlightOffer[] {
@@ -228,6 +236,7 @@ export function pickSpotlightOffer(
     services: SalonService[]
     selectedServiceIds: string[]
     selectedPackage?: SalonPackage | null
+    quantities?: Record<string, number> | null
     subtotal: number
   },
 ): SpotlightOffer | null {
@@ -260,12 +269,30 @@ export function pickRecommendedAddOn(
   return candidates[0] ?? null
 }
 
+function toServiceLineItem(
+  service: SalonService,
+  quantities?: Record<string, number> | null,
+): BookingLineItem {
+  const quantity = quantityForService(service, quantities)
+  const unit = parsePricingUnit(service.pricingUnit)
+  return {
+    id: service.id,
+    name: service.name,
+    durationMin: service.durationMin * quantity,
+    price: service.price * quantity,
+    kind: "service",
+    quantity,
+    quantityCaption: formatPricingUnitQuantityCaption(unit, quantity),
+  }
+}
+
 export function buildBookingLineItems(input: {
   selectedPackage: SalonPackage | null
   extraServices: SalonService[]
   selectedServices: SalonService[]
+  quantities?: Record<string, number> | null
 }): BookingLineItem[] {
-  const { selectedPackage, extraServices, selectedServices } = input
+  const { selectedPackage, extraServices, selectedServices, quantities } = input
 
   if (selectedPackage) {
     return [
@@ -276,21 +303,9 @@ export function buildBookingLineItems(input: {
         price: selectedPackage.packagePrice,
         kind: "package",
       },
-      ...extraServices.map((service) => ({
-        id: service.id,
-        name: service.name,
-        durationMin: service.durationMin,
-        price: service.price,
-        kind: "service" as const,
-      })),
+      ...extraServices.map((service) => toServiceLineItem(service, quantities)),
     ]
   }
 
-  return selectedServices.map((service) => ({
-    id: service.id,
-    name: service.name,
-    durationMin: service.durationMin,
-    price: service.price,
-    kind: "service" as const,
-  }))
+  return selectedServices.map((service) => toServiceLineItem(service, quantities))
 }

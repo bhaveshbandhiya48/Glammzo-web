@@ -14,6 +14,7 @@ import {
   resolveServices,
   sumServiceDuration,
 } from "@/lib/bookings/utils"
+import { quantityForService } from "@/lib/salons/pricing-unit"
 import { guardCreateBooking } from "@/lib/bookings/guard-create-booking"
 import { getSalonById } from "@/lib/salons"
 import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
@@ -36,6 +37,7 @@ export type MobileCreateBookingInput = {
   marketingOptIn?: boolean
   useWallet?: boolean
   useFreeService?: boolean
+  serviceQuantities?: Record<string, number>
 }
 
 export type MobileCreateBookingResult =
@@ -99,7 +101,7 @@ export async function createMobileBooking(
     }
   }
 
-  const totalDuration = sumServiceDuration(services)
+  const totalDuration = sumServiceDuration(services, input.serviceQuantities)
   const displayTime =
     input.time.includes("AM") || input.time.includes("PM")
       ? input.time
@@ -121,6 +123,7 @@ export async function createMobileBooking(
     marketingOptIn: input.marketingOptIn ?? true,
     useWallet: Boolean(input.useWallet),
     useFreeService: Boolean(input.useFreeService),
+    serviceQuantities: input.serviceQuantities,
   })
 
   if (!result.success) {
@@ -142,6 +145,7 @@ export async function createMobileBooking(
     services: salon.services,
     selectedServiceIds: serviceIds,
     selectedPackage,
+    quantities: input.serviceQuantities,
   })
 
   const booking: Booking = {
@@ -150,12 +154,15 @@ export async function createMobileBooking(
     salonId: salon.id,
     salonName: salon.name,
     salonArea: salon.area,
-    services: services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      price: s.price,
-      durationMin: s.durationMin,
-    })),
+    services: services.map((s) => {
+      const quantity = quantityForService(s, input.serviceQuantities)
+      return {
+        id: s.id,
+        name: s.name,
+        price: s.price * quantity,
+        durationMin: s.durationMin * quantity,
+      }
+    }),
     date: input.date,
     time: displayTime,
     price: result.payAtSalonRupees,

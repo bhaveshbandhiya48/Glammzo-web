@@ -6,6 +6,8 @@ export type SalonService = {
   price: number
   /** Original CRM price when an offer is active (shown struck through). */
   compareAtPrice?: number
+  /** Nail Art Studio unit pricing: both hands, per hand, or per finger. */
+  pricingUnit?: "both_hands" | "per_hand" | "per_finger"
   category: string
   categorySortOrder?: number
   imageUrl: string

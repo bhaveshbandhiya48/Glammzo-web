@@ -31,14 +31,18 @@ export function SalonServicesSection({
   salonName,
   authenticated,
 }: SalonServicesSectionProps) {
-  const [selectedIds, setSelectedIds] = useSalonCartSelection(salonId, salonName, services)
+  const [selectedIds, setSelectedIds, , , quantities, setServiceQuantity] = useSalonCartSelection(
+    salonId,
+    salonName,
+    services,
+  )
 
   const selectedServices = useMemo(
     () => resolveServices(services, selectedIds),
     [services, selectedIds]
   )
 
-  const bookHref = buildBookHref(salonId, selectedIds, authenticated)
+  const bookHref = buildBookHref(salonId, selectedIds, authenticated, null, null, quantities)
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_min(100%,340px)] lg:gap-10">
@@ -46,7 +50,9 @@ export function SalonServicesSection({
         <ServicePicker
           services={services}
           selectedIds={selectedIds}
+          quantities={quantities}
           onToggle={(id) => setSelectedIds((prev) => toggleServiceId(prev, id))}
+          onQuantityChange={setServiceQuantity}
           variant="list"
         />
       </div>
@@ -56,7 +62,7 @@ export function SalonServicesSection({
           <>
             <p className="section-eyebrow">Your selection</p>
             <div className="mt-2">
-              <BookingSummary services={selectedServices} compact />
+              <BookingSummary services={selectedServices} quantities={quantities} compact />
             </div>
             <SelectedServicesList
               className="mt-4 border-t border-border/60 pt-4"

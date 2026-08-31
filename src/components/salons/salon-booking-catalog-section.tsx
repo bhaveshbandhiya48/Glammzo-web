@@ -80,7 +80,8 @@ export function SalonBookingCatalogSection({
   const [detailService, setDetailService] = useState<SalonService | null>(null)
   const [detailServiceOpen, setDetailServiceOpen] = useState(false)
 
-  const [selectedIds, setSelectedIds, packageId, setPackageId] = useSalonCartSelection(
+  const [selectedIds, setSelectedIds, packageId, setPackageId, quantities, setServiceQuantity] =
+    useSalonCartSelection(
     salonId,
     salonName,
     services,
@@ -363,14 +364,15 @@ export function SalonBookingCatalogSection({
     extraServices,
     selectedPackage,
     salonId,
-    salonCoverImageUrl,
     tax,
     authenticated,
+    quantities,
     onRemoveService: handleRemoveService,
     onClearPackage: handleClearPackage,
     onAddService: (id: string) => {
       setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
     },
+    onQuantityChange: setServiceQuantity,
     onViewEligibleServices: handleViewEligibleServices,
   }
 
@@ -446,8 +448,10 @@ export function SalonBookingCatalogSection({
                   badges={featuredBadges}
                   offers={offers}
                   selectedIds={selectedIds}
+                  quantities={quantities}
                   onOpenDetails={openServiceDetails}
                   onToggleService={handleToggleService}
+                  onQuantityChange={setServiceQuantity}
                 />
               )}
             </section>
@@ -472,10 +476,12 @@ export function SalonBookingCatalogSection({
                   offers={offers}
                   openCategories={openCategories}
                   selectedIds={selectedIds}
+                  quantities={quantities}
                   highlightedServiceIds={highlightedServiceIds}
                   onToggleCategory={toggleCategory}
                   onOpenService={openServiceDetails}
                   onToggleService={handleToggleService}
+                  onQuantityChange={setServiceQuantity}
                   searchQuery={searchQuery}
                   registerCategoryRef={registerCategoryRef}
                   registerServiceRef={registerServiceRef}
@@ -518,12 +524,16 @@ export function SalonBookingCatalogSection({
         authenticated={authenticated}
         offers={offers}
         selected={detailService ? selectedIds.includes(detailService.id) : false}
+        quantity={detailService ? quantities[detailService.id] ?? 1 : 1}
         open={detailServiceOpen}
         onOpenChange={setDetailServiceOpen}
         onToggle={() => {
           if (detailService) handleToggleService(detailService.id)
         }}
         onAddOnToggle={handleToggleService}
+        onQuantityChange={(quantity) => {
+          if (detailService) setServiceQuantity(detailService.id, quantity)
+        }}
         selectedIds={selectedIds}
       />
     </>

@@ -76,6 +76,8 @@ export type CreateCrmBookingInput = {
   walletAmountPaise?: number
   /** Redeem one loyalty credit: up to ₹999 off one service (free if ≤ ₹999). */
   useFreeService?: boolean
+  /** Per-finger / per-hand counts. Other units always persist as 1. */
+  serviceQuantities?: Record<string, number>
 }
 
 export type CreateCrmBookingResult =

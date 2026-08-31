@@ -14,6 +14,15 @@ import { fetchCrmSalonById, fetchCrmSalons } from "@/lib/salons/fetch-crm-salons
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
 import type { Salon } from "@/types/salon"
 
+/** Public catalog only — no cookies. Safe for generateStaticParams / static SEO pages. */
+export const getPublicSalons = cache(async (): Promise<Salon[]> => {
+  if (!isSupabaseConfigured()) {
+    return filterDemoSalonsForViewer(demoSalons, null)
+  }
+
+  return filterDemoSalonsForViewer(await fetchCrmSalons(), null)
+})
+
 export const getSalons = cache(async (): Promise<Salon[]> => {
   const session = await getSession()
   const phone = session?.phone

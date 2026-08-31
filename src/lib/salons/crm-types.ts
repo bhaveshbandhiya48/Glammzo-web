@@ -60,6 +60,7 @@ export type CrmServiceRow = {
   duration_minutes: number
   price: string
   offer_price?: string | number | null
+  pricing_unit?: string | null
   is_active: boolean
   category_id?: string | null
   recommended_for?: string[] | null

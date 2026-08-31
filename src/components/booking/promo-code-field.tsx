@@ -22,6 +22,7 @@ type PromoCodeFieldProps = {
   salonId: string
   serviceIds: string[]
   packageId?: string | null
+  serviceQuantities?: Record<string, number>
   value: AppliedOfferDiscount | null
   onChange: (discount: AppliedOfferDiscount | null) => void
   onCashbackChange?: (claim: CashbackClaim | null) => void
@@ -36,6 +37,7 @@ export function PromoCodeField({
   salonId,
   serviceIds,
   packageId = null,
+  serviceQuantities,
   value,
   onChange,
   onCashbackChange,
@@ -66,6 +68,7 @@ export function PromoCodeField({
         code: initialCode,
         serviceIds,
         packageId,
+        serviceQuantities,
       })
 
       if (!result.success) {
@@ -110,6 +113,7 @@ export function PromoCodeField({
         code: cashback.code,
         serviceIds,
         packageId,
+        serviceQuantities,
       })
 
       if (result.success && result.kind === "cashback") {
@@ -129,7 +133,7 @@ export function PromoCodeField({
           : result.error,
       )
     })
-  }, [cashback?.code, packageId, salonId, serviceIds.join("|")])
+  }, [cashback?.code, packageId, salonId, serviceIds.join("|"), JSON.stringify(serviceQuantities ?? {})])
 
   // Drop salon offer discount if cart services are no longer covered.
   useEffect(() => {
@@ -141,6 +145,7 @@ export function PromoCodeField({
         code: value.code,
         serviceIds,
         packageId,
+        serviceQuantities,
       })
 
       if (result.success && result.kind === "discount") {
@@ -156,7 +161,7 @@ export function PromoCodeField({
           : result.error,
       )
     })
-  }, [value?.code, packageId, salonId, serviceIds.join("|")])
+  }, [value?.code, packageId, salonId, serviceIds.join("|"), JSON.stringify(serviceQuantities ?? {})])
 
   function clearPromo() {
     setCode("")
@@ -183,6 +188,7 @@ export function PromoCodeField({
         code: trimmed,
         serviceIds,
         packageId,
+        serviceQuantities,
       })
 
       if (!result.success) {

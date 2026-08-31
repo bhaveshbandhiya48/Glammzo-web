@@ -45,6 +45,7 @@ export async function validatePromoCode(input: {
   serviceIds: string[]
   packageId?: string | null
   phone?: string | null
+  serviceQuantities?: Record<string, number>
 }): Promise<ValidatePromoCodeResult> {
   const salon = await getSalonById(input.salonId)
   if (!salon?.crmSalonId) {
@@ -64,6 +65,7 @@ export async function validatePromoCode(input: {
     services: salon.services,
     selectedServiceIds: input.serviceIds,
     selectedPackage,
+    quantities: input.serviceQuantities,
   }
 
   if (isLaunchPromoCode(normalizedCode)) {

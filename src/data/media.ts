@@ -31,7 +31,7 @@ export const media = {
   },
   sections: {
     featuredExperience: "/images/sections/featured-experience.jpg",
-    mobileApp: "/images/sections/mobile-app-v2.jpg",
+    mobileApp: "/images/sections/mobile-app-v3.jpg",
     partnerSalon: "/images/sections/partner-salon.jpg",
     exploreComingSoon: "/images/sections/explore-coming-soon.jpg",
     partnerFlangeSign: "/images/sections/partner-flange-kit.jpg",

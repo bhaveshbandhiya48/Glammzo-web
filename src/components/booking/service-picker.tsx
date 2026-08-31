@@ -8,6 +8,16 @@ import { CheckIcon, ChevronDownIcon, Trash2Icon } from "lucide-react"
 import type { SalonService } from "@/types/salon"
 import { Button } from "@/components/ui/button"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
+import {
+  ServiceQuantityStepper,
+  serviceUsesQuantity,
+} from "@/components/salons/booking-catalog/service-quantity-stepper"
+import { formatInr } from "@/lib/salons/catalog-utils"
+import {
+  formatPricingUnitQuantityCaption,
+  parsePricingUnit,
+  quantityForService,
+} from "@/lib/salons/pricing-unit"
 import { cn } from "@/lib/utils"
 
 const serviceCardPadX = "px-4 sm:px-5"
@@ -17,7 +27,9 @@ const serviceListShellRadius = "rounded-xl"
 type ServicePickerProps = {
   services: SalonService[]
   selectedIds: string[]
+  quantities?: Record<string, number>
   onToggle: (id: string) => void
+  onQuantityChange?: (id: string, quantity: number) => void
   variant?: "list" | "cards"
   mode?: "select" | "cart"
   unstaffedIds?: string[]
@@ -26,7 +38,9 @@ type ServicePickerProps = {
 export function ServicePicker({
   services,
   selectedIds,
+  quantities = {},
   onToggle,
+  onQuantityChange,
   variant = "cards",
   mode = "select",
   unstaffedIds = [],
@@ -55,8 +69,14 @@ export function ServicePicker({
               >
                 <CompactCartServiceRow
                   service={svc}
+                  quantity={quantityForService(svc, quantities)}
                   unstaffed={unstaffedIds.includes(svc.id)}
                   onRemove={() => onToggle(svc.id)}
+                  onQuantityChange={
+                    onQuantityChange
+                      ? (quantity) => onQuantityChange(svc.id, quantity)
+                      : undefined
+                  }
                 />
               </motion.li>
             ))}
@@ -78,7 +98,13 @@ export function ServicePicker({
               service={svc}
               selected={selectedIds.includes(svc.id)}
               expanded={expandedId === svc.id || selectedIds.includes(svc.id)}
+              quantity={quantityForService(svc, quantities)}
               onToggle={() => onToggle(svc.id)}
+              onQuantityChange={
+                onQuantityChange
+                  ? (quantity) => onQuantityChange(svc.id, quantity)
+                  : undefined
+              }
               onToggleDetails={() => toggleExpanded(svc.id)}
               variant="list"
             />
@@ -96,7 +122,13 @@ export function ServicePicker({
           service={svc}
           selected={selectedIds.includes(svc.id)}
           expanded={selectedIds.includes(svc.id)}
+          quantity={quantityForService(svc, quantities)}
           onToggle={() => onToggle(svc.id)}
+          onQuantityChange={
+            onQuantityChange
+              ? (quantity) => onQuantityChange(svc.id, quantity)
+              : undefined
+          }
           onToggleDetails={() => {}}
           variant="cards"
         />
@@ -107,13 +139,23 @@ export function ServicePicker({
 
 function CompactCartServiceRow({
   service,
+  quantity = 1,
   unstaffed = false,
   onRemove,
+  onQuantityChange,
 }: {
   service: SalonService
+  quantity?: number
   unstaffed?: boolean
   onRemove: () => void
+  onQuantityChange?: (quantity: number) => void
 }) {
+  const unit = parsePricingUnit(service.pricingUnit)
+  const caption = formatPricingUnitQuantityCaption(unit, quantity)
+  const linePrice = service.price * quantity
+  const lineDuration = service.durationMin * quantity
+  const showQuantity = serviceUsesQuantity(service) && Boolean(onQuantityChange)
+
   return (
     <div
       className={cn(
@@ -122,12 +164,15 @@ function CompactCartServiceRow({
       )}
     >
       <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30">
-        <Image src={service.imageUrl} alt="" fill className="object-cover" sizes="48px" />
+        {service.imageUrl?.trim() ? (
+          <Image src={service.imageUrl} alt="" fill className="object-cover" sizes="48px" />
+        ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{service.name}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {service.category} · {service.durationMin} min
+          {service.category}
+          {caption ? ` · ${caption}` : ""} · {lineDuration} min
         </p>
         {unstaffed ? (
           <p className="mt-1 text-xs font-medium text-destructive" role="alert">
@@ -135,8 +180,16 @@ function CompactCartServiceRow({
           </p>
         ) : null}
       </div>
-      <p className="shrink-0 text-sm font-semibold text-foreground">
-        <ServicePriceText service={service} />
+      {showQuantity ? (
+        <ServiceQuantityStepper
+          service={service}
+          quantity={quantity}
+          onQuantityChange={onQuantityChange!}
+          onRemove={onRemove}
+        />
+      ) : null}
+      <p className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+        {showQuantity ? formatInr(linePrice) : <ServicePriceText service={service} />}
       </p>
       <Button
         type="button"
@@ -181,13 +234,15 @@ function ServiceThumbnail({ service, compact = false }: { service: SalonService;
         compact ? "size-12" : "size-14 sm:size-16",
       )}
     >
-      <Image
-        src={service.imageUrl}
-        alt=""
-        fill
-        className="object-cover"
-        sizes={compact ? "48px" : "64px"}
-      />
+      {service.imageUrl?.trim() ? (
+        <Image
+          src={service.imageUrl}
+          alt=""
+          fill
+          className="object-cover"
+          sizes={compact ? "48px" : "64px"}
+        />
+      ) : null}
     </div>
   )
 }
@@ -196,20 +251,25 @@ function ServicePickerItem({
   service,
   selected,
   expanded,
+  quantity = 1,
   onToggle,
+  onQuantityChange,
   onToggleDetails,
   variant,
 }: {
   service: SalonService
   selected: boolean
   expanded: boolean
+  quantity?: number
   onToggle: () => void
+  onQuantityChange?: (quantity: number) => void
   onToggleDetails: () => void
   variant: "list" | "cards"
 }) {
   const isList = variant === "list"
   const hasIncludes = service.includes.length > 0
   const showIncludes = hasIncludes && expanded
+  const showQuantity = selected && serviceUsesQuantity(service) && Boolean(onQuantityChange)
 
   return (
     <div
@@ -244,7 +304,14 @@ function ServicePickerItem({
           <span className="font-heading text-base font-semibold sm:text-lg">
             <ServicePriceText service={service} />
           </span>
-          {!selected ? (
+          {showQuantity ? (
+            <ServiceQuantityStepper
+              service={service}
+              quantity={quantity}
+              onQuantityChange={onQuantityChange!}
+              onRemove={onToggle}
+            />
+          ) : !selected ? (
             <Button
               type="button"
               size="sm"

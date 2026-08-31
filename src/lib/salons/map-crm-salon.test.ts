@@ -183,6 +183,16 @@ describe("mapCrmSalonToWeb", () => {
     expect(mapped.services[0]?.compareAtPrice).toBeUndefined()
   })
 
+  it("maps nail pricing units", () => {
+    const mapped = mapCrmSalonToWeb(
+      salon,
+      [{ ...service, pricing_unit: "per_finger" }],
+      [hairStaff],
+    )
+
+    expect(mapped.services[0]?.pricingUnit).toBe("per_finger")
+  })
+
   it("does not revive legacy content when a canonical profile exists", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
@@ -259,7 +269,7 @@ describe("mapCrmSalonToWeb", () => {
     ])
   })
 
-  it("keeps services without images and uses category stock (not salon list/cover)", () => {
+  it("keeps services without images blank (no category stock, not salon list/cover)", () => {
     const mapped = mapCrmSalonToWeb(
       salon,
       [{ ...service, image_url: null }],
@@ -267,7 +277,7 @@ describe("mapCrmSalonToWeb", () => {
     )
 
     expect(mapped.services).toHaveLength(1)
-    expect(mapped.services[0]?.imageUrl).toBe("/images/categories/hair.png")
+    expect(mapped.services[0]?.imageUrl).toBe("")
   })
 
   it("does not reuse salon cover for services without photos", () => {
@@ -277,7 +287,7 @@ describe("mapCrmSalonToWeb", () => {
       [hairStaff],
     )
 
-    expect(mapped.services[0]?.imageUrl).toBe("/images/categories/hair.png")
+    expect(mapped.services[0]?.imageUrl).toBe("")
     expect(mapped.services[0]?.imageUrl).not.toBe("https://images.unsplash.com/cover.jpg")
   })
 })

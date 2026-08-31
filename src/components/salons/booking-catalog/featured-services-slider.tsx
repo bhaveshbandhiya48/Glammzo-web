@@ -14,8 +14,10 @@ type FeaturedServicesSliderProps = {
   badges: Map<string, ServiceBadge>
   offers?: SalonOffer[]
   selectedIds: string[]
+  quantities?: Record<string, number>
   onOpenDetails: (service: SalonService) => void
   onToggleService: (serviceId: string) => void
+  onQuantityChange?: (serviceId: string, quantity: number) => void
   className?: string
 }
 
@@ -28,8 +30,10 @@ export function FeaturedServicesSlider({
   badges,
   offers = [],
   selectedIds,
+  quantities = {},
   onOpenDetails,
   onToggleService,
+  onQuantityChange,
   className,
 }: FeaturedServicesSliderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -105,8 +109,14 @@ export function FeaturedServicesSlider({
               badge={badges.get(service.id)}
               offer={bestOfferForService(offers, service.id, service.price)}
               selected={selectedIds.includes(service.id)}
+              quantity={quantities[service.id] ?? 1}
               onOpenDetails={() => onOpenDetails(service)}
               onToggle={() => onToggleService(service.id)}
+              onQuantityChange={
+                onQuantityChange
+                  ? (quantity) => onQuantityChange(service.id, quantity)
+                  : undefined
+              }
             />
           </div>
         ))}

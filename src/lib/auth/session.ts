@@ -54,13 +54,18 @@ export async function clearSessionCookie() {
 }
 
 export async function getSession() {
-  const jar = await cookies()
-  const token = jar.get(COOKIE_NAME)?.value
-  if (!token) return null
-
   try {
-    return await verifySessionToken(token)
+    const jar = await cookies()
+    const token = jar.get(COOKIE_NAME)?.value
+    if (!token) return null
+
+    try {
+      return await verifySessionToken(token)
+    } catch {
+      return null
+    }
   } catch {
+    // cookies() is unavailable during generateStaticParams / build-time static work.
     return null
   }
 }

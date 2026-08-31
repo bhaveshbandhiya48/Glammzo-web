@@ -5,7 +5,7 @@ import { Footer } from "@/components/sections/parts/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { LocalSalonLanding } from "@/components/seo/local-salon-landing"
 import { JsonLd } from "@/components/seo/json-ld"
-import { getSalons } from "@/lib/salons"
+import { getPublicSalons } from "@/lib/salons"
 import { buildAreaGeoAnswer, buildAreaGeoFaqs } from "@/lib/seo/geo-copy"
 import {
   buildBreadcrumbJsonLd,
@@ -33,7 +33,7 @@ type PageProps = {
 }
 
 export async function generateStaticParams() {
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
   const params: Array<{ city: string; area: string }> = []
 
   for (const city of SEO_CITY_LANDINGS) {
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { robots: { index: false, follow: false } }
   }
 
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
   const areaLabel = resolveAreaLabel(salons, city, areaSlug)
   if (!areaLabel) {
     return { robots: { index: false, follow: false } }
@@ -94,7 +94,7 @@ export default async function SalonsInAreaPage({ params }: PageProps) {
   const city = resolveSeoCity(citySlug)
   if (!city) notFound()
 
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
   const areaLabel = resolveAreaLabel(salons, city, areaSlug)
   if (!areaLabel) notFound()
 

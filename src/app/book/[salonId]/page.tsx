@@ -9,7 +9,7 @@ import { SitePageShell } from "@/components/layout/site-page-shell"
 import { resolveSessionDisplayEmail, resolveSessionDisplayName } from "@/lib/auth/display"
 import { getSession } from "@/lib/auth/session"
 import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
-import { parseServiceIds } from "@/lib/bookings/utils"
+import { parseServiceIds, parseServiceQuantities } from "@/lib/bookings/utils"
 import { formatPhoneForInput } from "@/lib/phone/display"
 import { getSalonById } from "@/lib/salons"
 import { getCustomerLoyalty, getCustomerWallet } from "@/lib/wallet/customer-wallet"
@@ -23,6 +23,7 @@ type Props = {
     package?: string
     promo?: string
     error?: string
+    qty?: string
   }>
 }
 
@@ -36,11 +37,12 @@ export default async function BookPage({ params, searchParams }: Props) {
   if (!session?.phone?.trim()) redirect("/login")
 
   const { salonId } = await params
-  const { services, serviceId, package: packageId, promo, error } = await searchParams
+  const { services, serviceId, package: packageId, promo, error, qty } = await searchParams
   const salon = await getSalonById(salonId)
   if (!salon) notFound()
 
   const initialServiceIds = parseServiceIds(services ?? serviceId ?? "")
+  const initialQuantities = parseServiceQuantities(qty)
 
   const useCrm = isSupabaseConfigured() && Boolean(salon.crmSalonId)
   const bookingContext = useCrm
@@ -105,6 +107,7 @@ export default async function BookPage({ params, searchParams }: Props) {
             salon={salon}
             initialServiceIds={initialServiceIds}
             initialPackageId={packageId ?? null}
+            initialQuantities={initialQuantities}
             unavailableSlots={unavailableSlots}
             bookingContext={bookingContext}
             defaultCustomerName={resolveSessionDisplayName(session.name)}

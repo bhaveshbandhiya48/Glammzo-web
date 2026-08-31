@@ -40,6 +40,7 @@ export async function resolveBookingOfferDiscount(input: {
   services: SalonService[]
   selectedServiceIds: string[]
   selectedPackage?: SalonPackage | null
+  quantities?: Record<string, number>
 }): Promise<
   | { ok: true; discount: AppliedOfferDiscount }
   | { ok: false; error: string }
@@ -70,6 +71,7 @@ export async function resolveBookingOfferDiscount(input: {
     services: input.services,
     selectedServiceIds: input.selectedServiceIds,
     selectedPackage: input.selectedPackage ?? null,
+    quantities: input.quantities,
   })
 
   if ("error" in result) {

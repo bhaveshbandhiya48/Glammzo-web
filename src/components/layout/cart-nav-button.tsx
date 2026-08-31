@@ -66,7 +66,7 @@ export function CartNavButton({ className }: CartNavButtonProps) {
       id: line.id,
       name: line.name,
       price: line.price,
-      durationMin: line.durationMin,
+      durationMin: line.durationMin * (line.quantity ?? 1),
       category: "",
       imageUrl: "",
       includes: [],
@@ -187,9 +187,16 @@ export function CartNavButton({ className }: CartNavButtonProps) {
                     </div>
                     <div className="flex shrink-0 items-start gap-1">
                       <span className="text-right text-foreground/55 tabular-nums">
-                        {line.price > 0 ? `₹${line.price}` : "—"}
+                        {line.price > 0
+                          ? `₹${line.price * (line.quantity ?? 1)}`
+                          : "—"}
                         {line.durationMin > 0 ? (
-                          <span className="block text-xs">{formatDuration(line.durationMin)}</span>
+                          <span className="block text-xs">
+                            {line.quantity && line.quantity > 1
+                              ? `${line.quantity} × `
+                              : ""}
+                            {formatDuration(line.durationMin * (line.quantity ?? 1))}
+                          </span>
                         ) : null}
                       </span>
                       <button

@@ -5,7 +5,7 @@ import { Footer } from "@/components/sections/parts/footer"
 import { Navbar } from "@/components/layout/navbar"
 import { LocalSalonLanding } from "@/components/seo/local-salon-landing"
 import { JsonLd } from "@/components/seo/json-ld"
-import { getSalons } from "@/lib/salons"
+import { getPublicSalons } from "@/lib/salons"
 import { buildCityGeoAnswer, buildCityGeoFaqs } from "@/lib/seo/geo-copy"
 import {
   buildBreadcrumbJsonLd,
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = `${SITE_URL}${seo.path}`
 
   // Avoid indexing a doorway page: only index once the city has real, bookable inventory.
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
   const hasInventory = filterSalonsByCityLanding(salons, city).length > 0
 
   return {
@@ -85,7 +85,7 @@ export default async function SalonsInCityPage({ params }: PageProps) {
     redirect(buildCityLandingPath(city.slug))
   }
 
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
   const citySalons = filterSalonsByCityLanding(salons, city)
   const areas = getAreasForSeoCity(salons, city)
   const seo = buildCityPageSeo(city)

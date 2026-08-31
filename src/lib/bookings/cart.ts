@@ -6,6 +6,8 @@ export type BookingCartLine = {
   name: string
   price: number
   durationMin: number
+  /** Per-finger / per-hand count. Always 1 for flat-priced services. */
+  quantity?: number
 }
 
 export type BookingCart = {
@@ -29,14 +31,22 @@ export function readBookingCart(): BookingCart | null {
     if (serviceIds.length === 0) return null
 
     const lines = Array.isArray(parsed.lines)
-      ? parsed.lines.filter(
-          (line): line is BookingCartLine =>
-            Boolean(line) &&
-            typeof line.id === "string" &&
-            typeof line.name === "string" &&
-            typeof line.price === "number" &&
-            typeof line.durationMin === "number",
-        )
+      ? parsed.lines.flatMap((line): BookingCartLine[] => {
+          if (
+            !line ||
+            typeof line.id !== "string" ||
+            typeof line.name !== "string" ||
+            typeof line.price !== "number" ||
+            typeof line.durationMin !== "number"
+          ) {
+            return []
+          }
+          const quantity =
+            typeof line.quantity === "number" && Number.isFinite(line.quantity)
+              ? Math.max(1, Math.floor(line.quantity))
+              : undefined
+          return [{ ...line, quantity }]
+        })
       : undefined
 
     return {
@@ -155,12 +165,26 @@ export function buildCartSnapshot(
   }
 }
 
+export function quantitiesFromCartLines(lines: BookingCartLine[] | undefined): Record<string, number> {
+  const quantities: Record<string, number> = {}
+  for (const line of lines ?? []) {
+    if (line.quantity != null && line.quantity > 1) {
+      quantities[line.id] = line.quantity
+    }
+  }
+  return quantities
+}
+
 export function buildCartHref(cart: BookingCart | null): string {
   if (!cart?.salonId || cart.serviceIds.length === 0) return "/explore"
   const qs = new URLSearchParams({ services: cart.serviceIds.join(",") })
   if (cart.packageId) {
     qs.set("package", cart.packageId)
   }
+  const qty = Object.entries(quantitiesFromCartLines(cart.lines))
+    .map(([id, quantity]) => `${id}:${quantity}`)
+    .join(",")
+  if (qty) qs.set("qty", qty)
   return `/book/${cart.salonId}?${qs.toString()}`
 }
 
@@ -168,16 +192,24 @@ export function buildCartHref(cart: BookingCart | null): string {
 export function readCartSelectionForSalon(
   salonId: string,
   availableServiceIds: Iterable<string>,
-): { serviceIds: string[]; packageId: string | null } {
+): { serviceIds: string[]; packageId: string | null; quantities: Record<string, number> } {
   const cart = readBookingCart()
   if (!cart || cart.salonId !== salonId) {
-    return { serviceIds: [], packageId: null }
+    return { serviceIds: [], packageId: null, quantities: {} }
   }
 
   const available = new Set(availableServiceIds)
+  const serviceIds = cart.serviceIds.filter((id) => available.has(id))
+  const quantities: Record<string, number> = {}
+  for (const [id, quantity] of Object.entries(quantitiesFromCartLines(cart.lines))) {
+    if (available.has(id) && serviceIds.includes(id)) {
+      quantities[id] = quantity
+    }
+  }
   return {
-    serviceIds: cart.serviceIds.filter((id) => available.has(id)),
+    serviceIds,
     packageId: cart.packageId ?? null,
+    quantities,
   }
 }
 

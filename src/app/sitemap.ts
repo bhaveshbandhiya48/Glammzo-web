@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-import { getSalons } from "@/lib/salons"
+import { getPublicSalons } from "@/lib/salons"
 import {
   SEO_CITY_LANDINGS,
   buildAreaLandingPath,
@@ -14,7 +14,7 @@ import {
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://glammzo.com"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const salons = await getSalons()
+  const salons = await getPublicSalons()
 
   const salonEntries: MetadataRoute.Sitemap = salons.map((salon) => ({
     url: `${BASE_URL}/salons/${encodeURIComponent(salon.id)}`,

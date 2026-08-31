@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   applyOfferDiscount,
   bestOfferForService,
+  computeBookingSubtotal,
   countOffersForServices,
   eligibleServicesForOffer,
   filterBookableOffers,
@@ -253,5 +254,38 @@ describe("offer eligibility helpers", () => {
         makeOffer({ id: "cash", discountType: "fixed", discountValue: 200 }),
       ]),
     ).toBe("₹200 OFF")
+  })
+
+  it("multiplies per-finger and per-hand prices by quantity", () => {
+    const gel = makeService({
+      id: "gel",
+      price: 149,
+      pricingUnit: "per_finger",
+    })
+    const cut = makeService({ id: "cut", price: 500 })
+
+    expect(
+      computeBookingSubtotal({
+        services: [gel, cut],
+        selectedServiceIds: ["gel"],
+        quantities: { gel: 4 },
+      }),
+    ).toBe(596)
+
+    expect(
+      computeBookingSubtotal({
+        services: [gel, cut],
+        selectedServiceIds: ["gel", "cut"],
+        quantities: { gel: 3 },
+      }),
+    ).toBe(947)
+
+    expect(
+      computeBookingSubtotal({
+        services: [gel],
+        selectedServiceIds: ["gel"],
+        quantities: { gel: 99 },
+      }),
+    ).toBe(1490)
   })
 })
