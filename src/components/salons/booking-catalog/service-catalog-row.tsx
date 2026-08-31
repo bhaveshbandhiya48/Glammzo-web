@@ -59,8 +59,8 @@ export function ServiceCatalogRow({
         onClick={onOpen}
         className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5 text-left"
       >
-        <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/20 sm:size-11">
-          {thumbnail ? (
+        {thumbnail ? (
+          <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/20 sm:size-11">
             <Image
               src={thumbnail}
               alt=""
@@ -68,8 +68,8 @@ export function ServiceCatalogRow({
               className="object-cover"
               sizes="44px"
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">

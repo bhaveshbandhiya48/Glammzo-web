@@ -93,13 +93,13 @@ function ServiceDetailSummaryPanel({
   const quantityCaption = formatPricingUnitQuantityCaption(unit, activeQuantity)
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        className={cn(
-          "relative w-full shrink-0 overflow-hidden bg-muted/30",
-          compactImage ? "h-[160px] rounded-t-3xl" : "h-[200px]",
-        )}
-      >
-        {thumbnail ? (
+      {thumbnail ? (
+        <div
+          className={cn(
+            "relative w-full shrink-0 overflow-hidden bg-muted/30",
+            compactImage ? "h-[160px] rounded-t-3xl" : "h-[200px]",
+          )}
+        >
           <Image
             src={thumbnail}
             alt={service.name}
@@ -108,23 +108,35 @@ function ServiceDetailSummaryPanel({
             sizes="(max-width: 1024px) 100vw, 420px"
             priority
           />
-        ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close service summary"
-          className="absolute right-3 top-3 z-10 inline-flex size-9 items-center justify-center rounded-full bg-black/45 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-        >
-          <XIcon className="size-4" aria-hidden />
-        </button>
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close service summary"
+            className="absolute right-3 top-3 z-10 inline-flex size-9 items-center justify-center rounded-full bg-black/45 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          >
+            <XIcon className="size-4" aria-hidden />
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-5 py-5 sm:px-6">
         <SheetHeader className="space-y-3 p-0 text-left">
-          <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
-            Service summary
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
+              Service summary
+            </p>
+            {!thumbnail ? (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close service summary"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-foreground/50 transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <XIcon className="size-4" aria-hidden />
+              </button>
+            ) : null}
+          </div>
           <div className="space-y-2.5">
             <SheetTitle className="font-heading text-xl leading-tight sm:text-2xl">
               {service.name}

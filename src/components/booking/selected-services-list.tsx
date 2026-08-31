@@ -11,17 +11,18 @@ type SelectedServicesListProps = {
 }
 
 function ServiceThumbnail({ service }: { service: SalonService }) {
+  const src = service.imageUrl?.trim()
+  if (!src) return null
+
   return (
     <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30 sm:size-14">
-      {service.imageUrl?.trim() ? (
-        <Image
-          src={service.imageUrl}
-          alt=""
-          fill
-          className="object-cover"
-          sizes="56px"
-        />
-      ) : null}
+      <Image
+        src={src}
+        alt=""
+        fill
+        className="object-cover"
+        sizes="56px"
+      />
     </div>
   )
 }

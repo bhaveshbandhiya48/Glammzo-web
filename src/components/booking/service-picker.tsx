@@ -163,11 +163,11 @@ function CompactCartServiceRow({
         unstaffed && "bg-destructive/[0.04]",
       )}
     >
-      <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30">
-        {service.imageUrl?.trim() ? (
+      {service.imageUrl?.trim() ? (
+        <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted/30">
           <Image src={service.imageUrl} alt="" fill className="object-cover" sizes="48px" />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{service.name}</p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -227,6 +227,9 @@ function ServiceIncludes({ includes }: { includes: string[] }) {
 }
 
 function ServiceThumbnail({ service, compact = false }: { service: SalonService; compact?: boolean }) {
+  const src = service.imageUrl?.trim()
+  if (!src) return null
+
   return (
     <div
       className={cn(
@@ -234,15 +237,13 @@ function ServiceThumbnail({ service, compact = false }: { service: SalonService;
         compact ? "size-12" : "size-14 sm:size-16",
       )}
     >
-      {service.imageUrl?.trim() ? (
-        <Image
-          src={service.imageUrl}
-          alt=""
-          fill
-          className="object-cover"
-          sizes={compact ? "48px" : "64px"}
-        />
-      ) : null}
+      <Image
+        src={src}
+        alt=""
+        fill
+        className="object-cover"
+        sizes={compact ? "48px" : "64px"}
+      />
     </div>
   )
 }

@@ -59,8 +59,8 @@ export function FeaturedServiceCard({
       tabIndex={0}
       aria-label={`View details for ${service.name}`}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/20">
-        {thumbnail ? (
+      {thumbnail ? (
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/20">
           <Image
             src={thumbnail}
             alt=""
@@ -68,19 +68,29 @@ export function FeaturedServiceCard({
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 40vw, 22vw"
           />
-        ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-        <div className="absolute top-1.5 left-1.5 z-10 flex flex-col items-start gap-1">
-          {offer ? <ServiceOfferBadge offer={offer} /> : null}
-          {!offer && badge ? (
-            <Badge className="rounded-full border-0 bg-background/95 px-1.5 py-0 text-[9px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
-              <span aria-hidden>{badge.emoji}</span> {badge.label}
-            </Badge>
-          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+          <div className="absolute top-1.5 left-1.5 z-10 flex flex-col items-start gap-1">
+            {offer ? <ServiceOfferBadge offer={offer} /> : null}
+            {!offer && badge ? (
+              <Badge className="rounded-full border-0 bg-background/95 px-1.5 py-0 text-[9px] font-medium text-primary shadow-sm backdrop-blur-sm hover:bg-background/95">
+                <span aria-hidden>{badge.emoji}</span> {badge.label}
+              </Badge>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex flex-1 flex-col gap-1 p-2.5">
+        {!thumbnail && (offer || badge) ? (
+          <div className="mb-0.5 flex flex-wrap items-center gap-1">
+            {offer ? <ServiceOfferBadge offer={offer} /> : null}
+            {!offer && badge ? (
+              <Badge className="rounded-full border-0 bg-primary/10 px-1.5 py-0 text-[9px] font-medium text-primary hover:bg-primary/10">
+                <span aria-hidden>{badge.emoji}</span> {badge.label}
+              </Badge>
+            ) : null}
+          </div>
+        ) : null}
         <h3 className="line-clamp-1 font-heading text-sm font-semibold leading-snug text-foreground">
           {service.name}
         </h3>

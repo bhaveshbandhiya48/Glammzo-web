@@ -49,8 +49,8 @@ export function ServiceCard({
       tabIndex={0}
       aria-label={`View details for ${service.name}`}
     >
-      <div className="relative size-[68px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/20">
-        {thumbnail ? (
+      {thumbnail ? (
+        <div className="relative size-[68px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/20">
           <Image
             src={thumbnail}
             alt=""
@@ -58,8 +58,8 @@ export function ServiceCard({
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="68px"
           />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

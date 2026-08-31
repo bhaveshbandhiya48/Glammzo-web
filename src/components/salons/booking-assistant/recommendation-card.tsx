@@ -41,8 +41,8 @@ export function RecommendationCard({
 
       <article className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-background/70">
         <div className="flex gap-3 p-3">
-          <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-            {imageSrc ? (
+          {imageSrc ? (
+            <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
               <Image
                 src={imageSrc}
                 alt={service.name}
@@ -50,8 +50,8 @@ export function RecommendationCard({
                 className="object-cover"
                 sizes="64px"
               />
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">{service.name}</p>
             <p className="mt-0.5 text-xs text-foreground/55">
