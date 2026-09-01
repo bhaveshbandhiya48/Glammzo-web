@@ -22,10 +22,10 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const SALON_SELECT =
-  "id, name, slug, email, phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score, established_year"
+  "id, name, slug, email, phone, whatsapp_phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score, established_year"
 
 const SALON_SELECT_LEGACY =
-  "id, name, slug, email, phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score"
+  "id, name, slug, email, phone, whatsapp_phone, address_line1, address_line2, city, state, postal_code, country, timezone, logo_url, list_image_url, cover_image_url, latitude, longitude, settings, is_active, status, listing_status, is_featured, featured_until, marketplace_response_score"
 
 function isMissingEstablishedYearColumn(message: string) {
   return message.toLowerCase().includes("established_year")
@@ -121,7 +121,7 @@ async function fetchPublishedSalonRows(): Promise<CrmSalonRow[]> {
 }
 
 const SERVICE_SELECT_WITH_MARKETPLACE =
-  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
+  "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, gender_audience, recommended_for, before_care, after_care, whats_included, service_categories(name, is_active, sort_order), service_add_ons!service_add_ons_service_id_fkey(add_on_service_id, sort_order)"
 
 const SERVICE_SELECT_WITH_IMAGE =
   "id, salon_id, name, description, image_url, duration_minutes, price, offer_price, pricing_unit, is_active, category_id, service_categories(name, is_active, sort_order)"
@@ -141,12 +141,20 @@ function isMissingServicePricingUnitColumn(message: string) {
   return message.toLowerCase().includes("pricing_unit")
 }
 
+function isMissingServiceGenderAudienceColumn(message: string) {
+  return message.toLowerCase().includes("gender_audience")
+}
+
 function stripOfferPriceFromSelect(select: string) {
   return select.replace(", offer_price", "").replace("offer_price, ", "")
 }
 
 function stripPricingUnitFromSelect(select: string) {
   return select.replace(", pricing_unit", "").replace("pricing_unit, ", "")
+}
+
+function stripGenderAudienceFromSelect(select: string) {
+  return select.replace("gender_audience, ", "").replace(", gender_audience", "")
 }
 
 function isMissingServiceMarketplaceColumns(message: string) {
@@ -186,6 +194,17 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
 
   if (error && isMissingServicePricingUnitColumn(error.message)) {
     select = stripPricingUnitFromSelect(select)
+    ;({ data, error } = await supabase
+      .from("services")
+      .select(select)
+      .in("salon_id", salonIds)
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true }))
+  }
+
+  if (error && isMissingServiceGenderAudienceColumn(error.message)) {
+    select = stripGenderAudienceFromSelect(select)
     ;({ data, error } = await supabase
       .from("services")
       .select(select)

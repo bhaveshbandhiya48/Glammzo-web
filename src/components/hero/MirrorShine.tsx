@@ -61,7 +61,7 @@ export function MirrorShine() {
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden>
       <motion.div
-        className="absolute -left-1/2 -top-1/2 h-[200%] w-[200%]"
+        className="pointer-events-none absolute -left-1/2 -top-1/2 h-[200%] w-[200%]"
         initial={false}
         animate={
           active

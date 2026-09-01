@@ -21,11 +21,12 @@ import { Navbar } from "@/components/layout/navbar"
 import { SalonDetailView } from "@/components/salons/salon-detail/salon-detail-view"
 import { SalonListingPreviewBanner } from "@/components/salons/salon-listing-preview-banner"
 import { Footer } from "@/components/sections/parts/footer"
+import { parseServiceGenderAudience } from "@/lib/salons/gender-audience"
 import type { Salon } from "@/types/salon"
 
 type PageProps = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ preview?: string }>
+  searchParams: Promise<{ preview?: string; for?: string }>
 }
 
 function isPreviewMode(value: string | undefined) {
@@ -97,7 +98,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
 export default async function SalonDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params
-  const { preview } = await searchParams
+  const { preview, for: forParam } = await searchParams
   const isPreview = isPreviewMode(preview)
   const salon = await getSalonById(id, { preview: isPreview })
   if (!salon) notFound()
@@ -153,6 +154,7 @@ export default async function SalonDetailPage({ params, searchParams }: PageProp
           initialFavorited={initialFavorited}
           authenticated={Boolean(session)}
           glammzoOffers={glammzoOffers}
+          initialGenderAudience={parseServiceGenderAudience(forParam)}
         />
       </main>
       <Footer />

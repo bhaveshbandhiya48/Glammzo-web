@@ -23,6 +23,8 @@ export type SalonService = {
   afterCare?: string
   /** Linked add-on service IDs from CRM. Empty = auto-suggested from same category. */
   addOnIds?: string[]
+  /** Unisex salon catalogs: men or women. Null/undefined = show in both tabs. */
+  genderAudience?: "men" | "women" | null
   /** Completed visits on Glammzo (CRM appointments), used for “Most booked” ranking. */
   completedBookingCount?: number
 }
@@ -203,6 +205,8 @@ export type Salon = {
   marketplaceMetadata?: Record<string, unknown>
   address: string
   phone: string
+  /** Salon WhatsApp from CRM setup; used for guest chat deep links. */
+  whatsappPhone?: string | null
   hours: string
   services: SalonService[]
   packages: SalonPackage[]

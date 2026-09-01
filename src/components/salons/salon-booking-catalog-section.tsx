@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 
 import { BrowseServicesAccordion } from "@/components/salons/booking-catalog/browse-services-accordion"
 import {
@@ -15,6 +16,7 @@ import { PackageCatalogRow } from "@/components/salons/booking-catalog/package-c
 import { PackageDetailSheet } from "@/components/salons/booking-catalog/package-detail-sheet"
 import { ServiceDetailSheet } from "@/components/salons/booking-catalog/service-detail-sheet"
 import { BookingAssistantSidebar } from "@/components/salons/booking-assistant/booking-assistant-sidebar"
+import { UnisexAudiencePicker } from "@/components/salons/unisex-audience-picker"
 import { useSalonCartSelection } from "@/hooks/use-salon-cart-selection"
 import {
   buildCatalogFilterChips,
@@ -34,9 +36,13 @@ import {
   serviceIdsMatchPackage,
   type CatalogFilterId,
 } from "@/lib/salons/catalog-utils"
+import { eligibleServicesForOffer } from "@/lib/salons/offer-utils"
 import {
-  eligibleServicesForOffer,
-} from "@/lib/salons/offer-utils"
+  filterPackagesByGenderAudience,
+  filterServicesByGenderAudience,
+  isUnisexSalonBusiness,
+  type ServiceGenderAudience,
+} from "@/lib/salons/gender-audience"
 import { resolveServices, toggleServiceId, removeOneServiceId } from "@/lib/bookings/utils"
 import type {
   SalonOffer,
@@ -58,6 +64,8 @@ type SalonBookingCatalogSectionProps = {
   offers?: SalonOffer[]
   glammzoOffers?: GlammzoOffer[]
   tax?: SalonTaxInfo | null
+  businessType?: string | null
+  initialGenderAudience?: ServiceGenderAudience | null
 }
 
 export function SalonBookingCatalogSection({
@@ -71,7 +79,14 @@ export function SalonBookingCatalogSection({
   offers = [],
   glammzoOffers = [],
   tax = null,
+  businessType = null,
+  initialGenderAudience = null,
 }: SalonBookingCatalogSectionProps) {
+  const router = useRouter()
+  const isUnisex = isUnisexSalonBusiness(businessType)
+  const [audience, setAudience] = useState<ServiceGenderAudience | null>(
+    isUnisex ? initialGenderAudience ?? "men" : initialGenderAudience,
+  )
   const [searchQuery, setSearchQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState<CatalogFilterId>("all")
   const [openCategories, setOpenCategories] = useState<Set<string>>(() => new Set())
@@ -104,35 +119,88 @@ export function SalonBookingCatalogSection({
   const [highlightedServiceIds, setHighlightedServiceIds] = useState<Set<string>>(
     () => new Set(),
   )
+  const previousAudience = useRef(audience)
+  const pendingScrollY = useRef<number | null>(null)
 
   useEffect(() => {
     setHydrated(true)
   }, [])
 
-  const catalogFilterChips = useMemo(() => buildCatalogFilterChips(services), [services])
+  function handleSelectAudience(next: ServiceGenderAudience) {
+    if (next === audience) return
+
+    if (typeof window !== "undefined") {
+      pendingScrollY.current = window.scrollY
+    }
+    setAudience(next)
+
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get("for") === next) return
+    url.searchParams.set("for", next)
+    router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false })
+  }
+
+  useLayoutEffect(() => {
+    if (pendingScrollY.current == null) return
+    const top = pendingScrollY.current
+    pendingScrollY.current = null
+    window.scrollTo({ top, left: 0, behavior: "instant" })
+  }, [audience])
+
+  useEffect(() => {
+    if (previousAudience.current === audience) return
+    previousAudience.current = audience
+    didInitOpen.current = false
+    setActiveFilter("all")
+    setSearchQuery("")
+    setOpenCategories(new Set())
+  }, [audience])
+
+  const catalogServices = useMemo(() => {
+    if (!isUnisex || !audience) return services
+    return filterServicesByGenderAudience(services, audience)
+  }, [audience, isUnisex, services])
+
+  const catalogPackages = useMemo(() => {
+    if (!isUnisex || !audience) return packages
+    return filterPackagesByGenderAudience(packages, services, audience)
+  }, [audience, isUnisex, packages, services])
+
+  const catalogFilterChips = useMemo(() => {
+    const chips = buildCatalogFilterChips(catalogServices)
+    if (!isUnisex) return chips
+    return chips.filter((chip) => chip.id !== "men" && chip.id !== "women")
+  }, [catalogServices, isUnisex])
 
   const filteredServices = useMemo(
-    () => filterServicesForCatalog(services, searchQuery, activeFilter, catalogFilterChips),
-    [services, searchQuery, activeFilter, catalogFilterChips],
+    () => filterServicesForCatalog(catalogServices, searchQuery, activeFilter, catalogFilterChips),
+    [catalogServices, searchQuery, activeFilter, catalogFilterChips],
   )
 
   const filteredPackages = useMemo(
     () =>
-      filterPackagesForCatalog(packages, services, searchQuery, activeFilter, catalogFilterChips),
-    [packages, services, searchQuery, activeFilter, catalogFilterChips],
+      filterPackagesForCatalog(
+        catalogPackages,
+        catalogServices,
+        searchQuery,
+        activeFilter,
+        catalogFilterChips,
+      ),
+    [catalogPackages, catalogServices, searchQuery, activeFilter, catalogFilterChips],
   )
 
-  const packageBadges = useMemo(() => inferPackageBadges(packages), [packages])
+  const packageBadges = useMemo(() => inferPackageBadges(catalogPackages), [catalogPackages])
 
   const bookingFrequency = useMemo(
-    () => buildServiceBookingFrequency(services),
-    [services],
+    () => buildServiceBookingFrequency(catalogServices),
+    [catalogServices],
   )
 
   const featuredServices = useMemo(() => {
-    const top = pickMostBookedServices(services, 4)
+    const top = pickMostBookedServices(catalogServices, 4)
     return top.filter((service) => filteredServices.some((entry) => entry.id === service.id))
-  }, [services, filteredServices])
+  }, [catalogServices, filteredServices])
 
   const featuredBadges = useMemo(
     () => inferServiceBadges(featuredServices, bookingFrequency),
@@ -193,7 +261,7 @@ export function SalonBookingCatalogSection({
 
   const handleViewEligibleServices = useCallback(
     (offer: SalonOffer) => {
-      const eligible = eligibleServicesForOffer(offer, services)
+      const eligible = eligibleServicesForOffer(offer, catalogServices)
       if (eligible.length === 0) return
 
       const categoriesToOpen = new Set(eligible.map((service) => service.category))
@@ -230,7 +298,7 @@ export function SalonBookingCatalogSection({
         highlightTimeoutRef.current = null
       }, 2600)
     },
-    [services],
+    [catalogServices],
   )
 
   useEffect(() => {
@@ -285,7 +353,7 @@ export function SalonBookingCatalogSection({
     if (filterId === "all" || filterId === "packages") return
 
     const match = groupServicesByCategory(
-      filterServicesForCatalog(services, searchQuery, filterId),
+      filterServicesForCatalog(catalogServices, searchQuery, filterId),
     ).find((group) => categoryMatchesFilter(group.category, filterId))
 
     if (match) {
@@ -380,6 +448,10 @@ export function SalonBookingCatalogSection({
     <>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_min(100%,380px)] lg:gap-8">
         <div className="order-1 min-w-0 space-y-6">
+          {isUnisex ? (
+            <UnisexAudiencePicker value={audience} onSelect={handleSelectAudience} />
+          ) : null}
+
           <div className="sticky top-[calc(4.25rem+env(safe-area-inset-top,0px))] z-30 -mx-5 space-y-2.5 border-b border-border/60 bg-background/95 px-5 pb-3 pt-0 backdrop-blur-xl sm:-mx-7 sm:px-7 lg:static lg:mx-0 lg:space-y-6 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
             <CatalogSearchBar value={searchQuery} onChange={setSearchQuery} />
 
@@ -492,7 +564,9 @@ export function SalonBookingCatalogSection({
 
           {!showPackages && filteredServices.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border/70 py-12 text-center text-sm text-foreground/55">
-              No packages or services match your search.
+              {audience
+                ? `No ${audience === "men" ? "men’s" : "women’s"} packages or services listed yet.`
+                : "No packages or services match your search."}
             </p>
           ) : null}
         </div>

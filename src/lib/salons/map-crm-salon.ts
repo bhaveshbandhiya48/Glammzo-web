@@ -203,6 +203,9 @@ function mapService(
     beforeCare: row.before_care?.trim() || undefined,
     afterCare: row.after_care?.trim() || undefined,
     addOnIds: addOnIds.length > 0 ? addOnIds : undefined,
+    genderAudience: row.gender_audience === "men" || row.gender_audience === "women"
+      ? row.gender_audience
+      : null,
     completedBookingCount:
       completedBookingCount > 0 ? completedBookingCount : undefined,
   }
@@ -640,6 +643,7 @@ export function mapCrmSalonToWeb(
     description,
     address: formatAddress(row) || area,
     phone: row.phone?.trim() || "Contact salon for details",
+    whatsappPhone: row.whatsapp_phone?.trim() || null,
     hours: formatSalonHours(row.settings),
     services: activeServices,
     packages: activePackages,

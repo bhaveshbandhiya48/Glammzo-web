@@ -6,6 +6,7 @@ export type CrmSalonRow = {
   slug: string
   email: string | null
   phone: string | null
+  whatsapp_phone?: string | null
   address_line1: string | null
   address_line2: string | null
   city: string | null
@@ -67,6 +68,7 @@ export type CrmServiceRow = {
   before_care?: string | null
   after_care?: string | null
   whats_included?: string[] | null
+  gender_audience?: "men" | "women" | null
   service_add_ons?: CrmServiceAddOnRow[] | null
   service_categories:
     | { name: string; is_active?: boolean; sort_order?: number }

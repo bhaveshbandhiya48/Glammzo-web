@@ -21,6 +21,7 @@ import {
   scrollToSalonServicesSection,
 } from "@/lib/salons/salon-detail-scroll"
 import { filterBookableOffers } from "@/lib/salons/offer-utils"
+import { isUnisexSalonBusiness, type ServiceGenderAudience } from "@/lib/salons/gender-audience"
 
 type SalonDetailViewProps = {
   salon: Salon
@@ -28,6 +29,7 @@ type SalonDetailViewProps = {
   initialFavorited: boolean
   authenticated: boolean
   glammzoOffers?: GlammzoOffer[]
+  initialGenderAudience?: ServiceGenderAudience | null
 }
 
 export function SalonDetailView({
@@ -36,10 +38,12 @@ export function SalonDetailView({
   initialFavorited,
   authenticated,
   glammzoOffers = [],
+  initialGenderAudience = null,
 }: SalonDetailViewProps) {
   const galleryImages = salon.gallery
   const bookableOffers = filterBookableOffers(salon.offers)
   const hasOffers = bookableOffers.length > 0 || glammzoOffers.length > 0
+  const isUnisex = isUnisexSalonBusiness(salon.businessType)
 
   useEffect(() => {
     const run = () => {
@@ -84,7 +88,11 @@ export function SalonDetailView({
           id="services"
           eyebrow="Book online"
           title="Services"
-          subtitle="Search, filter by category, and add treatments to your visit."
+          subtitle={
+            isUnisex
+              ? "Choose men or women’s, then browse the matching services."
+              : "Search, filter by category, and add treatments to your visit."
+          }
           compactTitleMobile
           className={hasOffers ? undefined : "!pt-6 sm:!pt-8"}
         >
@@ -99,6 +107,8 @@ export function SalonDetailView({
             offers={salon.offers}
             glammzoOffers={glammzoOffers}
             tax={salon.tax}
+            businessType={salon.businessType}
+            initialGenderAudience={initialGenderAudience}
           />
         </SalonDetailSection>
 

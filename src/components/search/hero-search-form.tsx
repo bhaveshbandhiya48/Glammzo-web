@@ -340,18 +340,12 @@ export function HeroSearchForm() {
           </div>
         </form>
 
+        {panelOpen ? (
         <div
           id={panelId}
           role="listbox"
           aria-labelledby={activePanel === "query" ? queryId : areaId}
-          aria-hidden={!panelOpen}
-          className={cn(
-            "absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[min(20rem,60vh)] overflow-hidden rounded-2xl border border-border/80 bg-card shadow-lg shadow-black/[0.1]",
-            "origin-top transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none",
-            panelOpen
-              ? "pointer-events-auto translate-y-0 opacity-100"
-              : "pointer-events-none -translate-y-1 opacity-0"
-          )}
+          className="pointer-events-auto absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[min(20rem,60vh)] origin-top translate-y-0 overflow-hidden rounded-2xl border border-border/80 bg-card opacity-100 shadow-lg shadow-black/[0.1] transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none"
         >
           <div className="max-h-[min(20rem,60vh)] overflow-y-auto">
           {activePanel === "query" ? (
@@ -594,6 +588,7 @@ export function HeroSearchForm() {
           )}
           </div>
         </div>
+        ) : null}
       </div>
     </div>
   )

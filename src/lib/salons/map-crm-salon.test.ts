@@ -193,6 +193,17 @@ describe("mapCrmSalonToWeb", () => {
     expect(mapped.services[0]?.pricingUnit).toBe("per_finger")
   })
 
+  it("maps unisex service gender audience", () => {
+    const mapped = mapCrmSalonToWeb(
+      salon,
+      [{ ...service, gender_audience: "women" }],
+      [hairStaff],
+    )
+
+    expect(mapped.businessType).toBe("Unisex Salon")
+    expect(mapped.services[0]?.genderAudience).toBe("women")
+  })
+
   it("does not revive legacy content when a canonical profile exists", () => {
     const mapped = mapCrmSalonToWeb(
       salon,

@@ -131,6 +131,7 @@
 
 @layer utilities {
   .glam-glow {
+    pointer-events: none;
     background-image:
       radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--glam-coral) 18%, transparent), transparent 55%),
       radial-gradient(circle at 84% 20%, color-mix(in oklab, var(--glam-sand) 55%, transparent), transparent 60%);
@@ -508,6 +509,7 @@
 }
 
 .hero-floating-blob {
+  pointer-events: none;
   position: absolute;
   left: 50%;
   top: 42%;
