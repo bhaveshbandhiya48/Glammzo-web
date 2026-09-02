@@ -84,6 +84,8 @@ export type SalonPackage = {
   isFeatured: boolean
   sortOrder: number
   items: SalonPackageItem[]
+  /** Unisex salon catalogs: men or women. Null/undefined = infer from included services. */
+  genderAudience?: "men" | "women" | null
 }
 
 export type SalonStaffMember = {

@@ -767,7 +767,7 @@ export function BookingForm({
         ) : null}
 
         <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
-          <DialogContent className="flex max-h-[min(85vh,720px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+          <DialogContent className="flex max-h-[min(92dvh,720px)] w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-3xl max-sm:rounded-b-none">
             <DialogHeader className="border-b border-border/60 px-5 py-4 text-left">
               <DialogTitle className="font-heading text-lg">Add services</DialogTitle>
               <DialogDescription className="text-sm">

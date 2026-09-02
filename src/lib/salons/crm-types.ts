@@ -179,6 +179,7 @@ export type CrmPackageRow = {
   is_active: boolean
   status?: string
   sort_order: number
+  gender_audience?: "men" | "women" | null
   salon_package_items?: Array<{
     id: string
     service_id: string

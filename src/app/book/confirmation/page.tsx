@@ -29,7 +29,11 @@ export default async function BookingConfirmationPage({
   return (
     <>
       <ClearBookingCart />
-      <SitePageShell>
+      <SitePageShell
+        navbarMobileTitle="Booking confirmed"
+        navbarBackHref="/dashboard/profile#bookings"
+        compactMain
+      >
         <BookingConfirmationContent booking={booking} />
       </SitePageShell>
     </>

@@ -1,11 +1,8 @@
-import { Navbar } from "@/components/layout/navbar"
 import { SitePageShell } from "@/components/layout/site-page-shell"
 
 export default function BookingConfirmationLoading() {
   return (
-    <>
-      <Navbar />
-      <SitePageShell>
+    <SitePageShell compactMain navbarMobileTitle="Booking confirmed">
         <div className="mx-auto grid w-full max-w-5xl items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
           <div className="mx-auto w-full max-w-lg overflow-hidden rounded-3xl border border-border/60 bg-white shadow-sm lg:mx-0 lg:max-w-none">
             <div className="space-y-3 border-b border-border/50 px-6 py-7 sm:px-8">
@@ -54,6 +51,5 @@ export default function BookingConfirmationLoading() {
           </div>
         </div>
       </SitePageShell>
-    </>
-  )
+    )
 }

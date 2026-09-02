@@ -14,7 +14,7 @@ export function BookingSalonSummary({ salon }: { salon: Salon }) {
   return (
     <>
       {/* Mobile: compact photo + name + address */}
-      <article className="mt-6 overflow-hidden rounded-xl border border-border/70 bg-card p-3 shadow-sm shadow-black/[0.03] lg:hidden">
+      <article className="overflow-hidden rounded-xl border border-border/70 bg-card p-3 shadow-sm shadow-black/[0.03] lg:hidden">
         <div className="flex items-start gap-3">
           <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
             <Image

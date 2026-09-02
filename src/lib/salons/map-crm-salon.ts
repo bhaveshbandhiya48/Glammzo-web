@@ -424,6 +424,10 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
     isFeatured: row.is_featured === true,
     sortOrder: row.sort_order ?? 0,
     items,
+    genderAudience:
+      row.gender_audience === "men" || row.gender_audience === "women"
+        ? row.gender_audience
+        : null,
   }
 }
 

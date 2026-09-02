@@ -25,6 +25,10 @@ import { useSessionStatus } from "@/hooks/use-session-status"
 type NavbarProps = {
   /** When set on `/salons/[id]`, replaces logo + location with back + title. */
   salonName?: string
+  /** Compact-header back target when history cannot go back (e.g. booking after login). */
+  backHref?: string
+  /** Overrides the compact mobile title. */
+  mobileTitle?: string
 }
 
 function isSalonDetailPath(pathname: string | null) {
@@ -35,12 +39,17 @@ function isProfilePath(pathname: string | null) {
   return Boolean(pathname && (pathname === "/dashboard/profile" || pathname.startsWith("/dashboard/profile/")))
 }
 
-export function Navbar({ salonName }: NavbarProps) {
+function isBookingFlowPath(pathname: string | null) {
+  return Boolean(pathname && (pathname === "/book" || pathname.startsWith("/book/")))
+}
+
+export function Navbar({ salonName, backHref, mobileTitle: mobileTitleProp }: NavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { authenticated, welcomeName } = useSessionStatus()
   const salonDetail = isSalonDetailPath(pathname)
   const profilePage = isProfilePath(pathname)
+  const bookingFlow = isBookingFlowPath(pathname)
   const [profileHash, setProfileHash] = useState("")
 
   useEffect(() => {
@@ -60,11 +69,13 @@ export function Navbar({ salonName }: NavbarProps) {
 
   const profileSection = profileSectionFromHash(profileHash)
   /** Mobile-only compact header (back + title); desktop keeps full chrome. */
-  const mobileCompact = salonDetail || profilePage
-  const mobileTitle = profilePage
-    ? profileMobileNavTitle(profileSection)
-    : salonName?.trim() || "Salon"
-  const backFallbackHref = profilePage ? "/" : "/explore"
+  const mobileCompact = salonDetail || profilePage || bookingFlow
+  const mobileTitle =
+    mobileTitleProp?.trim() ||
+    (profilePage
+      ? profileMobileNavTitle(profileSection)
+      : salonName?.trim() || (bookingFlow ? "Book appointment" : "Salon"))
+  const backFallbackHref = backHref || (profilePage ? "/" : "/explore")
 
   const scrollToTopIfCurrentPage = (href: string) => {
     const path = href.split("#")[0] || href
@@ -83,6 +94,10 @@ export function Navbar({ salonName }: NavbarProps) {
     if (profilePage && isProfileHubChild(profileSection)) {
       window.history.replaceState(null, "", `${pathname}#profile`)
       window.dispatchEvent(new Event("hashchange"))
+      return
+    }
+    if (backHref) {
+      router.push(backHref)
       return
     }
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -149,7 +164,7 @@ export function Navbar({ salonName }: NavbarProps) {
           </nav>
 
           <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-            <div className={cn(profilePage && "max-lg:hidden")}>
+            <div className={cn((profilePage || bookingFlow) && "max-lg:hidden")}>
               <CartNavButton />
             </div>
 

@@ -97,6 +97,20 @@ describe("unisex salon gender audience", () => {
     expect(filterPackagesByGenderAudience(packages, services, "women").map((entry) => entry.id)).toEqual([
       "p-women",
     ])
+    expect(
+      filterPackagesByGenderAudience(
+        [{ ...packages[1], genderAudience: "women", items: [{ serviceId: "m", serviceName: "Haircut", quantity: 1 }] }],
+        services,
+        "women",
+      ).map((entry) => entry.id),
+    ).toEqual(["p-women"])
+    expect(
+      filterPackagesByGenderAudience(
+        [{ ...packages[1], genderAudience: "women", items: [{ serviceId: "m", serviceName: "Haircut", quantity: 1 }] }],
+        services,
+        "men",
+      ),
+    ).toEqual([])
     expect(parseServiceGenderAudience("women")).toBe("women")
     expect(parseServiceGenderAudience("kids")).toBeNull()
   })

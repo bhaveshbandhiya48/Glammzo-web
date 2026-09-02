@@ -54,7 +54,7 @@ export function BookingFormSubmitButtons({
         {label}
       </Button>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 p-3 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">
         {showBlockers ? (
           <p className="mb-2 text-center text-xs font-medium text-destructive">
             {blockingReasons[0]}

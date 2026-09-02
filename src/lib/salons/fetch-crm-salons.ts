@@ -474,6 +474,9 @@ async function fetchReviewsForSalons(salonIds: string[]): Promise<CrmSalonReview
 }
 
 const PACKAGE_SELECT_EXTENDED =
+  "id, salon_id, name, description, short_description, detailed_description, image_url, package_price, original_price, amount_saved, discount_percentage, total_duration, badge, is_featured, marketplace_visible, show_compare_price, show_savings, allow_online_booking, service_preview_count, is_active, status, sort_order, gender_audience, salon_package_items(id, service_id, quantity, sort_order, services(name, price, duration_minutes))"
+
+const PACKAGE_SELECT_WITHOUT_GENDER =
   "id, salon_id, name, description, short_description, detailed_description, image_url, package_price, original_price, amount_saved, discount_percentage, total_duration, badge, is_featured, marketplace_visible, show_compare_price, show_savings, allow_online_booking, service_preview_count, is_active, status, sort_order, salon_package_items(id, service_id, quantity, sort_order, services(name, price, duration_minutes))"
 
 const PACKAGE_SELECT_WITH_COMPARE =
@@ -521,6 +524,19 @@ async function fetchPackagesForSalons(salonIds: string[]): Promise<CrmPackageRow
       .eq("is_active", true)
       .is("deleted_at", null)
       .order("sort_order", { ascending: true })
+
+    if (error && error.message.toLowerCase().includes("gender_audience")) {
+      const withoutGender = await supabase
+        .from("salon_packages")
+        .select(PACKAGE_SELECT_WITHOUT_GENDER)
+        .in("salon_id", salonIds)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("sort_order", { ascending: true })
+
+      data = withoutGender.data as typeof data
+      error = withoutGender.error
+    }
 
     if (error && isMissingPackageExtendedColumns(error.message)) {
       const compareFallback = await supabase

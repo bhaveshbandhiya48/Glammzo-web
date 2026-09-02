@@ -59,45 +59,54 @@ export default async function BookPage({ params, searchParams }: Props) {
     ? await Promise.all([getCustomerWallet(session.phone), getCustomerLoyalty(session.phone)])
     : [null, null]
 
+  const salonHref = `/salons/${encodeURIComponent(salon.id)}`
+
   return (
-    <SitePageShell>
-      <div className="grid items-start gap-6 lg:gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <div className="xl:sticky xl:top-24 xl:self-start">
+    <SitePageShell
+      navbarSalonName={salon.name}
+      navbarBackHref={salonHref}
+      navbarMobileTitle="Book appointment"
+      compactMain
+    >
+      <div className="grid items-start gap-5 lg:gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="space-y-3 xl:sticky xl:top-24 xl:self-start">
           <Link
-            href={`/salons/${encodeURIComponent(salon.id)}`}
-            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-foreground/65 transition-colors hover:text-foreground"
+            href={salonHref}
+            className="mb-4 hidden items-center gap-1.5 text-sm font-medium text-foreground/65 transition-colors hover:text-foreground xl:inline-flex"
           >
             <ArrowLeftIcon className="size-4" aria-hidden />
             Back to {salon.name}
           </Link>
-          <p className="section-eyebrow">Booking</p>
-          <h1 className="display-section mt-2">Reserve your visit</h1>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            What you&apos;re booking, when, and how much you&apos;ll pay — then confirm in one step.
-          </p>
+          <div className="hidden xl:block">
+            <p className="section-eyebrow">Booking</p>
+            <h1 className="display-section mt-2">Reserve your visit</h1>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              What you&apos;re booking, when, and how much you&apos;ll pay — then confirm in one step.
+            </p>
+          </div>
 
           {error === "slot" ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+            <p className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
               That time slot was just taken. Please choose another.
             </p>
           ) : null}
           {error === "contact" ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+            <p className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
               Please enter your name and a valid email to continue.
             </p>
           ) : null}
           {error === "rate_limit" ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+            <p className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
               Too many booking attempts. Please wait a few minutes and try again.
             </p>
           ) : null}
           {error === "booking" ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+            <p className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
               We couldn&apos;t complete your booking. Check your details and try again.
             </p>
           ) : null}
           {error === "promo" ? (
-            <p className="mt-3 rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
+            <p className="rounded-xl border border-primary/30 bg-primary/8 px-3 py-2.5 text-sm">
               That promo code could not be applied. Check the code and your selected services, then
               try again.
             </p>
