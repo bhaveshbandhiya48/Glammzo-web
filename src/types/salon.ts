@@ -25,6 +25,12 @@ export type SalonService = {
   addOnIds?: string[]
   /** Unisex salon catalogs: men or women. Null/undefined = show in both tabs. */
   genderAudience?: "men" | "women" | null
+  /** Named prices (Regular / Rica). Empty/undefined = single flat price. */
+  priceOptions?: Array<{
+    id: string
+    name: string
+    price: number
+  }>
   /** Completed visits on Glammzo (CRM appointments), used for “Most booked” ranking. */
   completedBookingCount?: number
 }

@@ -78,6 +78,8 @@ export type CreateCrmBookingInput = {
   useFreeService?: boolean
   /** Per-finger / per-hand counts. Other units always persist as 1. */
   serviceQuantities?: Record<string, number>
+  /** Named price option per service (Regular / Rica). */
+  servicePriceOptionIds?: Record<string, string>
 }
 
 export type CreateCrmBookingResult =

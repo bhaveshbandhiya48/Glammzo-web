@@ -182,13 +182,25 @@ function mapService(
     row.price,
     row.offer_price,
   )
+  const priceOptions = [...(row.price_options ?? [])]
+    .sort((left, right) => left.sort_order - right.sort_order)
+    .map((option) => ({
+      id: option.id,
+      name: option.name.trim(),
+      price: Number.parseFloat(String(option.price)) || 0,
+    }))
+    .filter((option) => option.name.length > 0 && option.price > 0)
+  const fromPrice = priceOptions.length >= 2
+  const catalogPrice = fromPrice
+    ? Math.min(...priceOptions.map((option) => option.price))
+    : price
 
   return {
     id: row.id,
     name: row.name,
     durationMin: row.duration_minutes,
-    price,
-    compareAtPrice,
+    price: catalogPrice,
+    compareAtPrice: fromPrice ? undefined : compareAtPrice,
     pricingUnit: parsePricingUnit(row.pricing_unit) ?? undefined,
     category: category.name,
     categorySortOrder: category.sortOrder,
@@ -206,6 +218,7 @@ function mapService(
     genderAudience: row.gender_audience === "men" || row.gender_audience === "women"
       ? row.gender_audience
       : null,
+    priceOptions: fromPrice ? priceOptions : undefined,
     completedBookingCount:
       completedBookingCount > 0 ? completedBookingCount : undefined,
   }

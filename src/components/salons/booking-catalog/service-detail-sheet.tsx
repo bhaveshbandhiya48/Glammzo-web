@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { buildBookHref } from "@/lib/bookings/utils"
-import { resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
+import { formatInr, resolveServiceThumbnail } from "@/lib/salons/catalog-utils"
 import { ServiceDetailOffers } from "@/components/salons/offers/service-detail-offers"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
 import {
@@ -44,11 +44,13 @@ type ServiceDetailSheetProps = {
   offers?: SalonOffer[]
   selected: boolean
   quantity?: number
+  priceOptionId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
   onToggle: () => void
   onAddOnToggle: (id: string) => void
   onQuantityChange?: (quantity: number) => void
+  onPriceOptionChange?: (optionId: string) => void
   selectedIds: string[]
 }
 
@@ -56,41 +58,65 @@ function ServiceDetailSummaryPanel({
   service,
   content,
   thumbnail,
-  bookHref,
   selected,
   selectedIds,
   serviceOffers,
   quantity,
+  priceOptionId,
+  salonId,
+  authenticated,
   onToggle,
   onAddOnToggle,
   onQuantityChange,
+  onPriceOptionChange,
   onClose,
   compactImage = false,
 }: {
   service: SalonService
   content: ServiceDetailContent
   thumbnail: string | null
-  bookHref: string
   selected: boolean
   selectedIds: string[]
   serviceOffers: SalonOffer[]
   quantity: number
+  priceOptionId?: string
+  salonId: string
+  authenticated: boolean
   onToggle: () => void
   onAddOnToggle: (id: string) => void
   onQuantityChange?: (quantity: number) => void
+  onPriceOptionChange?: (optionId: string) => void
   onClose: () => void
   compactImage?: boolean
 }) {
   const usesQuantity = serviceUsesQuantity(service)
   const unit = parsePricingUnit(service.pricingUnit)
   const [draftQuantity, setDraftQuantity] = useState(quantity)
+  const priceOptions = service.priceOptions ?? []
+  const hasOptions = priceOptions.length >= 2
+  const defaultOptionId = priceOptions[0]?.id ?? ""
+  const [draftOptionId, setDraftOptionId] = useState(priceOptionId || defaultOptionId)
 
   useEffect(() => {
     setDraftQuantity(quantity)
   }, [service.id, quantity, selected])
 
+  useEffect(() => {
+    setDraftOptionId(priceOptionId || defaultOptionId)
+  }, [service.id, priceOptionId, defaultOptionId])
+
   const activeQuantity = selected ? quantity : draftQuantity
   const quantityCaption = formatPricingUnitQuantityCaption(unit, activeQuantity)
+  const bookHref = buildBookHref(
+    salonId,
+    [service.id],
+    authenticated,
+    null,
+    null,
+    usesQuantity ? { [service.id]: activeQuantity } : undefined,
+    service.genderAudience,
+    hasOptions ? { [service.id]: draftOptionId } : undefined,
+  )
   return (
     <div className="flex h-full min-h-0 flex-col">
       {thumbnail ? (
@@ -162,7 +188,10 @@ function ServiceDetailSummaryPanel({
             <div>
               <p className="text-xs font-medium text-foreground/50">Price</p>
               <p className="font-heading text-2xl font-semibold text-foreground">
-                <ServicePriceText service={service} />
+                <ServicePriceText
+                  service={service}
+                  selectedOptionId={hasOptions ? draftOptionId : undefined}
+                />
               </p>
             </div>
             <div className="text-right">
@@ -173,6 +202,37 @@ function ServiceDetailSummaryPanel({
               </p>
             </div>
           </div>
+          {hasOptions ? (
+            <div className="mt-4 space-y-2 border-t border-border/50 pt-3">
+              <p className="text-xs font-medium text-foreground/50">Choose a price</p>
+              <div className="grid gap-2">
+                {priceOptions.map((option) => {
+                  const active = draftOptionId === option.id
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setDraftOptionId(option.id)
+                        if (selected) onPriceOptionChange?.(option.id)
+                      }}
+                      className={cn(
+                        "flex items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm transition-colors",
+                        active
+                          ? "border-primary bg-primary/5"
+                          : "border-border/70 hover:border-primary/40",
+                      )}
+                    >
+                      <span className="font-medium">{option.name}</span>
+                      <span className="tabular-nums font-semibold">
+                        {formatInr(option.price)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
           {usesQuantity ? (
             <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
               <div>
@@ -265,8 +325,10 @@ function ServiceDetailSummaryPanel({
             size="md"
             className="w-full"
             onClick={() => {
-              if (!selected && usesQuantity) {
-                onQuantityChange?.(draftQuantity)
+              if (!selected) {
+                if (hasOptions) onPriceOptionChange?.(draftOptionId)
+                if (usesQuantity) onQuantityChange?.(draftQuantity)
+                if (!hasOptions && !usesQuantity) onToggle()
                 return
               }
               onToggle()
@@ -275,7 +337,15 @@ function ServiceDetailSummaryPanel({
             {selected ? "Remove from booking" : "Add to booking"}
           </Button>
           <Button asChild size="lg" className="w-full">
-            <Link href={bookHref}>Book Service</Link>
+            <Link
+              href={bookHref}
+              onClick={() => {
+                if (hasOptions) onPriceOptionChange?.(draftOptionId)
+                else if (!selected) onToggle()
+              }}
+            >
+              Book Service
+            </Link>
           </Button>
         </div>
       </div>
@@ -292,11 +362,13 @@ export function ServiceDetailSheet({
   offers = [],
   selected,
   quantity = 1,
+  priceOptionId,
   open,
   onOpenChange,
   onToggle,
   onAddOnToggle,
   onQuantityChange,
+  onPriceOptionChange,
   selectedIds,
 }: ServiceDetailSheetProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)")
@@ -305,14 +377,6 @@ export function ServiceDetailSheet({
 
   const content = buildServiceDetailContent(service, allServices, salonReviews)
   const thumbnail = resolveServiceThumbnail(service)
-  const bookHref = buildBookHref(
-    salonId,
-    [service.id],
-    authenticated,
-    null,
-    null,
-    serviceUsesQuantity(service) ? { [service.id]: quantity } : undefined,
-  )
   const serviceOffers = offersForService(offers, service.id)
 
   return (
@@ -330,14 +394,17 @@ export function ServiceDetailSheet({
           service={service}
           content={content}
           thumbnail={thumbnail}
-          bookHref={bookHref}
+          salonId={salonId}
+          authenticated={authenticated}
           selected={selected}
           selectedIds={selectedIds}
           serviceOffers={serviceOffers}
           quantity={quantity}
+          priceOptionId={priceOptionId}
           onToggle={onToggle}
           onAddOnToggle={onAddOnToggle}
           onQuantityChange={onQuantityChange}
+          onPriceOptionChange={onPriceOptionChange}
           onClose={() => onOpenChange(false)}
           compactImage={!isDesktop}
         />

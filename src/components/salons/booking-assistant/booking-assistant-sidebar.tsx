@@ -36,6 +36,7 @@ import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
 import { formatInr } from "@/lib/salons/catalog-utils"
 import { calculateGstAmount, resolveSalonTaxInfo } from "@/lib/salons/tax-utils"
 import type { SalonOffer, SalonPackage, SalonService, SalonTaxInfo } from "@/types/salon"
+import type { ServiceGenderAudience } from "@/lib/salons/gender-audience"
 import { cn } from "@/lib/utils"
 
 export type BookingAssistantSidebarProps = {
@@ -50,6 +51,7 @@ export type BookingAssistantSidebarProps = {
   tax?: SalonTaxInfo | null
   authenticated: boolean
   quantities?: Record<string, number>
+  priceOptionIds?: Record<string, string>
   onRemoveService: (id: string) => void
   onClearPackage: () => void
   onAddService: (id: string) => void
@@ -58,6 +60,7 @@ export type BookingAssistantSidebarProps = {
   className?: string
   /** Render fixed mobile continue bar (only mount once). */
   showMobileBar?: boolean
+  genderAudience?: ServiceGenderAudience | null
 }
 
 export function BookingAssistantSidebar({
@@ -72,12 +75,14 @@ export function BookingAssistantSidebar({
   tax = null,
   authenticated,
   quantities = {},
+  priceOptionIds = {},
   onRemoveService,
   onClearPackage,
   onAddService,
   onViewEligibleServices,
   className,
   showMobileBar = false,
+  genderAudience = null,
 }: BookingAssistantSidebarProps) {
   const [appliedOfferId, setAppliedOfferId] = useState<string | null>(null)
   const [applyError, setApplyError] = useState<string | null>(null)
@@ -102,8 +107,9 @@ export function BookingAssistantSidebar({
         selectedServiceIds: selectedIds,
         selectedPackage,
         quantities,
+        priceOptionIds,
       }),
-    [services, selectedIds, selectedPackage, quantities],
+    [services, selectedIds, selectedPackage, quantities, priceOptionIds],
   )
 
   const offerInput = useMemo(
@@ -112,9 +118,10 @@ export function BookingAssistantSidebar({
       selectedServiceIds: selectedIds,
       selectedPackage,
       quantities,
+      priceOptionIds,
       subtotal,
     }),
-    [services, selectedIds, selectedPackage, quantities, subtotal],
+    [services, selectedIds, selectedPackage, quantities, priceOptionIds, subtotal],
   )
 
   const hasCart = selectedIds.length > 0 || Boolean(selectedPackage)
@@ -350,8 +357,9 @@ export function BookingAssistantSidebar({
         extraServices,
         selectedServices,
         quantities,
+        priceOptionIds,
       }),
-    [selectedPackage, extraServices, selectedServices, quantities],
+    [selectedPackage, extraServices, selectedServices, quantities, priceOptionIds],
   )
 
   const hasSelection = lines.length > 0
@@ -377,6 +385,8 @@ export function BookingAssistantSidebar({
     selectedPackage?.id,
     appliedPromoCode,
     quantities,
+    genderAudience,
+    priceOptionIds,
   )
 
   useEffect(() => {

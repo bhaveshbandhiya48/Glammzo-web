@@ -31,7 +31,16 @@ export function SalonServicesSection({
   salonName,
   authenticated,
 }: SalonServicesSectionProps) {
-  const [selectedIds, setSelectedIds, , , quantities, setServiceQuantity] = useSalonCartSelection(
+  const [
+    selectedIds,
+    setSelectedIds,
+    ,
+    ,
+    quantities,
+    setServiceQuantity,
+    priceOptionIds,
+    setServicePriceOption,
+  ] = useSalonCartSelection(
     salonId,
     salonName,
     services,
@@ -42,7 +51,16 @@ export function SalonServicesSection({
     [services, selectedIds]
   )
 
-  const bookHref = buildBookHref(salonId, selectedIds, authenticated, null, null, quantities)
+  const bookHref = buildBookHref(
+    salonId,
+    selectedIds,
+    authenticated,
+    null,
+    null,
+    quantities,
+    null,
+    priceOptionIds,
+  )
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_min(100%,340px)] lg:gap-10">
@@ -51,8 +69,10 @@ export function SalonServicesSection({
           services={services}
           selectedIds={selectedIds}
           quantities={quantities}
+          priceOptionIds={priceOptionIds}
           onToggle={(id) => setSelectedIds((prev) => toggleServiceId(prev, id))}
           onQuantityChange={setServiceQuantity}
+          onPriceOptionChange={setServicePriceOption}
           variant="list"
         />
       </div>

@@ -18,6 +18,8 @@ export type BookingCart = {
   packageId?: string
   /** Snapshot for instant cart preview in the header. */
   lines?: BookingCartLine[]
+  /** Chosen named price per service id. */
+  priceOptionIds?: Record<string, string>
 }
 
 export function readBookingCart(): BookingCart | null {
@@ -55,6 +57,14 @@ export function readBookingCart(): BookingCart | null {
       serviceIds,
       packageId: typeof parsed.packageId === "string" ? parsed.packageId : undefined,
       lines,
+      priceOptionIds:
+        parsed.priceOptionIds && typeof parsed.priceOptionIds === "object"
+          ? Object.fromEntries(
+              Object.entries(parsed.priceOptionIds).filter(
+                (entry): entry is [string, string] => typeof entry[1] === "string",
+              ),
+            )
+          : undefined,
     }
   } catch {
     return null
@@ -140,6 +150,7 @@ export function buildCartSnapshot(
   packageId?: string | null,
   packageLine?: BookingCartLine | null,
   extraLines: BookingCartLine[] = [],
+  priceOptionIds?: Record<string, string>,
 ): BookingCart {
   if (packageId && packageLine) {
     return {
@@ -148,6 +159,7 @@ export function buildCartSnapshot(
       serviceIds,
       packageId,
       lines: [packageLine, ...extraLines],
+      priceOptionIds,
     }
   }
 
@@ -160,8 +172,8 @@ export function buildCartSnapshot(
     salonId,
     salonName,
     serviceIds,
-    packageId: packageId ?? undefined,
-    lines,
+    lines: lines.length > 0 ? lines : undefined,
+    priceOptionIds,
   }
 }
 
@@ -185,6 +197,11 @@ export function buildCartHref(cart: BookingCart | null): string {
     .map(([id, quantity]) => `${id}:${quantity}`)
     .join(",")
   if (qty) qs.set("qty", qty)
+  const opts = Object.entries(cart.priceOptionIds ?? {})
+    .filter(([, optionId]) => optionId)
+    .map(([id, optionId]) => `${id}:${optionId}`)
+    .join(",")
+  if (opts) qs.set("opts", opts)
   return `/book/${cart.salonId}?${qs.toString()}`
 }
 
@@ -192,10 +209,10 @@ export function buildCartHref(cart: BookingCart | null): string {
 export function readCartSelectionForSalon(
   salonId: string,
   availableServiceIds: Iterable<string>,
-): { serviceIds: string[]; packageId: string | null; quantities: Record<string, number> } {
+): { serviceIds: string[]; packageId: string | null; quantities: Record<string, number>; priceOptionIds: Record<string, string> } {
   const cart = readBookingCart()
   if (!cart || cart.salonId !== salonId) {
-    return { serviceIds: [], packageId: null, quantities: {} }
+    return { serviceIds: [], packageId: null, quantities: {}, priceOptionIds: {} }
   }
 
   const available = new Set(availableServiceIds)
@@ -206,10 +223,17 @@ export function readCartSelectionForSalon(
       quantities[id] = quantity
     }
   }
+  const priceOptionIds: Record<string, string> = {}
+  for (const [id, optionId] of Object.entries(cart.priceOptionIds ?? {})) {
+    if (available.has(id) && serviceIds.includes(id) && optionId) {
+      priceOptionIds[id] = optionId
+    }
+  }
   return {
     serviceIds,
     packageId: cart.packageId ?? null,
     quantities,
+    priceOptionIds,
   }
 }
 
@@ -230,6 +254,7 @@ export function syncBookingCartForSalon(
   packageId?: string | null,
   packageLine?: BookingCartLine | null,
   extraLines: BookingCartLine[] = [],
+  priceOptionIds?: Record<string, string>,
 ): void {
   if (selectedIds.length === 0) {
     const cart = readBookingCart()
@@ -248,6 +273,7 @@ export function syncBookingCartForSalon(
       packageId,
       packageLine,
       extraLines,
+      priceOptionIds,
     ),
   )
 }

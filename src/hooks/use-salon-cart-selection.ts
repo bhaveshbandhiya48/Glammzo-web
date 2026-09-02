@@ -7,7 +7,11 @@ import {
   syncBookingCartForSalon,
   type BookingCartLine,
 } from "@/lib/bookings/cart"
-import { getExtraServiceIds } from "@/lib/salons/catalog-utils"
+import {
+  defaultPriceOptionId,
+  getExtraServiceIds,
+  resolveServiceOptionPrice,
+} from "@/lib/salons/catalog-utils"
 import {
   clampPricingUnitQuantity,
   parsePricingUnit,
@@ -22,6 +26,7 @@ type CartService = {
   price: number
   durationMin: number
   pricingUnit?: string | null
+  priceOptions?: Array<{ id: string; name: string; price: number }>
 }
 
 type CartPackage = {
@@ -36,6 +41,7 @@ type InitialCartSelection = {
   serviceIds?: string[]
   packageId?: string | null
   quantities?: Record<string, number>
+  priceOptionIds?: Record<string, string>
 }
 
 function pruneQuantities(
@@ -78,6 +84,9 @@ export function useSalonCartSelection(
   const [quantities, setQuantities] = useState<Record<string, number>>(
     () => pruneQuantities(initialSelection.serviceIds ?? [], services, initialSelection.quantities ?? {}),
   )
+  const [priceOptionIds, setPriceOptionIds] = useState<Record<string, string>>(
+    () => initialSelection.priceOptionIds ?? {},
+  )
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -98,6 +107,18 @@ export function useSalonCartSelection(
     setSelectedIds(nextIds)
     setPackageId(nextPackageId)
     setQuantities(pruneQuantities(nextIds, servicesRef.current, mergedQuantities))
+    const mergedOptions = {
+      ...(fromCart.priceOptionIds ?? {}),
+      ...(initial.priceOptionIds ?? {}),
+    }
+    for (const id of nextIds) {
+      if (mergedOptions[id]) continue
+      const fallback = defaultPriceOptionId(
+        servicesRef.current.find((service) => service.id === id),
+      )
+      if (fallback) mergedOptions[id] = fallback
+    }
+    setPriceOptionIds(mergedOptions)
     setHydrated(true)
   }, [salonId])
 
@@ -117,19 +138,50 @@ export function useSalonCartSelection(
   }, [selectedIds])
 
   useEffect(() => {
+    setPriceOptionIds((prev) => {
+      const selected = new Set(selectedIds)
+      const next: Record<string, string> = {}
+      for (const [id, optionId] of Object.entries(prev)) {
+        if (selected.has(id) && optionId) next[id] = optionId
+      }
+      for (const id of selectedIds) {
+        if (next[id]) continue
+        const fallback = defaultPriceOptionId(
+          servicesRef.current.find((service) => service.id === id),
+        )
+        if (fallback) next[id] = fallback
+      }
+      const prevKeys = Object.keys(prev)
+      const nextKeys = Object.keys(next)
+      if (
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every((id) => prev[id] === next[id])
+      ) {
+        return prev
+      }
+      return next
+    })
+  }, [selectedIds])
+
+  useEffect(() => {
     if (!hydrated) {
       return
     }
 
     const currentServices = servicesRef.current
     const selected = currentServices.filter((service) => selectedIds.includes(service.id))
-    const serviceLines: BookingCartLine[] = selected.map((service) => ({
-      id: service.id,
-      name: service.name,
-      price: service.price,
-      durationMin: service.durationMin,
-      quantity: quantityForService(service, quantities),
-    }))
+    const serviceLines: BookingCartLine[] = selected.map((service) => {
+      const option = service.priceOptions?.find(
+        (entry) => entry.id === priceOptionIds[service.id],
+      )
+      return {
+        id: service.id,
+        name: option ? `${service.name} (${option.name})` : service.name,
+        price: option?.price ?? resolveServiceOptionPrice(service, priceOptionIds[service.id]),
+        durationMin: service.durationMin,
+        quantity: quantityForService(service, quantities),
+      }
+    })
 
     const activePackage = packageId
       ? packagesRef.current.find((pkg) => pkg.id === packageId) ?? null
@@ -169,8 +221,9 @@ export function useSalonCartSelection(
       packageId,
       packageLine,
       extraLines,
+      priceOptionIds,
     )
-  }, [hydrated, packageId, quantities, salonId, salonName, selectedIds])
+  }, [hydrated, packageId, priceOptionIds, quantities, salonId, salonName, selectedIds])
 
   const setServiceQuantity = useCallback((serviceId: string, quantity: number) => {
     const service = servicesRef.current.find((entry) => entry.id === serviceId)
@@ -193,5 +246,19 @@ export function useSalonCartSelection(
     setQuantities((prev) => ({ ...prev, [serviceId]: clamped }))
   }, [])
 
-  return [selectedIds, setSelectedIds, packageId, setPackageId, quantities, setServiceQuantity] as const
+  const setServicePriceOption = useCallback((serviceId: string, optionId: string) => {
+    setPriceOptionIds((prev) => ({ ...prev, [serviceId]: optionId }))
+    setSelectedIds((prev) => (prev.includes(serviceId) ? prev : [...prev, serviceId]))
+  }, [])
+
+  return [
+    selectedIds,
+    setSelectedIds,
+    packageId,
+    setPackageId,
+    quantities,
+    setServiceQuantity,
+    priceOptionIds,
+    setServicePriceOption,
+  ] as const
 }

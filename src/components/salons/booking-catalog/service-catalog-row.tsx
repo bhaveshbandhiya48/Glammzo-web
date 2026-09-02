@@ -43,6 +43,7 @@ export function ServiceCatalogRow({
   const thumbnail = resolveServiceThumbnail(service)
   const summary = getServiceCardSummary(service)
   const showQuantity = selected && serviceUsesQuantity(service) && Boolean(onQuantityChange)
+  const hasOptions = (service.priceOptions?.length ?? 0) >= 2
 
   return (
     <div
@@ -121,7 +122,7 @@ export function ServiceCatalogRow({
             selected &&
               "border-border/80 bg-background text-foreground/75 hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive",
           )}
-          onClick={onToggle}
+          onClick={hasOptions && !selected ? onOpen : onToggle}
         >
           {selected ? "Remove" : "Add"}
         </Button>

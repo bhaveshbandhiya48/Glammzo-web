@@ -11,10 +11,12 @@ import { getSalonById } from "@/lib/salons"
 import {
   parseServiceIds,
   parseServiceQuantities,
+  parseServicePriceOptions,
   resolveServices,
   sumServiceDuration,
 } from "@/lib/bookings/utils"
 import { quantityForService } from "@/lib/salons/pricing-unit"
+import { resolveServiceOptionPrice } from "@/lib/salons/catalog-utils"
 import { computeBookingSubtotal } from "@/lib/salons/offer-utils"
 import { addBooking } from "@/lib/bookings/store"
 import { getSession, updateSessionProfile } from "@/lib/auth/session"
@@ -59,6 +61,9 @@ export async function createBookingAction(formData: FormData) {
   const serviceQuantities = parseServiceQuantities(
     String(formData.get("serviceQuantities") ?? ""),
   )
+  const servicePriceOptionIds = parseServicePriceOptions(
+    String(formData.get("servicePriceOptions") ?? ""),
+  )
   const date = String(formData.get("date") ?? "")
   const time = String(formData.get("time") ?? "")
   const notes = String(formData.get("notes") ?? "").trim()
@@ -98,6 +103,7 @@ export async function createBookingAction(formData: FormData) {
     selectedServiceIds: serviceIds,
     selectedPackage,
     quantities: serviceQuantities,
+    priceOptionIds: servicePriceOptionIds,
   })
   const totalDuration = sumServiceDuration(services, serviceQuantities)
   const displayTime = time.includes("AM") || time.includes("PM") ? time : formatSlotLabel(time)
@@ -126,6 +132,7 @@ export async function createBookingAction(formData: FormData) {
       useWallet,
       useFreeService,
       serviceQuantities,
+      servicePriceOptionIds,
     })
 
     if (!result.success) {
@@ -152,10 +159,11 @@ export async function createBookingAction(formData: FormData) {
       salonArea: salon.area,
       services: services.map((s) => {
         const quantity = quantityForService(s, serviceQuantities)
+        const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
         return {
           id: s.id,
           name: s.name,
-          price: s.price * quantity,
+          price: unitPrice * quantity,
           durationMin: s.durationMin * quantity,
         }
       }),
@@ -204,10 +212,11 @@ export async function createBookingAction(formData: FormData) {
     salonArea: salon.area,
     services: services.map((s) => {
       const quantity = quantityForService(s, serviceQuantities)
+      const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
       return {
         id: s.id,
         name: s.name,
-        price: s.price * quantity,
+        price: unitPrice * quantity,
         durationMin: s.durationMin * quantity,
       }
     }),

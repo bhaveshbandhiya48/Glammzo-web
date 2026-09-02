@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest"
 import { quantitiesFromCartLines, type BookingCartLine } from "./cart"
 import {
   parseServiceQuantities,
+  parseServicePriceOptions,
   serializeServiceQuantities,
+  serializeServicePriceOptions,
+  buildBookHref,
   sumServiceDuration,
   sumServicePrice,
 } from "./utils"
@@ -41,5 +44,27 @@ describe("qty-aware totals", () => {
     expect(sumServicePrice([gel], { gel: 3 })).toBe(447)
     expect(sumServiceDuration([gel], { gel: 3 })).toBe(60)
     expect(sumServicePrice([gel], {})).toBe(149)
+  })
+})
+
+describe("named price options", () => {
+  it("round-trips service option ids in the booking URL", () => {
+    expect(parseServicePriceOptions("cut:regular,spa:rica")).toEqual({
+      cut: "regular",
+      spa: "rica",
+    })
+    expect(serializeServicePriceOptions({ cut: "regular", spa: "" })).toBe("cut:regular")
+
+    const href = buildBookHref(
+      "teqnoman",
+      ["cut"],
+      true,
+      null,
+      null,
+      null,
+      "men",
+      { cut: "regular" },
+    )
+    expect(href).toContain("opts=cut%3Aregular")
   })
 })

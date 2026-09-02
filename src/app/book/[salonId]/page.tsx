@@ -9,8 +9,9 @@ import { SitePageShell } from "@/components/layout/site-page-shell"
 import { resolveSessionDisplayEmail, resolveSessionDisplayName } from "@/lib/auth/display"
 import { getSession } from "@/lib/auth/session"
 import { fetchSalonBookingContext } from "@/lib/bookings/crm/salon-context"
-import { parseServiceIds, parseServiceQuantities } from "@/lib/bookings/utils"
+import { parseServiceIds, parseServiceQuantities, parseServicePriceOptions } from "@/lib/bookings/utils"
 import { formatPhoneForInput } from "@/lib/phone/display"
+import { parseServiceGenderAudience } from "@/lib/salons/gender-audience"
 import { getSalonById } from "@/lib/salons"
 import { getCustomerLoyalty, getCustomerWallet } from "@/lib/wallet/customer-wallet"
 import { isSupabaseConfigured } from "@/lib/supabase/admin"
@@ -24,6 +25,8 @@ type Props = {
     promo?: string
     error?: string
     qty?: string
+    for?: string
+    opts?: string
   }>
 }
 
@@ -37,12 +40,13 @@ export default async function BookPage({ params, searchParams }: Props) {
   if (!session?.phone?.trim()) redirect("/login")
 
   const { salonId } = await params
-  const { services, serviceId, package: packageId, promo, error, qty } = await searchParams
+  const { services, serviceId, package: packageId, promo, error, qty, for: forParam, opts } = await searchParams
   const salon = await getSalonById(salonId)
   if (!salon) notFound()
 
   const initialServiceIds = parseServiceIds(services ?? serviceId ?? "")
   const initialQuantities = parseServiceQuantities(qty)
+  const initialPriceOptionIds = parseServicePriceOptions(opts)
 
   const useCrm = isSupabaseConfigured() && Boolean(salon.crmSalonId)
   const bookingContext = useCrm
@@ -108,6 +112,7 @@ export default async function BookPage({ params, searchParams }: Props) {
             initialServiceIds={initialServiceIds}
             initialPackageId={packageId ?? null}
             initialQuantities={initialQuantities}
+            initialPriceOptionIds={initialPriceOptionIds}
             unavailableSlots={unavailableSlots}
             bookingContext={bookingContext}
             defaultCustomerName={resolveSessionDisplayName(session.name)}
@@ -116,6 +121,7 @@ export default async function BookPage({ params, searchParams }: Props) {
             initialPromoCode={promo ?? ""}
             walletBalanceRupees={wallet?.balanceRupees ?? 0}
             freeServiceCredits={loyalty?.freeServiceCredits ?? 0}
+            initialGenderAudience={parseServiceGenderAudience(forParam)}
           />
         </div>
       </div>

@@ -273,11 +273,13 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
       return []
     }
 
-    return normalizeServiceRows(
-      (fallback.data ?? []).map((row) => ({
-        ...(row as unknown as Omit<CrmServiceRow, "image_url">),
-        image_url: null,
-      })),
+    return attachServicePriceOptions(
+      normalizeServiceRows(
+        (fallback.data ?? []).map((row) => ({
+          ...(row as unknown as Omit<CrmServiceRow, "image_url">),
+          image_url: null,
+        })),
+      ),
     )
   }
 
@@ -286,7 +288,45 @@ async function fetchServicesForSalons(salonIds: string[]): Promise<CrmServiceRow
     return []
   }
 
-  return normalizeServiceRows(data ?? [])
+  return attachServicePriceOptions(normalizeServiceRows(data ?? []))
+}
+
+async function attachServicePriceOptions(rows: CrmServiceRow[]): Promise<CrmServiceRow[]> {
+  if (rows.length === 0) return rows
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from("service_price_options")
+    .select("id, service_id, name, price, sort_order")
+    .in(
+      "service_id",
+      rows.map((row) => row.id),
+    )
+    .order("sort_order", { ascending: true })
+
+  if (error) {
+    if (!error.message.toLowerCase().includes("service_price_options")) {
+      console.error("[salons] Failed to fetch service price options:", error.message)
+    }
+    return rows
+  }
+
+  const byService = new Map<string, NonNullable<CrmServiceRow["price_options"]>>()
+  for (const row of (data ?? []) as Array<{
+    id: string
+    service_id: string
+    name: string
+    price: string | number
+    sort_order: number
+  }>) {
+    const list = byService.get(row.service_id) ?? []
+    list.push(row)
+    byService.set(row.service_id, list)
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    price_options: byService.get(row.id) ?? [],
+  }))
 }
 
 async function fetchStaffForSalons(salonIds: string[]): Promise<CrmStaffRow[]> {

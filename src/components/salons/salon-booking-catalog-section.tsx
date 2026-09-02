@@ -23,6 +23,7 @@ import {
   buildPackageServiceIds,
   buildServiceBookingFrequency,
   categoryMatchesFilter,
+  defaultPriceOptionId,
   filterPackagesForCatalog,
   filterServicesForCatalog,
   getExtraServiceIds,
@@ -95,7 +96,16 @@ export function SalonBookingCatalogSection({
   const [detailService, setDetailService] = useState<SalonService | null>(null)
   const [detailServiceOpen, setDetailServiceOpen] = useState(false)
 
-  const [selectedIds, setSelectedIds, packageId, setPackageId, quantities, setServiceQuantity] =
+  const [
+    selectedIds,
+    setSelectedIds,
+    packageId,
+    setPackageId,
+    quantities,
+    setServiceQuantity,
+    priceOptionIds,
+    setServicePriceOption,
+  ] =
     useSalonCartSelection(
     salonId,
     salonName,
@@ -398,7 +408,14 @@ export function SalonBookingCatalogSection({
   }
 
   function handleToggleService(id: string) {
+    const alreadySelected = selectedIds.includes(id)
     setSelectedIds((prev) => toggleServiceId(prev, id))
+    if (alreadySelected) return
+    const service = services.find((entry) => entry.id === id)
+    const optionId = defaultPriceOptionId(service)
+    if (optionId && !priceOptionIds[id]) {
+      setServicePriceOption(id, optionId)
+    }
   }
 
   function handleRemoveService(id: string) {
@@ -435,6 +452,7 @@ export function SalonBookingCatalogSection({
     tax,
     authenticated,
     quantities,
+    priceOptionIds,
     onRemoveService: handleRemoveService,
     onClearPackage: handleClearPackage,
     onAddService: (id: string) => {
@@ -442,6 +460,7 @@ export function SalonBookingCatalogSection({
     },
     onQuantityChange: setServiceQuantity,
     onViewEligibleServices: handleViewEligibleServices,
+    genderAudience: audience,
   }
 
   return (
@@ -599,6 +618,7 @@ export function SalonBookingCatalogSection({
         offers={offers}
         selected={detailService ? selectedIds.includes(detailService.id) : false}
         quantity={detailService ? quantities[detailService.id] ?? 1 : 1}
+        priceOptionId={detailService ? priceOptionIds[detailService.id] : undefined}
         open={detailServiceOpen}
         onOpenChange={setDetailServiceOpen}
         onToggle={() => {
@@ -607,6 +627,9 @@ export function SalonBookingCatalogSection({
         onAddOnToggle={handleToggleService}
         onQuantityChange={(quantity) => {
           if (detailService) setServiceQuantity(detailService.id, quantity)
+        }}
+        onPriceOptionChange={(optionId) => {
+          if (detailService) setServicePriceOption(detailService.id, optionId)
         }}
         selectedIds={selectedIds}
       />

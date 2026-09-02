@@ -52,6 +52,14 @@ export type CrmServiceAddOnRow = {
   sort_order: number
 }
 
+export type CrmServicePriceOptionRow = {
+  id: string
+  service_id?: string
+  name: string
+  price: string | number
+  sort_order: number
+}
+
 export type CrmServiceRow = {
   id: string
   salon_id: string
@@ -70,6 +78,7 @@ export type CrmServiceRow = {
   whats_included?: string[] | null
   gender_audience?: "men" | "women" | null
   service_add_ons?: CrmServiceAddOnRow[] | null
+  price_options?: CrmServicePriceOptionRow[] | null
   service_categories:
     | { name: string; is_active?: boolean; sort_order?: number }
     | { name: string; is_active?: boolean; sort_order?: number }[]

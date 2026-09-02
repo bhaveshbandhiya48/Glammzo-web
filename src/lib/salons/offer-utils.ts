@@ -1,4 +1,5 @@
 import { quantityForService } from "@/lib/salons/pricing-unit"
+import { resolveServiceOptionPrice } from "@/lib/salons/catalog-utils"
 import type { SalonOffer, SalonPackage, SalonService } from "@/types/salon"
 
 export type OfferValidationError =
@@ -148,14 +149,16 @@ export type BookingPricingInput = {
   selectedServiceIds: string[]
   selectedPackage?: SalonPackage | null
   quantities?: Record<string, number> | null
+  priceOptionIds?: Record<string, string> | null
 }
 
 function serviceLineAmount(
   service: SalonService | undefined,
   quantities?: Record<string, number> | null,
+  optionId?: string | null,
 ) {
   if (!service) return 0
-  return service.price * quantityForService(service, quantities)
+  return resolveServiceOptionPrice(service, optionId) * quantityForService(service, quantities)
 }
 
 export function computeBookingSubtotal({
@@ -163,8 +166,11 @@ export function computeBookingSubtotal({
   selectedServiceIds,
   selectedPackage = null,
   quantities = null,
+  priceOptionIds = null,
 }: BookingPricingInput) {
   const serviceById = new Map(services.map((service) => [service.id, service]))
+  const lineAmount = (serviceId: string) =>
+    serviceLineAmount(serviceById.get(serviceId), quantities, priceOptionIds?.[serviceId])
 
   if (selectedPackage) {
     const packageServiceIds = new Set(
@@ -172,20 +178,12 @@ export function computeBookingSubtotal({
     )
     const extrasTotal = selectedServiceIds
       .filter((serviceId) => !packageServiceIds.has(serviceId))
-      .reduce(
-        (sum, serviceId) =>
-          sum + serviceLineAmount(serviceById.get(serviceId), quantities),
-        0,
-      )
+      .reduce((sum, serviceId) => sum + lineAmount(serviceId), 0)
 
     return selectedPackage.packagePrice + extrasTotal
   }
 
-  return selectedServiceIds.reduce(
-    (sum, serviceId) =>
-      sum + serviceLineAmount(serviceById.get(serviceId), quantities),
-    0,
-  )
+  return selectedServiceIds.reduce((sum, serviceId) => sum + lineAmount(serviceId), 0)
 }
 
 function extrasSubtotal(
@@ -193,12 +191,13 @@ function extrasSubtotal(
   selectedServiceIds: string[],
   packageServiceIds: Set<string>,
   quantities?: Record<string, number> | null,
+  priceOptionIds?: Record<string, string> | null,
 ) {
   return selectedServiceIds
     .filter((serviceId) => !packageServiceIds.has(serviceId))
     .reduce(
       (sum, serviceId) =>
-        sum + serviceLineAmount(serviceById.get(serviceId), quantities),
+        sum + serviceLineAmount(serviceById.get(serviceId), quantities, priceOptionIds?.[serviceId]),
       0,
     )
 }
@@ -224,6 +223,7 @@ function getDiscountableSubtotal(
         input.selectedServiceIds,
         packageServiceIds,
         input.quantities,
+        input.priceOptionIds,
       )
     }
     return computeBookingSubtotal(input)
@@ -239,6 +239,7 @@ function getDiscountableSubtotal(
       input.selectedServiceIds.filter((serviceId) => eligibleIds.has(serviceId)),
       new Set(packageServiceIds),
       input.quantities,
+      input.priceOptionIds,
     )
 
     if (eligiblePackageIds.has(input.selectedPackage.id)) {
@@ -259,7 +260,11 @@ function getDiscountableSubtotal(
     .filter((serviceId) => eligibleIds.has(serviceId))
     .reduce(
       (sum, serviceId) =>
-        sum + serviceLineAmount(serviceById.get(serviceId), input.quantities),
+        sum + serviceLineAmount(
+          serviceById.get(serviceId),
+          input.quantities,
+          input.priceOptionIds?.[serviceId],
+        ),
       0,
     )
 }

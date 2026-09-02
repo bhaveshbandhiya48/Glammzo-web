@@ -288,4 +288,38 @@ describe("offer eligibility helpers", () => {
       }),
     ).toBe(1490)
   })
+
+  it("uses the selected named price instead of the catalog from-price", () => {
+    const haircut = makeService({
+      id: "cut",
+      price: 450,
+      priceOptions: [
+        { id: "regular", name: "Regular", price: 650 },
+        { id: "rica", name: "Rica", price: 450 },
+      ],
+    })
+
+    expect(
+      computeBookingSubtotal({
+        services: [haircut],
+        selectedServiceIds: ["cut"],
+      }),
+    ).toBe(650)
+
+    expect(
+      computeBookingSubtotal({
+        services: [haircut],
+        selectedServiceIds: ["cut"],
+        priceOptionIds: { cut: "rica" },
+      }),
+    ).toBe(450)
+
+    expect(
+      computeBookingSubtotal({
+        services: [haircut],
+        selectedServiceIds: ["cut"],
+        priceOptionIds: { cut: "regular" },
+      }),
+    ).toBe(650)
+  })
 })

@@ -52,6 +52,32 @@ export function formatInr(amount: number) {
   }).format(amount)
 }
 
+export function serviceHasPriceOptions(
+  service: Pick<SalonService, "priceOptions"> | null | undefined,
+) {
+  return (service?.priceOptions?.length ?? 0) >= 2
+}
+
+export function defaultPriceOptionId(
+  service: Pick<SalonService, "priceOptions"> | null | undefined,
+) {
+  if (!serviceHasPriceOptions(service)) return null
+  return service!.priceOptions![0]!.id
+}
+
+export function resolveServiceOptionPrice(
+  service: Pick<SalonService, "price" | "priceOptions">,
+  optionId?: string | null,
+) {
+  const selected = service.priceOptions?.find((option) => option.id === optionId)
+  if (selected) return selected.price
+  const fallbackId = defaultPriceOptionId(service)
+  const fallback = fallbackId
+    ? service.priceOptions?.find((option) => option.id === fallbackId)
+    : undefined
+  return fallback?.price ?? service.price
+}
+
 /** Payable price + optional compare-at when CRM offer_price is set and lower. */
 export function resolveServicePayablePrice(
   price: string | number,

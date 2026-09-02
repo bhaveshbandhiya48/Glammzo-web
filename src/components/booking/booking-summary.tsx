@@ -5,7 +5,8 @@ import { CheckCircleIcon } from "lucide-react"
 
 import { formatDuration, sumServiceDuration, sumServicePrice } from "@/lib/bookings/utils"
 import { ServicePriceText } from "@/components/salons/booking-catalog/service-price-text"
-import { formatInr, formatPackageDuration } from "@/lib/salons/catalog-utils"
+import { formatInr, formatPackageDuration, resolveServiceOptionPrice } from "@/lib/salons/catalog-utils"
+import { serviceGenderLabel, type ServiceGenderAudience } from "@/lib/salons/gender-audience"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
 import { formatGstLineLabel } from "@/lib/salons/tax-utils"
 import {
@@ -29,12 +30,14 @@ type BookingSummaryProps = {
   emptyLabel?: string
   compact?: boolean
   cancellationPolicy?: SalonCancellationPolicy | null
-  tax?: SalonTaxInfo | null
+          tax?: SalonTaxInfo | null
   gstAmount?: number
   totalDurationMin?: number
   walletAppliedRupees?: number
   freeServiceAppliedRupees?: number
   payAtSalonRupees?: number
+  priceOptionIds?: Record<string, string>
+  genderAudience?: ServiceGenderAudience | null
 }
 
 function formatServiceDuration(minutes: number): string {
@@ -93,6 +96,8 @@ export function BookingSummary({
   walletAppliedRupees = 0,
   freeServiceAppliedRupees = 0,
   payAtSalonRupees,
+  priceOptionIds = {},
+  genderAudience = null,
 }: BookingSummaryProps) {
   if (services.length === 0) {
     return <p className="text-sm text-muted-foreground">{emptyLabel}</p>
@@ -223,17 +228,42 @@ export function BookingSummary({
             const quantity = quantityForService(svc, quantities)
             const unit = parsePricingUnit(svc.pricingUnit)
             const caption = formatPricingUnitQuantityCaption(unit, quantity)
+            const optionId = priceOptionIds[svc.id] ?? null
+            const optionName = svc.priceOptions?.find((option) => option.id === optionId)?.name
+            const genderLabel =
+              serviceGenderLabel(svc.genderAudience) ?? serviceGenderLabel(genderAudience)
+            const unitPrice = resolveServiceOptionPrice(svc, optionId)
+            const linePrice = unitPrice * quantity
+            const meta = [
+              caption,
+              formatServiceDuration(svc.durationMin * quantity),
+              optionName,
+            ].filter(Boolean)
             return (
             <div key={svc.id} className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">{svc.name}</p>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <p className="truncate text-sm font-medium text-foreground">{svc.name}</p>
+                  {genderLabel ? (
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-foreground/70">
+                      {genderLabel}
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {caption ? `${caption} · ` : ""}
-                  {formatServiceDuration(svc.durationMin * quantity)}
+                  {meta.join(" · ")}
                 </p>
               </div>
               <p className="shrink-0 text-sm font-semibold tabular-nums">
-                {quantity > 1 ? formatInr(svc.price * quantity) : <ServicePriceText service={svc} />}
+                {quantity > 1 ? (
+                  formatInr(linePrice)
+                ) : (
+                  <ServicePriceText
+                    service={svc}
+                    selectedOptionId={optionId}
+                    finalPrice
+                  />
+                )}
               </p>
             </div>
             )

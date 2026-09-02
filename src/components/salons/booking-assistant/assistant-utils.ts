@@ -6,6 +6,7 @@ import {
   isOfferBookableNow,
 } from "@/lib/salons/offer-utils"
 import type { GlammzoOffer } from "@/lib/marketing/glammzo-offers"
+import { resolveServiceOptionPrice } from "@/lib/salons/catalog-utils"
 import {
   formatPricingUnitQuantityCaption,
   parsePricingUnit,
@@ -272,14 +273,16 @@ export function pickRecommendedAddOn(
 function toServiceLineItem(
   service: SalonService,
   quantities?: Record<string, number> | null,
+  optionId?: string | null,
 ): BookingLineItem {
   const quantity = quantityForService(service, quantities)
   const unit = parsePricingUnit(service.pricingUnit)
+  const option = service.priceOptions?.find((entry) => entry.id === optionId)
   return {
     id: service.id,
-    name: service.name,
+    name: option ? `${service.name} (${option.name})` : service.name,
     durationMin: service.durationMin * quantity,
-    price: service.price * quantity,
+    price: resolveServiceOptionPrice(service, optionId) * quantity,
     kind: "service",
     quantity,
     quantityCaption: formatPricingUnitQuantityCaption(unit, quantity),
@@ -291,8 +294,9 @@ export function buildBookingLineItems(input: {
   extraServices: SalonService[]
   selectedServices: SalonService[]
   quantities?: Record<string, number> | null
+  priceOptionIds?: Record<string, string> | null
 }): BookingLineItem[] {
-  const { selectedPackage, extraServices, selectedServices, quantities } = input
+  const { selectedPackage, extraServices, selectedServices, quantities, priceOptionIds } = input
 
   if (selectedPackage) {
     return [
@@ -303,9 +307,13 @@ export function buildBookingLineItems(input: {
         price: selectedPackage.packagePrice,
         kind: "package",
       },
-      ...extraServices.map((service) => toServiceLineItem(service, quantities)),
+      ...extraServices.map((service) =>
+        toServiceLineItem(service, quantities, priceOptionIds?.[service.id]),
+      ),
     ]
   }
 
-  return selectedServices.map((service) => toServiceLineItem(service, quantities))
+  return selectedServices.map((service) =>
+    toServiceLineItem(service, quantities, priceOptionIds?.[service.id]),
+  )
 }

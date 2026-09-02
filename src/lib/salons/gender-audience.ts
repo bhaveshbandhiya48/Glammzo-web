@@ -8,6 +8,13 @@ export const SERVICE_GENDER_AUDIENCE_LABELS: Record<ServiceGenderAudience, strin
   women: "Women's",
 }
 
+export function serviceGenderLabel(
+  genderAudience: ServiceGenderAudience | null | undefined,
+) {
+  if (!genderAudience) return null
+  return SERVICE_GENDER_AUDIENCE_LABELS[genderAudience]
+}
+
 function normalizeBusinessType(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase()
 }

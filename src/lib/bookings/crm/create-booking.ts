@@ -165,8 +165,38 @@ export async function createCrmWebBooking(
       price,
       is_active: service.is_active,
       pricing_unit: parsePricingUnit(service.pricing_unit),
+      priceOptionId: null as string | null,
+      priceOptionName: null as string | null,
     }
   })
+
+  const requestedOptionIds = Object.values(input.servicePriceOptionIds ?? {}).filter(Boolean)
+  if (requestedOptionIds.length > 0) {
+    const { data: optionRows } = await supabase
+      .from("service_price_options")
+      .select("id, service_id, name, price")
+      .eq("salon_id", input.crmSalonId)
+      .in("id", requestedOptionIds)
+
+    const optionById = new Map(
+      ((optionRows ?? []) as Array<{
+        id: string
+        service_id: string
+        name: string
+        price: string | number
+      }>).map((row) => [row.id, row]),
+    )
+
+    for (const service of services) {
+      const optionId = input.servicePriceOptionIds?.[service.id]
+      const option = optionId ? optionById.get(optionId) : null
+      if (option && option.service_id === service.id) {
+        service.price = Number.parseFloat(String(option.price)) || service.price
+        service.priceOptionId = option.id
+        service.priceOptionName = option.name
+      }
+    }
+  }
 
   if (services.length !== uniqueIds.length) {
     return {
@@ -708,6 +738,8 @@ export async function createCrmWebBooking(
       price,
       duration_minutes: (service?.duration_minutes ?? 0) * quantity,
       quantity,
+      price_option_id: service?.priceOptionId ?? null,
+      price_option_name: service?.priceOptionName ?? null,
     }
   })
 
@@ -715,8 +747,27 @@ export async function createCrmWebBooking(
     .from("appointment_services")
     .insert(appointmentServices)
 
+  if (
+    servicesError?.message.toLowerCase().includes("price_option") ||
+    servicesError?.message.toLowerCase().includes("service_price_options")
+  ) {
+    const withoutOptions = appointmentServices.map(
+      ({ price_option_id: _id, price_option_name: _name, ...row }) => row,
+    )
+    ;({ error: servicesError } = await supabase
+      .from("appointment_services")
+      .insert(withoutOptions))
+  }
+
   if (servicesError?.message.toLowerCase().includes("quantity")) {
-    const withoutQuantity = appointmentServices.map(({ quantity: _quantity, ...row }) => row)
+    const withoutQuantity = appointmentServices.map(
+      ({
+        quantity: _quantity,
+        price_option_id: _id,
+        price_option_name: _name,
+        ...row
+      }) => row,
+    )
     ;({ error: servicesError } = await supabase
       .from("appointment_services")
       .insert(withoutQuantity))

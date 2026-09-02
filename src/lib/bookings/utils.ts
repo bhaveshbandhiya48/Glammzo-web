@@ -32,6 +32,28 @@ export function serializeServiceQuantities(quantities: Record<string, number>): 
     .join(",")
 }
 
+export function parseServicePriceOptions(raw: string | null | undefined): Record<string, string> {
+  if (!raw?.trim()) return {}
+  const options: Record<string, string> = {}
+  for (const part of raw.split(",")) {
+    const trimmed = part.trim()
+    const colon = trimmed.lastIndexOf(":")
+    if (colon <= 0) continue
+    const id = trimmed.slice(0, colon).trim()
+    const optionId = trimmed.slice(colon + 1).trim()
+    if (!id || !optionId) continue
+    options[id] = optionId
+  }
+  return options
+}
+
+export function serializeServicePriceOptions(options: Record<string, string>): string {
+  return Object.entries(options)
+    .filter(([, optionId]) => optionId.length > 0)
+    .map(([id, optionId]) => `${id}:${optionId}`)
+    .join(",")
+}
+
 export function resolveServices(
   allServices: SalonService[],
   ids: string[]
@@ -93,6 +115,8 @@ export function buildBookHref(
   packageId?: string | null,
   promoCode?: string | null,
   quantities?: Record<string, number> | null,
+  genderAudience?: string | null,
+  priceOptionIds?: Record<string, string> | null,
 ): string {
   const params = new URLSearchParams()
   if (serviceIds.length > 0) {
@@ -107,6 +131,13 @@ export function buildBookHref(
   const qty = quantities ? serializeServiceQuantities(quantities) : ""
   if (qty) {
     params.set("qty", qty)
+  }
+  if (genderAudience === "men" || genderAudience === "women") {
+    params.set("for", genderAudience)
+  }
+  const opts = priceOptionIds ? serializeServicePriceOptions(priceOptionIds) : ""
+  if (opts) {
+    params.set("opts", opts)
   }
 
   const qs = params.toString()

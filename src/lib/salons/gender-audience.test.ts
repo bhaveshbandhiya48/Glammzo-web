@@ -5,6 +5,7 @@ import {
   filterServicesByGenderAudience,
   isUnisexSalonBusiness,
   parseServiceGenderAudience,
+  serviceGenderLabel,
   serviceMatchesGenderAudience,
 } from "./gender-audience"
 import type { SalonPackage, SalonService } from "@/types/salon"
@@ -23,6 +24,12 @@ function service(overrides: Partial<SalonService>): SalonService {
 }
 
 describe("unisex salon gender audience", () => {
+  it("returns a label only when the service is tagged men or women", () => {
+    expect(serviceGenderLabel("men")).toBe("Men")
+    expect(serviceGenderLabel("women")).toBe("Women's")
+    expect(serviceGenderLabel(null)).toBeNull()
+  })
+
   it("detects Unisex Salon business type", () => {
     expect(isUnisexSalonBusiness("Unisex Salon")).toBe(true)
     expect(isUnisexSalonBusiness("Salon")).toBe(false)

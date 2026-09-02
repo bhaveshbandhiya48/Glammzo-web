@@ -40,6 +40,7 @@ export function FeaturedServiceCard({
 }: FeaturedServiceCardProps) {
   const thumbnail = resolveServiceThumbnail(service)
   const showQuantity = selected && serviceUsesQuantity(service) && Boolean(onQuantityChange)
+  const hasOptions = (service.priceOptions?.length ?? 0) >= 2
 
   return (
     <article
@@ -132,6 +133,10 @@ export function FeaturedServiceCard({
               )}
               onClick={(event) => {
                 event.stopPropagation()
+                if (hasOptions && !selected) {
+                  onOpenDetails()
+                  return
+                }
                 onToggle()
               }}
             >

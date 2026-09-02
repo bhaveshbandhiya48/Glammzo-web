@@ -12,6 +12,7 @@ import {
   toggleServiceId,
   sumServiceDuration,
   serializeServiceQuantities,
+  serializeServicePriceOptions,
 } from "@/lib/bookings/utils"
 import {
   formatSlotLabel,
@@ -32,11 +33,13 @@ import {
   getExtraServiceIds,
   packageServiceIdsIncluded,
   removePackageServiceIds,
+  resolveServiceOptionPrice,
   serviceIdsMatchPackage,
 } from "@/lib/salons/catalog-utils"
 import type { AppliedOfferDiscount } from "@/lib/salons/offer-utils"
 import type { SalonBookingContext } from "@/lib/bookings/crm/types"
 import type { Salon } from "@/types/salon"
+import type { ServiceGenderAudience } from "@/lib/salons/gender-audience"
 import { BookingFormCard } from "@/components/booking/booking-form-card"
 import { BookingFormSubmitButtons } from "@/components/booking/booking-form-submit"
 import { BookingSummary } from "@/components/booking/booking-summary"
@@ -92,6 +95,7 @@ export function BookingForm({
   initialServiceIds = [],
   initialPackageId = null,
   initialQuantities = {},
+  initialPriceOptionIds = {},
   unavailableSlots = [],
   bookingContext = null,
   defaultCustomerName = "",
@@ -100,11 +104,13 @@ export function BookingForm({
   initialPromoCode = "",
   walletBalanceRupees = 0,
   freeServiceCredits = 0,
+  initialGenderAudience = null,
 }: {
   salon: Salon
   initialServiceIds?: string[]
   initialPackageId?: string | null
   initialQuantities?: Record<string, number>
+  initialPriceOptionIds?: Record<string, string>
   unavailableSlots?: UnavailableSlot[]
   bookingContext?: SalonBookingContext | null
   defaultCustomerName?: string
@@ -113,6 +119,7 @@ export function BookingForm({
   initialPromoCode?: string
   walletBalanceRupees?: number
   freeServiceCredits?: number
+  initialGenderAudience?: ServiceGenderAudience | null
 }) {
   const validInitial = initialServiceIds.filter((id) =>
     salon.services.some((s) => s.id === id),
@@ -123,7 +130,16 @@ export function BookingForm({
       ? initialPackageId
       : null
 
-  const [selectedIds, setSelectedIds, packageId, setPackageId, quantities, setServiceQuantity] =
+  const [
+    selectedIds,
+    setSelectedIds,
+    packageId,
+    setPackageId,
+    quantities,
+    setServiceQuantity,
+    priceOptionIds,
+    setServicePriceOption,
+  ] =
     useSalonCartSelection(
     salon.id,
     salon.name,
@@ -132,6 +148,7 @@ export function BookingForm({
       serviceIds: validInitial,
       packageId: validPackageId,
       quantities: initialQuantities,
+      priceOptionIds: initialPriceOptionIds,
     },
     salon.packages.map((pkg) => ({
       id: pkg.id,
@@ -554,8 +571,9 @@ export function BookingForm({
         selectedServiceIds: selectedIds,
         selectedPackage,
         quantities,
+        priceOptionIds,
       }),
-    [appliedOffer, quantities, salon.services, selectedIds, selectedPackage],
+    [appliedOffer, priceOptionIds, quantities, salon.services, selectedIds, selectedPackage],
   )
 
   const loyaltyPick = useMemo(
@@ -563,11 +581,11 @@ export function BookingForm({
       pickLoyaltyDiscountLine(
         selectedServices.map((s) => ({
           id: s.id,
-          price: s.price * quantityForService(s, quantities),
+          price: resolveServiceOptionPrice(s, priceOptionIds[s.id]) * quantityForService(s, quantities),
         })),
         useFreeService && !selectedPackage,
       ),
-    [quantities, selectedPackage, selectedServices, useFreeService],
+    [priceOptionIds, quantities, selectedPackage, selectedServices, useFreeService],
   )
 
   const afterLoyaltyTotal = Math.max(0, payableTotal - loyaltyPick.discountRupees)
@@ -637,6 +655,13 @@ export function BookingForm({
           value={serializeServiceQuantities(quantities)}
         />
       ) : null}
+      {serializeServicePriceOptions(priceOptionIds) ? (
+        <input
+          type="hidden"
+          name="servicePriceOptions"
+          value={serializeServicePriceOptions(priceOptionIds)}
+        />
+      ) : null}
       {selectedPackage ? <input type="hidden" name="packageId" value={selectedPackage.id} /> : null}
       {!packageMode ? <input type="hidden" name="preferredStaffId" value={staffId} /> : null}
 
@@ -699,16 +724,18 @@ export function BookingForm({
               onRemove={handleClearPackage}
             />
             {extraServices.length > 0 ? (
-              <ServicePicker
-                services={extraServices}
-                selectedIds={selectedIds}
-                quantities={quantities}
-                onToggle={handleToggle}
-                onQuantityChange={setServiceQuantity}
-                variant="list"
-                mode="cart"
-                unstaffedIds={unstaffedIds}
-              />
+          <ServicePicker
+            services={extraServices}
+            selectedIds={selectedIds}
+            quantities={quantities}
+            priceOptionIds={priceOptionIds}
+            genderAudience={initialGenderAudience}
+            onToggle={handleToggle}
+            onQuantityChange={setServiceQuantity}
+            variant="list"
+            mode="cart"
+            unstaffedIds={unstaffedIds}
+          />
             ) : null}
           </>
         ) : (
@@ -716,6 +743,8 @@ export function BookingForm({
             services={selectedServices}
             selectedIds={selectedIds}
             quantities={quantities}
+            priceOptionIds={priceOptionIds}
+            genderAudience={initialGenderAudience}
             onToggle={handleToggle}
             onQuantityChange={setServiceQuantity}
             variant="list"
@@ -750,8 +779,10 @@ export function BookingForm({
                 services={salon.services}
                 selectedIds={selectedIds}
                 quantities={quantities}
+                priceOptionIds={priceOptionIds}
                 onToggle={handleToggle}
                 onQuantityChange={setServiceQuantity}
+                onPriceOptionChange={setServicePriceOption}
                 variant="list"
               />
             </div>
@@ -1054,6 +1085,8 @@ export function BookingForm({
           walletAppliedRupees={walletAppliedRupees}
           freeServiceAppliedRupees={loyaltyPick.discountRupees}
           payAtSalonRupees={payAtSalonRupees}
+          priceOptionIds={priceOptionIds}
+          genderAudience={initialGenderAudience}
         />
 
         <BookingFormSubmitButtons
