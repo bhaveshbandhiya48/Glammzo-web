@@ -124,14 +124,14 @@ export function PackageDetailSheet({
 
               <div className="mt-5 rounded-2xl border border-border/60 bg-background/70 p-4">
                 <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-heading text-3xl font-semibold tabular-nums">
+                    {formatInr(pkg.packagePrice)}
+                  </span>
                   {shouldShowCompare ? (
                     <span className="text-base text-foreground/45 line-through tabular-nums">
                       {formatInr(pkg.comparePrice)}
                     </span>
                   ) : null}
-                  <span className="font-heading text-3xl font-semibold tabular-nums">
-                    {formatInr(pkg.packagePrice)}
-                  </span>
                 </div>
                 {savings > 0 ? (
                   <p className="mt-1 text-sm font-medium text-emerald-700">

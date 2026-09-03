@@ -22,14 +22,14 @@ function PackagePriceDisplay({ pkg }: { pkg: SalonPackage }) {
 
   return (
     <div className="flex flex-wrap items-baseline gap-2">
+      <span className="font-heading text-2xl font-semibold tabular-nums text-foreground">
+        {formatInr(pkg.packagePrice)}
+      </span>
       {shouldShowCompare ? (
         <span className="text-sm text-foreground/50 line-through tabular-nums">
           {formatInr(pkg.comparePrice)}
         </span>
       ) : null}
-      <span className="font-heading text-2xl font-semibold tabular-nums text-foreground">
-        {formatInr(pkg.packagePrice)}
-      </span>
       {shouldShowCompare ? (
         <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
           Save {formatInr(pkg.comparePrice - pkg.packagePrice)}
