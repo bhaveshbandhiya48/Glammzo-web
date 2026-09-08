@@ -174,7 +174,9 @@ export function computeBookingSubtotal({
 
   if (selectedPackage) {
     const packageServiceIds = new Set(
-      selectedPackage.items.map((item) => item.serviceId),
+      selectedPackage.items
+        .map((item) => item.serviceId)
+        .filter((id): id is string => Boolean(id)),
     )
     const extrasTotal = selectedServiceIds
       .filter((serviceId) => !packageServiceIds.has(serviceId))
@@ -216,7 +218,9 @@ function getDiscountableSubtotal(
   if (offer.appliesTo === "all_services") {
     if (input.selectedPackage) {
       const packageServiceIds = new Set(
-        input.selectedPackage.items.map((item) => item.serviceId),
+        input.selectedPackage.items
+          .map((item) => item.serviceId)
+          .filter((id): id is string => Boolean(id)),
       )
       return extrasSubtotal(
         serviceById,
@@ -233,7 +237,9 @@ function getDiscountableSubtotal(
   const eligiblePackageIds = new Set(packageIds)
 
   if (input.selectedPackage) {
-    const packageServiceIds = input.selectedPackage.items.map((item) => item.serviceId)
+    const packageServiceIds = input.selectedPackage.items
+      .map((item) => item.serviceId)
+      .filter((id): id is string => Boolean(id))
     const extrasTotal = extrasSubtotal(
       serviceById,
       input.selectedServiceIds.filter((serviceId) => eligibleIds.has(serviceId)),

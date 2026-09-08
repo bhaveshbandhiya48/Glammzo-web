@@ -215,8 +215,8 @@ export function BookingStickySummary({
                     Included services
                   </p>
                   <ul className="mt-2 space-y-1.5 text-sm text-foreground/70">
-                    {selectedPackage.items.map((item) => (
-                      <li key={`${selectedPackage.id}-${item.serviceId}`}>
+                    {selectedPackage.items.map((item, index) => (
+                      <li key={`${selectedPackage.id}-${item.serviceId ?? item.serviceName}-${index}`}>
                         {item.quantity}× {item.serviceName}
                       </li>
                     ))}

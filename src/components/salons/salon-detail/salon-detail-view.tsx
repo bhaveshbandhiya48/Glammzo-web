@@ -175,7 +175,7 @@ export function SalonDetailView({
           <SalonDetailSection
             id="similar"
             eyebrow="Explore more"
-            title="Similar businesses"
+            title="Similar salons"
             subtitle="Other salons you may like nearby."
           >
             <SalonDetailSimilar salons={similarSalons} authenticated={authenticated} />

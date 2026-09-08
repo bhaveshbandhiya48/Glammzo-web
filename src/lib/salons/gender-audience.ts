@@ -52,12 +52,14 @@ export function filterPackagesByGenderAudience(
 ) {
   const byId = new Map(services.map((service) => [service.id, service]))
   return packages.filter((pkg) => {
+    if (pkg.genderAudience === "unisex") return true
     if (pkg.genderAudience === "men" || pkg.genderAudience === "women") {
       return pkg.genderAudience === selected
     }
-    if (pkg.items.length === 0) return true
-    return pkg.items.some((item) =>
-      serviceMatchesGenderAudience(byId.get(item.serviceId)?.genderAudience, selected),
+    const catalogItems = pkg.items.filter((item) => item.serviceId)
+    if (catalogItems.length === 0) return true
+    return catalogItems.some((item) =>
+      serviceMatchesGenderAudience(byId.get(item.serviceId!)?.genderAudience, selected),
     )
   })
 }

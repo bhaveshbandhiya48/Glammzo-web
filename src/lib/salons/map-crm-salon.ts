@@ -372,19 +372,29 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((item) => {
       const service = resolveJoin(item.services)
+      const isCustom = !item.service_id
+      const durationMin =
+        service?.duration_minutes ?? item.custom_duration_minutes ?? undefined
 
       return {
         serviceId: item.service_id,
-        serviceName: service?.name ?? "Service",
+        serviceName: service?.name ?? item.custom_name ?? "Service",
         quantity: item.quantity,
+        durationMin: durationMin != null ? Number(durationMin) : undefined,
+        isCustom,
       }
     })
 
   const individualTotal = (row.salon_package_items ?? []).reduce((sum, item) => {
     const service = resolveJoin(item.services)
-    const price = Number(service?.price ?? 0)
+    const price = Number(service?.price ?? item.custom_price ?? 0)
     return sum + price * item.quantity
   }, 0)
+
+  const itemsDuration = items.reduce(
+    (sum, item) => sum + (item.durationMin ?? 0) * item.quantity,
+    0,
+  )
 
   const packagePrice = Number(row.package_price)
   const comparePrice =
@@ -415,7 +425,7 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
     comparePrice,
     amountSaved,
     discountPercent,
-    totalDurationMin: row.total_duration ?? 0,
+    totalDurationMin: row.total_duration ?? itemsDuration,
     showComparePrice: row.show_compare_price !== false,
     showSavings: row.show_savings !== false,
     allowOnlineBooking: row.allow_online_booking !== false,
@@ -425,7 +435,9 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
     sortOrder: row.sort_order ?? 0,
     items,
     genderAudience:
-      row.gender_audience === "men" || row.gender_audience === "women"
+      row.gender_audience === "men" ||
+      row.gender_audience === "women" ||
+      row.gender_audience === "unisex"
         ? row.gender_audience
         : null,
   }
@@ -513,7 +525,9 @@ export function mapCrmSalonToWeb(
     .filter((pkg) => {
       const items = pkg.salon_package_items ?? []
       if (items.length === 0) return true
-      return items.every((item) => visibleServiceIds.has(item.service_id))
+      return items.every(
+        (item) => !item.service_id || visibleServiceIds.has(item.service_id),
+      )
     })
     .sort((a, b) => {
       const featuredDiff = Number(b.is_featured) - Number(a.is_featured)

@@ -104,7 +104,10 @@ export async function createCrmWebBooking(
     }
   }
 
-  if (input.serviceIds.length === 0) {
+  const isPackageBooking = Boolean(input.packageBooking && input.packageId)
+  const uniqueIds = uniqueServiceIds(input.serviceIds).filter(Boolean)
+
+  if (uniqueIds.length === 0 && !isPackageBooking) {
     return {
       success: false,
       error: "Select at least one service.",
@@ -113,7 +116,6 @@ export async function createCrmWebBooking(
   }
 
   const supabase = createAdminClient()
-  const uniqueIds = uniqueServiceIds(input.serviceIds)
 
   type ServiceRow = {
     id: string
@@ -131,20 +133,22 @@ export async function createCrmWebBooking(
     "id, name, duration_minutes, price, is_active",
   ]
 
-  let serviceRows: ServiceRow[] | null = null
+  let serviceRows: ServiceRow[] = []
   let serviceError: { message: string } | null = null
 
-  for (const columns of SERVICE_SELECTS) {
-    const result = await supabase
-      .from("services")
-      .select(columns)
-      .eq("salon_id", input.crmSalonId)
-      .in("id", uniqueIds)
-      .is("deleted_at", null)
+  if (uniqueIds.length > 0) {
+    for (const columns of SERVICE_SELECTS) {
+      const result = await supabase
+        .from("services")
+        .select(columns)
+        .eq("salon_id", input.crmSalonId)
+        .in("id", uniqueIds)
+        .is("deleted_at", null)
 
-    serviceRows = (result.data ?? []) as unknown as ServiceRow[]
-    serviceError = result.error
-    if (!serviceError) break
+      serviceRows = (result.data ?? []) as unknown as ServiceRow[]
+      serviceError = result.error
+      if (!serviceError) break
+    }
   }
 
   if (serviceError) {
@@ -156,7 +160,7 @@ export async function createCrmWebBooking(
     }
   }
 
-  const services = (serviceRows ?? []).map((service) => {
+  const services = serviceRows.map((service) => {
     const { price } = resolveServicePayablePrice(service.price, service.offer_price)
     return {
       id: service.id,
@@ -198,7 +202,7 @@ export async function createCrmWebBooking(
     }
   }
 
-  if (services.length !== uniqueIds.length) {
+  if (uniqueIds.length > 0 && services.length !== uniqueIds.length) {
     return {
       success: false,
       error: "One or more selected services are no longer available.",
@@ -228,37 +232,77 @@ export async function createCrmWebBooking(
 
   const serviceById = new Map(services.map((service) => [service.id, service]))
 
-  const selectedPackage = input.packageId
-    ? (
-        await supabase
-          .from("salon_packages")
-          .select(
-            "id, package_price, salon_package_items(service_id, quantity, services(name, price, duration_minutes))",
-          )
-          .eq("id", input.packageId)
-          .eq("salon_id", input.crmSalonId)
-          .is("deleted_at", null)
-          .maybeSingle()
-      ).data
-    : null
+  type PackageItemRow = {
+    service_id: string | null
+    quantity: number
+    custom_name?: string | null
+    custom_duration_minutes?: number | null
+    custom_price?: string | number | null
+    services?: { name: string; price: string | number; duration_minutes?: number } | { name: string; price: string | number; duration_minutes?: number }[] | null
+  }
+
+  type PackageRow = {
+    id: string
+    name?: string | null
+    package_price: string | number
+    total_duration?: number | null
+    salon_package_items?: PackageItemRow[] | null
+  }
+
+  const PACKAGE_SELECTS = [
+    "id, name, package_price, total_duration, salon_package_items(service_id, quantity, custom_name, custom_duration_minutes, custom_price, services(name, price, duration_minutes))",
+    "id, name, package_price, total_duration, salon_package_items(service_id, quantity, services(name, price, duration_minutes))",
+    "id, package_price, salon_package_items(service_id, quantity, services(name, price, duration_minutes))",
+  ]
+
+  let selectedPackage: PackageRow | null = null
+  if (input.packageId) {
+    for (const columns of PACKAGE_SELECTS) {
+      const result = await supabase
+        .from("salon_packages")
+        .select(columns)
+        .eq("id", input.packageId)
+        .eq("salon_id", input.crmSalonId)
+        .is("deleted_at", null)
+        .maybeSingle()
+
+      if (!result.error) {
+        selectedPackage = result.data as PackageRow | null
+        break
+      }
+    }
+  }
+
+  if (isPackageBooking && !selectedPackage) {
+    return {
+      success: false,
+      error: "This package is no longer available.",
+      code: "invalid",
+    }
+  }
+
+  const packageItems = selectedPackage?.salon_package_items ?? []
+  const itemsDuration = packageItems.reduce((sum, item) => {
+    const joined = Array.isArray(item.services) ? item.services[0] : item.services
+    const minutes = Number(item.custom_duration_minutes ?? joined?.duration_minutes ?? 0)
+    return sum + minutes * item.quantity
+  }, 0)
 
   const mappedPackage =
     selectedPackage && input.packageBooking
       ? {
-          id: (selectedPackage as { id: string }).id,
-          name: "",
+          id: selectedPackage.id,
+          name: selectedPackage.name?.trim() || "",
           description: "",
           shortDescription: "",
           detailedDescription: "",
           imageUrl: "",
           packagePrice:
-            Number.parseFloat(
-              String((selectedPackage as { package_price: string | number }).package_price),
-            ) || 0,
+            Number.parseFloat(String(selectedPackage.package_price)) || 0,
           comparePrice: 0,
           amountSaved: 0,
           discountPercent: 0,
-          totalDurationMin: 0,
+          totalDurationMin: Number(selectedPackage.total_duration) || itemsDuration,
           showComparePrice: false,
           showSavings: false,
           allowOnlineBooking: true,
@@ -266,20 +310,21 @@ export async function createCrmWebBooking(
           badge: null,
           isFeatured: false,
           sortOrder: 0,
-          items: (
-            (selectedPackage as {
-              salon_package_items?: Array<{ service_id: string; quantity: number }>
-            }).salon_package_items ?? []
-          ).map((item) => ({
-            serviceId: item.service_id,
-            serviceName: "",
-            quantity: item.quantity,
-          })),
+          items: packageItems.map((item) => {
+            const joined = Array.isArray(item.services) ? item.services[0] : item.services
+            return {
+              serviceId: item.service_id,
+              serviceName: joined?.name ?? item.custom_name ?? "",
+              quantity: item.quantity,
+            }
+          }),
         }
       : null
 
   const packageIncludedIds = new Set(
-    mappedPackage?.items.map((item) => item.serviceId) ?? [],
+    mappedPackage?.items
+      .map((item) => item.serviceId)
+      .filter((id): id is string => Boolean(id)) ?? [],
   )
 
   function quantityForId(serviceId: string) {
@@ -289,11 +334,30 @@ export async function createCrmWebBooking(
     return clampPricingUnitQuantity(unit, input.serviceQuantities?.[serviceId] ?? 1)
   }
 
-  const durationMinutes = uniqueIds.reduce(
+  const catalogDuration = uniqueIds.reduce(
     (total, serviceId) =>
       total + (serviceById.get(serviceId)?.duration_minutes ?? 0) * quantityForId(serviceId),
     0,
   )
+  const extrasDuration = uniqueIds
+    .filter((serviceId) => !packageIncludedIds.has(serviceId))
+    .reduce(
+      (total, serviceId) =>
+        total + (serviceById.get(serviceId)?.duration_minutes ?? 0) * quantityForId(serviceId),
+      0,
+    )
+  const durationMinutes =
+    input.packageBooking && mappedPackage && mappedPackage.totalDurationMin > 0
+      ? mappedPackage.totalDurationMin + extrasDuration
+      : catalogDuration
+
+  if (durationMinutes <= 0) {
+    return {
+      success: false,
+      error: "This package does not have a bookable duration.",
+      code: "invalid",
+    }
+  }
 
   const webServices = services.map((service) => ({
     id: service.id,
@@ -448,11 +512,18 @@ export async function createCrmWebBooking(
     }
   }
 
-  const serviceNames = uniqueIds
+  const catalogNames = uniqueIds
     .map((serviceId) => serviceById.get(serviceId)?.name)
     .filter((name): name is string => Boolean(name))
-    .join(", ")
-  const noteParts = [`Web booking: ${serviceNames}`]
+  const customNames = mappedPackage?.items
+    .filter((item) => !item.serviceId && item.serviceName)
+    .map((item) => item.serviceName) ?? []
+  const serviceNames = [...catalogNames, ...customNames].join(", ")
+  const bookingLabel =
+    mappedPackage?.name
+      ? `Web booking: ${mappedPackage.name}${serviceNames ? ` (${serviceNames})` : ""}`
+      : `Web booking: ${serviceNames}`
+  const noteParts = [bookingLabel]
   if (appliedOffer) {
     noteParts.push(
       `Promo ${appliedOffer.code} applied (estimated savings ${appliedOffer.discountAmount})`,
@@ -678,7 +749,7 @@ export async function createCrmWebBooking(
       salon_id: input.crmSalonId,
       customer_id: customerId,
       staff_id: staffId,
-      service_id: input.serviceIds[0],
+      service_id: uniqueIds[0] ?? null,
       appointment_date: input.appointmentDate,
       start_time: startTime,
       end_time: endTime,
@@ -743,34 +814,37 @@ export async function createCrmWebBooking(
     }
   })
 
-  let { error: servicesError } = await supabase
-    .from("appointment_services")
-    .insert(appointmentServices)
-
-  if (
-    servicesError?.message.toLowerCase().includes("price_option") ||
-    servicesError?.message.toLowerCase().includes("service_price_options")
-  ) {
-    const withoutOptions = appointmentServices.map(
-      ({ price_option_id: _id, price_option_name: _name, ...row }) => row,
-    )
+  let servicesError: { message: string } | null = null
+  if (appointmentServices.length > 0) {
     ;({ error: servicesError } = await supabase
       .from("appointment_services")
-      .insert(withoutOptions))
-  }
+      .insert(appointmentServices))
 
-  if (servicesError?.message.toLowerCase().includes("quantity")) {
-    const withoutQuantity = appointmentServices.map(
-      ({
-        quantity: _quantity,
-        price_option_id: _id,
-        price_option_name: _name,
-        ...row
-      }) => row,
-    )
-    ;({ error: servicesError } = await supabase
-      .from("appointment_services")
-      .insert(withoutQuantity))
+    if (
+      servicesError?.message.toLowerCase().includes("price_option") ||
+      servicesError?.message.toLowerCase().includes("service_price_options")
+    ) {
+      const withoutOptions = appointmentServices.map(
+        ({ price_option_id: _id, price_option_name: _name, ...row }) => row,
+      )
+      ;({ error: servicesError } = await supabase
+        .from("appointment_services")
+        .insert(withoutOptions))
+    }
+
+    if (servicesError?.message.toLowerCase().includes("quantity")) {
+      const withoutQuantity = appointmentServices.map(
+        ({
+          quantity: _quantity,
+          price_option_id: _id,
+          price_option_name: _name,
+          ...row
+        }) => row,
+      )
+      ;({ error: servicesError } = await supabase
+        .from("appointment_services")
+        .insert(withoutQuantity))
+    }
   }
 
   if (servicesError) {

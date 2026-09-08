@@ -77,7 +77,7 @@ export async function createMobileBooking(
     ? salon?.packages.find((pkg) => pkg.id === packageId) ?? null
     : null
 
-  if (!salon || services.length === 0 || !input.date || !input.time) {
+  if (!salon || (!selectedPackage && services.length === 0) || !input.date || !input.time) {
     return { ok: false, error: "Missing salon, services, date, or time.", code: "missing" }
   }
 
@@ -101,7 +101,16 @@ export async function createMobileBooking(
     }
   }
 
-  const totalDuration = sumServiceDuration(services, input.serviceQuantities)
+  const extraServiceIds = selectedPackage
+    ? serviceIds.filter(
+        (serviceId) => !selectedPackage.items.some((item) => item.serviceId === serviceId),
+      )
+    : serviceIds
+  const extraServices = resolveServices(salon.services, extraServiceIds)
+  const totalDuration = selectedPackage
+    ? (selectedPackage.totalDurationMin || 0) +
+      sumServiceDuration(extraServices, input.serviceQuantities)
+    : sumServiceDuration(services, input.serviceQuantities)
   const displayTime =
     input.time.includes("AM") || input.time.includes("PM")
       ? input.time
@@ -154,15 +163,27 @@ export async function createMobileBooking(
     salonId: salon.id,
     salonName: salon.name,
     salonArea: salon.area,
-    services: services.map((s) => {
-      const quantity = quantityForService(s, input.serviceQuantities)
-      return {
-        id: s.id,
-        name: s.name,
-        price: s.price * quantity,
-        durationMin: s.durationMin * quantity,
-      }
-    }),
+    services:
+      services.length > 0
+        ? services.map((s) => {
+            const quantity = quantityForService(s, input.serviceQuantities)
+            return {
+              id: s.id,
+              name: s.name,
+              price: s.price * quantity,
+              durationMin: s.durationMin * quantity,
+            }
+          })
+        : selectedPackage
+          ? [
+              {
+                id: selectedPackage.id,
+                name: selectedPackage.name,
+                price: selectedPackage.packagePrice,
+                durationMin: selectedPackage.totalDurationMin,
+              },
+            ]
+          : [],
     date: input.date,
     time: displayTime,
     price: result.payAtSalonRupees,

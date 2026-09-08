@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       ? salon.packages.find((pkg) => pkg.id === packageId) ?? null
       : null
     const packageServiceIds = selectedPackage
-      ? selectedPackage.items.map((item) => item.serviceId).filter(Boolean)
+      ? selectedPackage.items.map((item) => item.serviceId).filter((id): id is string => Boolean(id))
       : []
     const services = selectedPackage
       ? resolveServices(salon.services, packageServiceIds)
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
 
     const resolvedServiceIds = selectedPackage ? packageServiceIds : serviceIds
 
-    if (resolvedServiceIds.length === 0 || services.length === 0) {
+    if (!selectedPackage && (resolvedServiceIds.length === 0 || services.length === 0)) {
       return jsonError(400, "Select at least one service or package.")
     }
 

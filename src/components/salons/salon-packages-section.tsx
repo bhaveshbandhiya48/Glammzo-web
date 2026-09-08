@@ -70,18 +70,22 @@ export function SalonPackagesSection({ packages }: SalonPackagesSectionProps) {
           </div>
 
           <div className="space-y-3 p-5">
-            <div>
-              <h3 className="font-heading text-lg font-semibold text-foreground">{pkg.name}</h3>
+            <div className="min-w-0">
+              <h3 className="font-heading text-lg font-semibold text-foreground wrap-anywhere">
+                {pkg.name}
+              </h3>
               {pkg.description ? (
-                <p className="mt-1 text-sm leading-relaxed text-foreground/65">{pkg.description}</p>
+                <p className="mt-1 text-sm leading-relaxed text-foreground/65 wrap-anywhere">
+                  {pkg.description}
+                </p>
               ) : null}
             </div>
 
             <PackagePriceDisplay pkg={pkg} />
 
             <ul className="space-y-1.5 border-t border-border/60 pt-3 text-sm text-foreground/70">
-              {pkg.items.map((item) => (
-                <li key={`${pkg.id}-${item.serviceId}`}>
+              {pkg.items.map((item, index) => (
+                <li key={`${pkg.id}-${item.serviceId ?? item.serviceName}-${index}`}>
                   {item.quantity}× {item.serviceName}
                 </li>
               ))}

@@ -89,8 +89,8 @@ export function PackageDetailSheet({
             : "max-h-[92vh] gap-0 overflow-hidden rounded-t-3xl p-0"
         }
       >
-        <div className="flex h-full flex-col">
-          <div className="flex-1 overflow-y-auto">
+        <div className="flex h-full min-w-0 flex-col">
+          <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
             <div className="overflow-hidden">
               <PackageCover
                 pkg={pkg}
@@ -100,11 +100,13 @@ export function PackageDetailSheet({
               />
             </div>
 
-            <div className="px-6 pt-5 pb-6">
-              <SheetHeader className="space-y-2 p-0 text-left">
-                <SheetTitle className="font-heading text-2xl leading-tight">{pkg.name}</SheetTitle>
+            <div className="min-w-0 px-6 pt-5 pb-6">
+              <SheetHeader className="min-w-0 space-y-2 p-0 text-left">
+                <SheetTitle className="font-heading text-2xl leading-tight wrap-anywhere">
+                  {pkg.name}
+                </SheetTitle>
                 {(pkg.detailedDescription || pkg.description) ? (
-                  <SheetDescription className="text-[15px] leading-relaxed">
+                  <SheetDescription className="text-[15px] leading-relaxed wrap-anywhere">
                     {pkg.detailedDescription || pkg.description}
                   </SheetDescription>
                 ) : null}
@@ -143,19 +145,22 @@ export function PackageDetailSheet({
 
               <DetailSection title="Included services">
                 <ul className="space-y-2.5">
-                  {pkg.items.map((item) => {
+                  {pkg.items.map((item, index) => {
                     const service = packageServices.find((entry) => entry.id === item.serviceId)
                     return (
                       <li
-                        key={`${pkg.id}-${item.serviceId}`}
+                        key={`${pkg.id}-${item.serviceId ?? item.serviceName}-${index}`}
                         className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3.5 py-3 text-sm"
                       >
                         <span className="text-foreground/80">
                           {item.quantity}× {item.serviceName}
+                          {item.isCustom ? (
+                            <span className="ml-1 text-xs text-foreground/45">package only</span>
+                          ) : null}
                         </span>
-                        {service ? (
+                        {item.durationMin || service ? (
                           <span className="shrink-0 text-foreground/50">
-                            {service.durationMin} min
+                            {item.durationMin ?? service?.durationMin} min
                           </span>
                         ) : null}
                       </li>

@@ -217,6 +217,7 @@ export function BookingForm({
   }, [selectedPackage, selectedIds, selectedServices, salon.services])
 
   const packageMode = Boolean(selectedPackage)
+  const hasBookingSelection = selectedServices.length > 0 || packageMode
   const totalDuration = useMemo(() => {
     if (!selectedPackage) {
       return sumServiceDuration(selectedServices, quantities)
@@ -326,7 +327,7 @@ export function BookingForm({
   }, [bookableStaff, staffId])
 
   useEffect(() => {
-    if (selectedIds.length === 0) return
+    if (!hasBookingSelection) return
 
     if (!useCrmSlots) {
       setDate((current) => current || toIsoDate(new Date()))
@@ -375,14 +376,14 @@ export function BookingForm({
         ) ?? current
       )
     })
-  }, [availabilityDuration, availabilityOptions, availabilityServiceIds, bookingContext, preferredStaffId, selectedIds.length, useCrmSlots])
+  }, [availabilityDuration, availabilityOptions, availabilityServiceIds, bookingContext, hasBookingSelection, preferredStaffId, useCrmSlots])
 
   useEffect(() => {
     if (!time) return
 
     if (!useCrmSlots) return
 
-    if (!bookingContext || !date || selectedIds.length === 0) {
+    if (!bookingContext || !date || !hasBookingSelection) {
       setTime("")
       return
     }
@@ -406,14 +407,14 @@ export function BookingForm({
     availabilityServiceIds,
     bookingContext,
     date,
+    hasBookingSelection,
     preferredStaffId,
-    selectedIds.length,
     time,
     useCrmSlots,
   ])
 
   const crmSlotResult = useMemo(() => {
-    if (!bookingContext || !date || selectedIds.length === 0) {
+    if (!bookingContext || !date || !hasBookingSelection) {
       return null
     }
 
@@ -431,8 +432,8 @@ export function BookingForm({
     availabilityServiceIds,
     bookingContext,
     date,
+    hasBookingSelection,
     preferredStaffId,
-    selectedIds.length,
   ])
 
   const timeSlotOptions = useMemo(() => {
@@ -460,7 +461,7 @@ export function BookingForm({
 
   const phoneDigits = customerPhone.replace(/\D/g, "")
   const canSubmit = Boolean(
-    selectedServices.length > 0 &&
+    hasBookingSelection &&
       date &&
       time &&
       customerName.trim().length >= 2 &&
@@ -501,8 +502,8 @@ export function BookingForm({
       date: date ? undefined : "Select a date.",
       time: time ? undefined : "Select a time.",
       services:
-        selectedServices.length === 0
-          ? "Add at least one service."
+        !hasBookingSelection
+          ? "Add a package or at least one service."
           : unstaffedIds.length > 0
             ? formatUnstaffedServicesMessage(unstaffedServices.map((service) => service.name))
             : undefined,
@@ -523,8 +524,8 @@ export function BookingForm({
     customerName,
     customerPhone,
     date,
+    hasBookingSelection,
     multiServiceNoSingleStaff,
-    selectedServices.length,
     staffId,
     time,
     unstaffedIds.length,
@@ -606,7 +607,7 @@ export function BookingForm({
   )
 
   const submitLabel =
-    selectedServices.length > 0
+    hasBookingSelection
       ? `Book · pay at salon ${formatInr(payAtSalonRupees)}`
       : packageMode
         ? "Book package appointment"
@@ -673,7 +674,7 @@ export function BookingForm({
             : "What you're booking today."
         }
         action={
-          selectedIds.length > 0 ? (
+          selectedIds.length > 0 || packageMode ? (
             <button
               type="button"
               onClick={handleClearPackage}
@@ -685,7 +686,7 @@ export function BookingForm({
         }
         contentClassName="space-y-3"
       >
-        {selectedServices.length === 0 ? (
+        {!selectedPackage && selectedServices.length === 0 ? (
           <div
             id="booking-services"
             className={
@@ -753,7 +754,7 @@ export function BookingForm({
           />
         )}
 
-        {selectedServices.length > 0 ? (
+        {hasBookingSelection ? (
           <Button
             type="button"
             variant="outline"
@@ -971,7 +972,7 @@ export function BookingForm({
               min={minDate}
               max={maxDate}
               value={date}
-              disabled={selectedServices.length === 0 || noEligibleStaff}
+              disabled={!hasBookingSelection || noEligibleStaff}
               onChange={(next) => {
                 setDate(next)
                 setTime("")

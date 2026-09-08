@@ -94,7 +94,7 @@ export async function createBookingAction(formData: FormData) {
     ? salon?.packages.find((pkg) => pkg.id === packageId) ?? null
     : null
 
-  if (!salon || services.length === 0 || !date || !time) {
+  if (!salon || (!selectedPackage && services.length === 0) || !date || !time) {
     redirect(`/salons/${salonId}?error=missing`)
   }
 
@@ -105,7 +105,16 @@ export async function createBookingAction(formData: FormData) {
     quantities: serviceQuantities,
     priceOptionIds: servicePriceOptionIds,
   })
-  const totalDuration = sumServiceDuration(services, serviceQuantities)
+  const extraServiceIds = selectedPackage
+    ? serviceIds.filter(
+        (serviceId) => !selectedPackage.items.some((item) => item.serviceId === serviceId),
+      )
+    : serviceIds
+  const extraServices = resolveServices(salon.services, extraServiceIds)
+  const totalDuration = selectedPackage
+    ? (selectedPackage.totalDurationMin || 0) +
+      sumServiceDuration(extraServices, serviceQuantities)
+    : sumServiceDuration(services, serviceQuantities)
   const displayTime = time.includes("AM") || time.includes("PM") ? time : formatSlotLabel(time)
 
   if (isSupabaseConfigured() && salon.crmSalonId) {
@@ -157,16 +166,28 @@ export async function createBookingAction(formData: FormData) {
       salonId: salon.id,
       salonName: salon.name,
       salonArea: salon.area,
-      services: services.map((s) => {
-        const quantity = quantityForService(s, serviceQuantities)
-        const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
-        return {
-          id: s.id,
-          name: s.name,
-          price: unitPrice * quantity,
-          durationMin: s.durationMin * quantity,
-        }
-      }),
+      services:
+        services.length > 0
+          ? services.map((s) => {
+              const quantity = quantityForService(s, serviceQuantities)
+              const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
+              return {
+                id: s.id,
+                name: s.name,
+                price: unitPrice * quantity,
+                durationMin: s.durationMin * quantity,
+              }
+            })
+          : selectedPackage
+            ? [
+                {
+                  id: selectedPackage.id,
+                  name: selectedPackage.name,
+                  price: selectedPackage.packagePrice,
+                  durationMin: selectedPackage.totalDurationMin,
+                },
+              ]
+            : [],
       date,
       time: displayTime,
       price: result.payAtSalonRupees,
@@ -210,16 +231,28 @@ export async function createBookingAction(formData: FormData) {
     salonId: salon.id,
     salonName: salon.name,
     salonArea: salon.area,
-    services: services.map((s) => {
-      const quantity = quantityForService(s, serviceQuantities)
-      const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
-      return {
-        id: s.id,
-        name: s.name,
-        price: unitPrice * quantity,
-        durationMin: s.durationMin * quantity,
-      }
-    }),
+    services:
+      services.length > 0
+        ? services.map((s) => {
+            const quantity = quantityForService(s, serviceQuantities)
+            const unitPrice = resolveServiceOptionPrice(s, servicePriceOptionIds[s.id])
+            return {
+              id: s.id,
+              name: s.name,
+              price: unitPrice * quantity,
+              durationMin: s.durationMin * quantity,
+            }
+          })
+        : selectedPackage
+          ? [
+              {
+                id: selectedPackage.id,
+                name: selectedPackage.name,
+                price: selectedPackage.packagePrice,
+                durationMin: selectedPackage.totalDurationMin,
+              },
+            ]
+          : [],
     date,
     time: displayTime,
     price: totalPrice,

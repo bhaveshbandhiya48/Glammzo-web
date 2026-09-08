@@ -81,7 +81,7 @@ export function PackageCard({
             {pkg.name}
           </h3>
 
-          <p className="mt-1 line-clamp-1 text-sm text-foreground/60">{tagline}</p>
+          <p className="mt-1 line-clamp-1 text-sm text-foreground/60 wrap-anywhere">{tagline}</p>
 
           {visible.length > 0 ? (
             <ul className="mt-3 space-y-1.5">

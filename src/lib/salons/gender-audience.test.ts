@@ -23,6 +23,31 @@ function service(overrides: Partial<SalonService>): SalonService {
   }
 }
 
+function pkg(overrides: Partial<SalonPackage>): SalonPackage {
+  return {
+    id: "p1",
+    name: "Pack",
+    description: "",
+    shortDescription: "",
+    detailedDescription: "",
+    imageUrl: "",
+    packagePrice: 900,
+    comparePrice: 1000,
+    amountSaved: 100,
+    discountPercent: 10,
+    totalDurationMin: 60,
+    showComparePrice: true,
+    showSavings: true,
+    allowOnlineBooking: true,
+    servicePreviewCount: 2,
+    badge: null,
+    isFeatured: false,
+    sortOrder: 0,
+    items: [],
+    ...overrides,
+  }
+}
+
 describe("unisex salon gender audience", () => {
   it("returns a label only when the service is tagged men or women", () => {
     expect(serviceGenderLabel("men")).toBe("Men")
@@ -46,48 +71,22 @@ describe("unisex salon gender audience", () => {
     const both = service({ id: "b", genderAudience: null })
     const services = [men, women, both]
     const packages: SalonPackage[] = [
-      {
+      pkg({
         id: "p-men",
         name: "Men pack",
-        description: "",
-        shortDescription: "",
-        detailedDescription: "",
-        imageUrl: "",
-        packagePrice: 900,
-        comparePrice: 1000,
-        amountSaved: 100,
-        discountPercent: 10,
-        totalDurationMin: 60,
-        showComparePrice: true,
-        showSavings: true,
-        allowOnlineBooking: true,
-        servicePreviewCount: 2,
-        badge: null,
-        isFeatured: false,
-        sortOrder: 0,
         items: [{ serviceId: "m", serviceName: "Haircut", quantity: 1 }],
-      },
-      {
+      }),
+      pkg({
         id: "p-women",
         name: "Women pack",
-        description: "",
-        shortDescription: "",
-        detailedDescription: "",
-        imageUrl: "",
         packagePrice: 1200,
         comparePrice: 1400,
         amountSaved: 200,
         discountPercent: 14,
         totalDurationMin: 90,
-        showComparePrice: true,
-        showSavings: true,
-        allowOnlineBooking: true,
-        servicePreviewCount: 2,
-        badge: null,
-        isFeatured: false,
         sortOrder: 1,
         items: [{ serviceId: "w", serviceName: "Haircut", quantity: 1 }],
-      },
+      }),
     ]
 
     expect(filterServicesByGenderAudience(services, "men").map((entry) => entry.id)).toEqual([
@@ -113,5 +112,21 @@ describe("unisex salon gender audience", () => {
     ).toEqual([])
     expect(parseServiceGenderAudience("women")).toBe("women")
     expect(parseServiceGenderAudience("kids")).toBeNull()
+  })
+
+  it("shows unisex packages in both men and women listings", () => {
+    const unisex = pkg({
+      id: "p-unisex",
+      name: "Unisex pack",
+      genderAudience: "unisex",
+      items: [{ serviceId: null, serviceName: "Trial makeup", quantity: 1, isCustom: true }],
+    })
+
+    expect(filterPackagesByGenderAudience([unisex], [], "men").map((entry) => entry.id)).toEqual([
+      "p-unisex",
+    ])
+    expect(filterPackagesByGenderAudience([unisex], [], "women").map((entry) => entry.id)).toEqual([
+      "p-unisex",
+    ])
   })
 })

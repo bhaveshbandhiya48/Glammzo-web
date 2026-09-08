@@ -87,12 +87,14 @@ export function ServiceCatalogRow({
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="inline-flex items-center justify-end gap-1 text-xs text-foreground/55">
-            <ClockIcon className="size-3 shrink-0" />
-            {formatDurationWithUnit(
-              `${service.durationMin} min`,
-              parsePricingUnit(service.pricingUnit),
-            )}
+          <p className="inline-flex max-w-[7.5rem] items-start justify-end gap-1 text-xs leading-snug text-foreground/55">
+            <ClockIcon className="mt-0.5 size-3 shrink-0" />
+            <span className="min-w-0 text-right text-pretty">
+              {formatDurationWithUnit(
+                `${service.durationMin} min`,
+                parsePricingUnit(service.pricingUnit),
+              )}
+            </span>
           </p>
           <p className="mt-0.5 font-heading text-sm font-semibold text-foreground">
             <ServicePriceText service={service} />

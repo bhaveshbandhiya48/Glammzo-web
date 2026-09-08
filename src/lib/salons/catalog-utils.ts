@@ -98,9 +98,10 @@ export function resolveServicePayablePrice(
 }
 
 export function buildPackageServiceIds(pkg: SalonPackage) {
-  return pkg.items.flatMap((item) =>
-    Array.from({ length: item.quantity }, () => item.serviceId),
-  )
+  return pkg.items.flatMap((item) => {
+    if (!item.serviceId) return []
+    return Array.from({ length: item.quantity }, () => item.serviceId as string)
+  })
 }
 
 export function packageServiceIdsIncluded(
@@ -222,7 +223,11 @@ function haystackForService(service: SalonService) {
 function haystackForPackage(pkg: SalonPackage, services: SalonService[]) {
   const resolved = resolveServices(services, buildPackageServiceIds(pkg))
   const categories = resolved.map((service) => service.category).join(" ")
-  return normalizeText(`${pkg.name} ${pkg.description} ${categories}`)
+  const customNames = pkg.items
+    .filter((item) => !item.serviceId)
+    .map((item) => item.serviceName)
+    .join(" ")
+  return normalizeText(`${pkg.name} ${pkg.description} ${categories} ${customNames}`)
 }
 
 export function matchesCatalogFilter(
@@ -503,6 +508,7 @@ export function buildServicePackageFrequency(packages: SalonPackage[]) {
 
   for (const pkg of packages) {
     for (const item of pkg.items) {
+      if (!item.serviceId) continue
       frequency.set(item.serviceId, (frequency.get(item.serviceId) ?? 0) + item.quantity)
     }
   }

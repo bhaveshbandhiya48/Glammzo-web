@@ -36,9 +36,11 @@ export type SalonService = {
 }
 
 export type SalonPackageItem = {
-  serviceId: string
+  serviceId: string | null
   serviceName: string
   quantity: number
+  durationMin?: number
+  isCustom?: boolean
 }
 
 export type SalonOffer = {
@@ -84,8 +86,8 @@ export type SalonPackage = {
   isFeatured: boolean
   sortOrder: number
   items: SalonPackageItem[]
-  /** Unisex salon catalogs: men or women. Null/undefined = infer from included services. */
-  genderAudience?: "men" | "women" | null
+  /** Unisex salon catalogs: men, women, or unisex (both). Null/undefined = infer from included services. */
+  genderAudience?: "men" | "women" | "unisex" | null
 }
 
 export type SalonStaffMember = {

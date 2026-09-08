@@ -147,7 +147,7 @@ function ServiceDetailSummaryPanel({
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-5 py-5 sm:px-6">
-        <SheetHeader className="space-y-3 p-0 text-left">
+        <SheetHeader className="min-w-0 space-y-3 p-0 text-left">
           <div className="flex items-start justify-between gap-3">
             <p className="text-xs font-semibold tracking-[0.14em] text-foreground/45 uppercase">
               Service summary
@@ -177,7 +177,7 @@ function ServiceDetailSummaryPanel({
           </div>
 
           {content.about || content.highlight ? (
-            <p className="text-sm leading-relaxed text-foreground/70">
+            <p className="text-sm leading-relaxed text-foreground/70 wrap-anywhere">
               {content.about ?? content.highlight}
             </p>
           ) : null}
@@ -194,11 +194,16 @@ function ServiceDetailSummaryPanel({
                 />
               </p>
             </div>
-            <div className="text-right">
+            <div className="min-w-0 max-w-[48%] text-right">
               <p className="text-xs font-medium text-foreground/50">Duration</p>
-              <p className="inline-flex items-center justify-end gap-1 text-sm font-medium text-foreground">
-                <ClockIcon className="size-3.5 text-foreground/50" />
-                {formatDurationWithUnit(`${service.durationMin} min`, unit)}
+              <p className="mt-0.5 flex items-start justify-end gap-1 text-sm font-medium leading-snug text-foreground">
+                <ClockIcon
+                  className="mt-0.5 size-3.5 shrink-0 text-foreground/50"
+                  aria-hidden
+                />
+                <span className="min-w-0 text-right text-pretty">
+                  {formatDurationWithUnit(`${service.durationMin} min`, unit)}
+                </span>
               </p>
             </div>
           </div>

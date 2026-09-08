@@ -179,12 +179,16 @@ export type CrmPackageRow = {
   is_active: boolean
   status?: string
   sort_order: number
-  gender_audience?: "men" | "women" | null
+  gender_audience?: "men" | "women" | "unisex" | null
   salon_package_items?: Array<{
     id: string
-    service_id: string
+    service_id: string | null
     quantity: number
     sort_order?: number
+    custom_name?: string | null
+    custom_category?: string | null
+    custom_duration_minutes?: number | null
+    custom_price?: string | number | null
     services?: { name: string; price: string | number; duration_minutes?: number } | { name: string; price: string | number; duration_minutes?: number }[] | null
   }> | null
 }
