@@ -433,7 +433,7 @@ async function fetchReviewsForSalons(salonIds: string[]): Promise<CrmSalonReview
 
   try {
     const supabase = createAdminClient()
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from("salon_reviews")
       .select(REVIEW_SELECT_WITH_OWNER_REPLY)
       .in("salon_id", salonIds)

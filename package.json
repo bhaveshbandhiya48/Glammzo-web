@@ -12,7 +12,7 @@
     "test": "vitest run",
     "start": "next start -p 4008",
     "media:sync": "node scripts/download-media.mjs",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.1",
@@ -47,8 +47,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^15.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
