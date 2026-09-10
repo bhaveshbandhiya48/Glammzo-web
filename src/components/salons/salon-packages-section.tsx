@@ -2,6 +2,7 @@ import Image from "next/image"
 import { PackageIcon } from "lucide-react"
 
 import type { SalonPackage } from "@/types/salon"
+import { getPackageSavings } from "@/lib/salons/catalog-utils"
 import { cn } from "@/lib/utils"
 
 type SalonPackagesSectionProps = {
@@ -17,8 +18,7 @@ function formatInr(amount: number) {
 }
 
 function PackagePriceDisplay({ pkg }: { pkg: SalonPackage }) {
-  const shouldShowCompare =
-    pkg.showComparePrice && pkg.comparePrice > pkg.packagePrice && pkg.packagePrice > 0
+  const { shouldShowCompare, savings } = getPackageSavings(pkg)
 
   return (
     <div className="flex flex-wrap items-baseline gap-2">
@@ -30,9 +30,9 @@ function PackagePriceDisplay({ pkg }: { pkg: SalonPackage }) {
           {formatInr(pkg.comparePrice)}
         </span>
       ) : null}
-      {shouldShowCompare ? (
+      {shouldShowCompare && savings > 0 ? (
         <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-          Save {formatInr(pkg.comparePrice - pkg.packagePrice)}
+          Save {formatInr(savings)}
         </span>
       ) : null}
     </div>

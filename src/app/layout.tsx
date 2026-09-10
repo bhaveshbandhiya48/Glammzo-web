@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter, Sora } from "next/font/google"
 
 import { Analytics } from "@/components/analytics/google-analytics"
 import { LocationBootstrap } from "@/components/layout/location-bootstrap"
+import { SiteVisitTracker } from "@/components/analytics/site-visit-tracker"
 import { NavigationScrollManager } from "@/components/layout/navigation-scroll-manager"
 import { getSalons } from "@/lib/salons"
 import { SEO_HOME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
@@ -102,6 +103,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <LocationBootstrap />
+        <SiteVisitTracker />
         <NavigationScrollManager />
         <ExploreDistanceOriginProvider>
           <SalonCatalogProvider initialSalons={initialSalons}>

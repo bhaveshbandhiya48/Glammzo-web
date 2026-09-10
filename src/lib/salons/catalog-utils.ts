@@ -280,8 +280,13 @@ export function filterPackagesForCatalog(
 }
 
 export function getPackageSavings(pkg: SalonPackage) {
+  const catalogOnly = pkg.items.length > 0 && pkg.items.every((item) => !item.isCustom)
   const shouldShowCompare =
-    pkg.showComparePrice && pkg.comparePrice > pkg.packagePrice && pkg.packagePrice > 0
+    catalogOnly &&
+    pkg.showComparePrice &&
+    pkg.comparePrice > 0 &&
+    pkg.packagePrice > 0 &&
+    pkg.comparePrice > pkg.packagePrice
   const savings = shouldShowCompare ? pkg.amountSaved || pkg.comparePrice - pkg.packagePrice : 0
   const savingsPercent =
     shouldShowCompare && pkg.comparePrice > 0

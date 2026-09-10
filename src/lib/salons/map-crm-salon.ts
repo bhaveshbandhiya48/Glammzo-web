@@ -397,20 +397,24 @@ function mapPackage(row: CrmPackageRow, fallbackImage: string): SalonPackage {
   )
 
   const packagePrice = Number(row.package_price)
-  const comparePrice =
+  const catalogOnly = items.length > 0 && items.every((item) => !item.isCustom)
+  const rawCompare =
     row.original_price != null && row.original_price !== ""
       ? Number(row.original_price)
       : individualTotal
-  const amountSaved =
-    row.amount_saved != null && row.amount_saved !== ""
+  const comparePrice = catalogOnly ? rawCompare : 0
+  const amountSaved = catalogOnly
+    ? row.amount_saved != null && row.amount_saved !== ""
       ? Number(row.amount_saved)
       : Math.max(0, comparePrice - packagePrice)
-  const discountPercent =
-    row.discount_percentage != null && row.discount_percentage !== ""
+    : 0
+  const discountPercent = catalogOnly
+    ? row.discount_percentage != null && row.discount_percentage !== ""
       ? Number(row.discount_percentage)
       : comparePrice > 0 && packagePrice < comparePrice
         ? Math.round(((comparePrice - packagePrice) / comparePrice) * 100)
         : 0
+    : 0
 
   const shortDescription = row.short_description?.trim() || row.description?.trim() || ""
 

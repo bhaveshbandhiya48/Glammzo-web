@@ -187,6 +187,31 @@ export function clearNearMeCoordinates(): void {
   })
 }
 
+export async function getVisitLocationSnapshot(): Promise<{
+  granted: boolean
+  label: string | null
+}> {
+  if (typeof window === "undefined") {
+    return { granted: false, label: null }
+  }
+
+  const permission = await queryGeolocationPermission()
+  const stored = readStoredLocation()?.stored
+  const granted = permission === "granted" || hasActiveNearMe(stored)
+  if (!granted) {
+    return { granted: false, label: null }
+  }
+
+  const label =
+    stored?.resolvedArea?.trim() ||
+    stored?.city?.trim() ||
+    stored?.displayLabel?.trim() ||
+    stored?.areaLabelOverride?.trim() ||
+    null
+
+  return { granted: true, label }
+}
+
 export function hasActiveNearMe(stored: StoredLocation | null | undefined): boolean {
   return Boolean(
     stored?.nearMe &&
