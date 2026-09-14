@@ -230,12 +230,14 @@ export function salonMatchesBengaluruIntent(salon: Salon, intent: BengaluruSeoIn
   if ("matchAllInCity" in intent && intent.matchAllInCity) return true
 
   const typeSlug = businessTypeSlugFromLabel(salon.businessType)
-  if (intent.businessTypeSlugs.length > 0 && typeSlug && intent.businessTypeSlugs.includes(typeSlug)) {
+  const typeSlugs = intent.businessTypeSlugs as readonly string[]
+  if (typeSlugs.length > 0 && typeSlug && typeSlugs.includes(typeSlug)) {
     return true
   }
 
   const haystack = salonSearchText(salon)
-  return intent.serviceKeywords.some((keyword) => haystack.includes(keyword))
+  const keywords = intent.serviceKeywords as readonly string[]
+  return keywords.some((keyword) => haystack.includes(keyword))
 }
 
 export function filterSalonsByBengaluruIntent(salons: Salon[], intent: BengaluruSeoIntent): Salon[] {

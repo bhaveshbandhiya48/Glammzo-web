@@ -89,7 +89,6 @@ const BENGALURU_FALLBACK_AREAS = [
   "Malleshwaram",
   "Hebbal",
 ]
-]
 
 function buildSteps(city: string) {
   return [
