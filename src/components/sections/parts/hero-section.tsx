@@ -45,6 +45,11 @@ export function HeroSection() {
               {hero.headline}{" "}
               <span className="text-primary">{hero.headlineAccent}</span>
             </h1>
+            <p className="mt-4 max-w-md text-lg font-semibold tracking-tight text-primary">
+              <Link href="/get-999-off" className="hover:underline">
+                Get ₹999 off, every 10th service free
+              </Link>
+            </p>
 
             <p className="mt-6 max-w-md text-lg leading-relaxed text-foreground/65">{hero.subhead}</p>
 
@@ -61,7 +66,7 @@ export function HeroSection() {
                 size="lg"
                 className="border-border/80 bg-card/60 px-7"
               >
-                <Link href="/#how">{hero.secondaryCta}</Link>
+                <Link href="/get-999-off">Get ₹999 off</Link>
               </Button>
             </div>
 

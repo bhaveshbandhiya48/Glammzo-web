@@ -10,6 +10,7 @@ import {
   buildWebsiteJsonLd,
   SALON_NEAR_ME_FAQS,
 } from "@/lib/seo/json-ld"
+import { buildLoyaltyOfferJsonLd } from "@/lib/seo/loyalty-offer-seo"
 import { SEO_HOME, SITE_URL, buildShareImages } from "@/lib/seo/site-seo"
 
 export const metadata: Metadata = {
@@ -58,6 +59,7 @@ export default function HomePage() {
           buildSalonBookingServiceJsonLd(),
           buildHowToBookJsonLd(),
           buildFaqJsonLd([...SALON_NEAR_ME_FAQS]),
+          buildLoyaltyOfferJsonLd(),
         ]}
       />
       <LandingPage />

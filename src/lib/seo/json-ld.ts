@@ -16,7 +16,7 @@ export function jsonLdScript(data: Record<string, unknown> | Array<Record<string
 export function buildOrganizationJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "OnlineBusiness"],
     "@id": `${SITE_URL}/#organization`,
     name: SEO_ORGANIZATION.name,
     legalName: SEO_ORGANIZATION.legalName,
@@ -28,13 +28,28 @@ export function buildOrganizationJsonLd() {
     email: SEO_ORGANIZATION.email,
     description: GEO_GLAMMZO_DEFINITION,
     sameAs: SEO_ORGANIZATION.sameAs,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Bengaluru",
+      addressRegion: "Karnataka",
+      addressCountry: "IN",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 12.9716,
+      longitude: 77.5946,
+    },
     areaServed: {
       "@type": "City",
       name: "Bengaluru",
       alternateName: "Bangalore",
       containedInPlace: {
-        "@type": "Country",
-        name: "India",
+        "@type": "State",
+        name: "Karnataka",
+        containedInPlace: {
+          "@type": "Country",
+          name: "India",
+        },
       },
     },
     knowsAbout: [
@@ -43,13 +58,16 @@ export function buildOrganizationJsonLd() {
       "beauty salon appointments",
       "spa booking",
       "Bengaluru salons",
+      "Bangalore hair salons",
+      "Bengaluru spa",
+      "nail salon Bengaluru",
     ],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer support",
       email: SEO_ORGANIZATION.email,
       areaServed: "IN",
-      availableLanguage: ["English", "Hindi"],
+      availableLanguage: ["English", "Hindi", "Kannada"],
     },
   }
 }
@@ -171,6 +189,11 @@ export const SALON_NEAR_ME_FAQS = [
   {
     question: "Are there Glammzo offers or cashback on bookings?",
     answer:
-      "Yes, when Glammzo publishes an offer. Active offers appear on Explore and salon pages — apply the promo code at checkout. Cashback (if any) is added to your Glammzo wallet after a completed visit.",
+      "Yes. Every 10th completed visit unlocks ₹999 off one service (free if that service is ₹999 or less). Apply the loyalty credit at checkout. Separate Glammzo promo codes, when published, appear on Explore and salon pages.",
+  },
+  {
+    question: "How do I get ₹999 off a salon service?",
+    answer:
+      "Complete 10 visits on Glammzo. Your next booking can use a loyalty credit: get the service free if it costs ₹999 or less, or ₹999 off if it costs more. No promo code is required.",
   },
 ] as const

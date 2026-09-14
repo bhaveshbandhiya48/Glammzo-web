@@ -12,7 +12,7 @@ export const DEFAULT_OG_IMAGE = {
   url: DEFAULT_OG_IMAGE_PATH,
   width: 1200,
   height: 630,
-  alt: "Glammzo — find a salon near you and book online",
+  alt: "Glammzo — book salons in Bengaluru online",
 } as const
 
 /** Prefer a remote salon photo when sharing a listing; otherwise the brand OG card. */
@@ -41,32 +41,45 @@ export const LOCAL_SALON_KEYWORDS = [
   "salon booking",
   "salon in Bengaluru",
   "salon in Bangalore",
+  "hair salon in Bengaluru",
+  "hair salon in Bangalore",
+  "spa in Bengaluru",
+  "spa in Bangalore",
+  "nail salon in Bengaluru",
+  "best salons in Bengaluru",
+  "best salons in Bangalore",
+  "beauty parlour in Bengaluru",
+  "unisex salon in Bangalore",
+  "get ₹999 off salon",
+  "every 10th service free",
+  "salon offer bangalore",
+  "₹999 off salon bengaluru",
 ] as const
 
 export const SEO_HOME = {
-  title: "Salon Near Me · Book Salons Online | Glammzo",
+  title: "Get ₹999 Off | Salon in Bengaluru (Bangalore) | Glammzo",
   description:
-    "Find a salon near me and book online in minutes. Compare fixed prices, ratings, and open slots for hair, spa, nails, and beauty salons nearby — starting in Bengaluru.",
+    "Get ₹999 off or a free service after every 10 completed visits. Book hair, spa, nail, and beauty salons in Bengaluru with fixed prices and live slots on Glammzo.",
   keywords: [...LOCAL_SALON_KEYWORDS],
 } as const
 
 export const SEO_EXPLORE = {
-  title: "Explore Salons Near Me · Book Online",
+  title: "Get ₹999 Off | Explore Salons in Bengaluru · Book Online",
   description:
-    "Explore salons near you on Glammzo. Filter by service, price, and rating, then book a nearby salon with clear pricing and instant confirmation.",
+    "Explore salons in Bengaluru and get ₹999 off after every 10 completed visits. Filter by neighbourhood, service, price, and rating, then book with clear pricing.",
 } as const
 
 export const SEO_SALONS_NEAR_ME = {
-  title: "Salon Near Me · Find & Book Nearby Salons Online",
+  title: "Get ₹999 Off | Salon Near Me in Bengaluru · Book Nearby",
   description:
-    "Looking for a salon near me? Discover verified nearby salons on Glammzo, compare services and fixed prices, and book your appointment online in under two minutes.",
+    "Find a salon near me in Bengaluru and get ₹999 off or a free service every 10th visit. Compare verified nearby salons, fixed prices, and book online on Glammzo.",
   path: "/salons-near-me",
 } as const
 
 export const SEO_SERVICES = {
-  title: "Browse by Business Type · Salon, Spa, Barber & More",
+  title: "Get ₹999 Off | Hair, Spa, Nails & Beauty in Bengaluru",
   description:
-    "Find salons, spas, barber shops, nail studios, and more near you. Compare ratings and fixed prices, then book on Glammzo.",
+    "Browse salons, spas, beauty parlours, and nail studios in Bengaluru. Every 10th completed visit unlocks ₹999 off or a free service. Compare prices and book on Glammzo.",
 } as const
 
 export const SEO_ORGANIZATION = {

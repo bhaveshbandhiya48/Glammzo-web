@@ -68,6 +68,13 @@ export function getAreasForSeoCity(salons: Salon[], city: SeoCityLanding): strin
       "Whitefield",
       "Jayanagar",
       "MG Road",
+      "Marathahalli",
+      "JP Nagar",
+      "BTM Layout",
+      "Bellandur",
+      "Electronic City",
+      "Malleshwaram",
+      "Hebbal",
     ]
   }
 
@@ -111,8 +118,9 @@ export function buildExploreAreaHref(cityDisplayName: string, areaLabel: string)
 }
 
 export function buildCityPageSeo(city: SeoCityLanding) {
-  const title = `Salons in ${city.displayName} · Book Near Me Online`
-  const description = `Find a salon near me in ${city.displayName}. Compare verified hair, beauty, spa, and nail salons, see fixed prices, and book online on Glammzo.`
+  const aliases = city.alternateNames.length > 0 ? ` (${city.alternateNames[0]})` : ""
+  const title = `Get ₹999 Off | Salons in ${city.displayName}${aliases}`
+  const description = `Get ₹999 off or a free service after every 10 visits. Find and book a salon in ${city.displayName} — hair, spa, nails, and beauty parlours in Indiranagar, Koramangala, HSR, Whitefield, and more.`
   return {
     title,
     description,
@@ -120,16 +128,28 @@ export function buildCityPageSeo(city: SeoCityLanding) {
     keywords: [
       `salon in ${city.displayName}`,
       `salons in ${city.displayName}`,
+      `best salons in ${city.displayName}`,
+      `hair salon in ${city.displayName}`,
+      `spa in ${city.displayName}`,
       "salon near me",
       "book salon online",
-      ...city.alternateNames.flatMap((name) => [`salon in ${name}`, `salons in ${name}`]),
+      "get ₹999 off",
+      "every 10th service free",
+      ...city.alternateNames.flatMap((name) => [
+        `salon in ${name}`,
+        `salons in ${name}`,
+        `hair salon in ${name}`,
+        `spa in ${name}`,
+        `best salons in ${name}`,
+      ]),
     ],
   }
 }
 
 export function buildAreaPageSeo(city: SeoCityLanding, areaLabel: string) {
-  const title = `Salons in ${areaLabel}, ${city.displayName} · Near Me`
-  const description = `Looking for a salon near me in ${areaLabel}, ${city.displayName}? Browse verified local salons on Glammzo, compare fixed prices, and book your appointment online.`
+  const aliases = city.alternateNames.length > 0 ? ` (${city.alternateNames[0]})` : ""
+  const title = `Salons in ${areaLabel}, ${city.displayName}${aliases} | Book Near You`
+  const description = `Book a salon in ${areaLabel}, ${city.displayName}. Compare verified hair, beauty, spa, and nail partners near ${areaLabel}, see fixed prices, and confirm your appointment online on Glammzo.`
   const areaSlug = slugifyLocalLabel(areaLabel)
   return {
     title,
@@ -140,6 +160,9 @@ export function buildAreaPageSeo(city: SeoCityLanding, areaLabel: string) {
       `salon in ${areaLabel}`,
       `salon near ${areaLabel}`,
       `salons in ${areaLabel} ${city.displayName}`,
+      `hair salon in ${areaLabel}`,
+      `spa in ${areaLabel}`,
+      `best salon in ${areaLabel} bangalore`,
       "salon near me",
       "book salon online",
     ],

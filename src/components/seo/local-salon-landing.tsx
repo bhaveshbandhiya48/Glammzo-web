@@ -15,6 +15,7 @@ type LocalSalonLandingProps = {
   exploreHref: string
   exploreLabel: string
   areaLinks?: Array<{ label: string; href: string }>
+  serviceLinks?: Array<{ label: string; href: string }>
   breadcrumb?: Array<{ label: string; href?: string }>
   geoAnswer?: { heading: string; answer: string; showKeyFacts?: boolean }
   faqs?: ReadonlyArray<{ question: string; answer: string }>
@@ -29,6 +30,7 @@ export function LocalSalonLanding({
   exploreHref,
   exploreLabel,
   areaLinks,
+  serviceLinks,
   breadcrumb,
   geoAnswer,
   faqs,
@@ -87,6 +89,29 @@ export function LocalSalonLanding({
           answer={geoAnswer.answer}
           showKeyFacts={geoAnswer.showKeyFacts}
         />
+      ) : null}
+
+      {serviceLinks && serviceLinks.length > 0 ? (
+        <section className="section-y section-y-separated">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              Book by service in Bengaluru
+            </h2>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {serviceLinks.map((service) => (
+                <li key={service.href}>
+                  <Link
+                    href={service.href}
+                    className="flex items-center gap-2 rounded-xl border border-border/70 bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary/30 hover:bg-primary/5"
+                  >
+                    <ArrowRightIcon className="size-4 text-primary" aria-hidden />
+                    {service.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       ) : null}
 
       {areaLinks && areaLinks.length > 0 ? (

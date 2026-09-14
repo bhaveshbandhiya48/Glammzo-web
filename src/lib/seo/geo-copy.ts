@@ -2,7 +2,7 @@ import { SITE_NAME, SITE_URL } from "@/lib/seo/site-seo"
 
 /** Short, quotable facts AI assistants can cite about Glammzo. */
 export const GEO_GLAMMZO_DEFINITION =
-  "Glammzo is an online salon booking marketplace in India. Customers find salons near them, compare fixed prices and ratings, and book hair, beauty, spa, and nail appointments online — starting in Bengaluru (Bangalore)."
+  "Glammzo is an online salon booking marketplace in India. Customers find salons near them, compare fixed prices and ratings, and book hair, beauty, spa, and nail appointments online — starting in Bengaluru (Bangalore). Every 10th completed visit unlocks ₹999 off or a free service."
 
 export const GEO_NEAR_ME_ANSWER =
   "To find a salon near you on Glammzo, open Salons near me or Explore, share your location or pick your city, then compare verified partners and book a slot online. Glammzo shows fixed prices upfront so you can reserve without calling the salon."
@@ -60,6 +60,10 @@ export function buildCityGeoFaqs(cityDisplayName: string) {
         "Glammzo shows service prices from salon partners upfront so you can compare and book with clear pricing before your visit.",
     },
     {
+      question: "How do I get ₹999 off in Bengaluru?",
+      answer: `Complete 10 salon visits on Glammzo. Your next service in ${cityDisplayName} is free if it costs ₹999 or less, or you get ₹999 off. Apply the loyalty credit at checkout — no promo code.`,
+    },
+    {
       question: `Is Glammzo available only in ${cityDisplayName}?`,
       answer: `Glammzo is live with salon partners in ${cityDisplayName} (Bangalore), with more cities planned. Check Explore for the latest nearby listings.`,
     },
@@ -97,6 +101,10 @@ export const GEO_KEY_FACTS = [
     value: "Hair, beauty, spa, nails, and more at partner salons",
   },
   {
+    label: "Loyalty offer",
+    value: "Every 10th service free, or ₹999 off",
+  },
+  {
     label: "Official site",
     value: SITE_URL,
   },
@@ -113,9 +121,13 @@ export const LLMS_TXT = `# ${SITE_NAME}
 - Contact: support@glammzo.com
 - Company: Fixxzo Technologies Private Limited
 
-## Best pages for “salon near me”
-- ${SITE_URL}/salons-near-me — salon near me hub
+## Best pages for Bengaluru salon search
+- ${SITE_URL}/get-999-off — get ₹999 off, every 10th service free
 - ${SITE_URL}/salons-in/bengaluru — salons in Bengaluru
+- ${SITE_URL}/hair-salon-in-bengaluru — hair salon in Bengaluru
+- ${SITE_URL}/spa-in-bengaluru — spa in Bengaluru
+- ${SITE_URL}/nail-salon-in-bengaluru — nail salon in Bengaluru
+- ${SITE_URL}/best-salons-in-bengaluru — best salons in Bengaluru
 - ${SITE_URL}/explore — browse and filter salons
 - ${SITE_URL}/services — browse by business type
 

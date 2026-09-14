@@ -41,6 +41,19 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     ],
   },
   {
+    title: "Bengaluru",
+    links: [
+      { label: "Get ₹999 off", href: "/get-999-off" },
+      { label: "Hair salon in Bengaluru", href: "/hair-salon-in-bengaluru" },
+      { label: "Spa in Bengaluru", href: "/spa-in-bengaluru" },
+      { label: "Nail salon in Bengaluru", href: "/nail-salon-in-bengaluru" },
+      { label: "Beauty parlour in Bengaluru", href: "/beauty-parlour-in-bengaluru" },
+      { label: "Best salons in Bengaluru", href: "/best-salons-in-bengaluru" },
+      { label: "Indiranagar salons", href: "/salons-in/bengaluru/indiranagar" },
+      { label: "Koramangala salons", href: "/salons-in/bengaluru/koramangala" },
+    ],
+  },
+  {
     title: "Resources",
     links: [
       { label: "Help Center", href: "/help" },
@@ -162,7 +175,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4 sm:gap-x-6 lg:gap-x-8">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-5 sm:gap-x-6 lg:gap-x-8">
             {FOOTER_COLUMNS.map((column) => (
               <FooterNavColumn key={column.title} {...column} />
             ))}

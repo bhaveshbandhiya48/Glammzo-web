@@ -48,6 +48,9 @@ export const metadata: Metadata = {
     "hair salon near me",
     "beauty salon near me",
     "book salon online",
+    "salon near me bengaluru",
+    "salon near me bangalore",
+    "hair salon near me bangalore",
   ],
   alternates: {
     canonical: `${SITE_URL}${SEO_SALONS_NEAR_ME.path}`,
@@ -78,6 +81,14 @@ const BENGALURU_FALLBACK_AREAS = [
   "Whitefield",
   "Jayanagar",
   "MG Road",
+  "Marathahalli",
+  "JP Nagar",
+  "BTM Layout",
+  "Bellandur",
+  "Electronic City",
+  "Malleshwaram",
+  "Hebbal",
+]
 ]
 
 function buildSteps(city: string) {

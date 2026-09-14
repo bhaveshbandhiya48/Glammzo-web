@@ -8,6 +8,10 @@ import { JsonLd } from "@/components/seo/json-ld"
 import { getPublicSalons } from "@/lib/salons"
 import { buildCityGeoAnswer, buildCityGeoFaqs } from "@/lib/seo/geo-copy"
 import {
+  BENGALURU_SEO_INTENTS,
+  buildBengaluruIntentPath,
+} from "@/lib/seo/bengaluru-intents"
+import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
   buildHowToBookJsonLd,
@@ -117,7 +121,7 @@ export default async function SalonsInCityPage({ params }: PageProps) {
         <LocalSalonLanding
           eyebrow={`Salons in ${city.displayName}`}
           title={`Book salons in ${city.displayName}`}
-          subtitle={`Discover verified salons near you in ${city.displayName}. Compare fixed prices, ratings, and open slots — then book online on Glammzo.`}
+          subtitle={`Discover hair salons, spas, nail studios, and beauty parlours in ${city.displayName} (Bangalore). Compare fixed prices, ratings, and open slots — then book online on Glammzo.`}
           salons={citySalons}
           exploreHref={buildExploreCityHref(city.displayName)}
           exploreLabel={`Explore ${city.displayName} salons`}
@@ -130,6 +134,17 @@ export default async function SalonsInCityPage({ params }: PageProps) {
             label: `Salons in ${area}`,
             href: buildAreaLandingPath(city.slug, slugifyLocalLabel(area)),
           }))}
+          serviceLinks={
+            city.slug === "bengaluru"
+              ? [
+                  { label: "Get ₹999 off", href: "/get-999-off" },
+                  ...BENGALURU_SEO_INTENTS.map((intent) => ({
+                    label: intent.h1,
+                    href: buildBengaluruIntentPath(intent.slug),
+                  })),
+                ]
+              : undefined
+          }
           geoAnswer={{
             heading: `Salons near me in ${city.displayName}`,
             answer: buildCityGeoAnswer(city.displayName, citySalons.length),

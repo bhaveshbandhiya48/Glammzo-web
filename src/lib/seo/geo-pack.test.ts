@@ -22,7 +22,7 @@ describe("GEO pack helpers", () => {
 
   it("emits Organization, HowTo, and Breadcrumb JSON-LD", () => {
     const org = buildOrganizationJsonLd()
-    expect(org["@type"]).toBe("Organization")
+    expect(org["@type"]).toEqual(["Organization", "OnlineBusiness"])
     expect(org.description).toContain("Glammzo")
     expect(org.knowsAbout).toContain("salon near me")
 

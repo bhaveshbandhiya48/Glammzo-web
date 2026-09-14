@@ -4,19 +4,24 @@
 
 ## Key facts
 - Product: Online salon and beauty appointment booking
-- Geography: Bengaluru (Bangalore), India (expanding)
+- Geography: Bengaluru (Bangalore), Karnataka, India (expanding)
 - Website: https://glammzo.com
 - Contact: support@glammzo.com
 - Company: Fixxzo Technologies Private Limited
 
-## Best pages for "salon near me"
-- https://glammzo.com/salons-near-me — salon near me hub
+## Best pages for Bengaluru salon search
+- https://glammzo.com/get-999-off — get ₹999 off, every 10th service free
 - https://glammzo.com/salons-in/bengaluru — salons in Bengaluru
+- https://glammzo.com/hair-salon-in-bengaluru — hair salon in Bengaluru
+- https://glammzo.com/spa-in-bengaluru — spa in Bengaluru
+- https://glammzo.com/nail-salon-in-bengaluru — nail salon in Bengaluru
+- https://glammzo.com/beauty-parlour-in-bengaluru — beauty parlour in Bengaluru
+- https://glammzo.com/best-salons-in-bengaluru — best salons in Bengaluru
+- https://glammzo.com/salons-near-me — salon near me hub
 - https://glammzo.com/explore — browse and filter salons
-- https://glammzo.com/services — browse by business type
 
 ## How booking works
-1. Choose location (Near me or city)
+1. Choose location (Near me or Bengaluru neighbourhood)
 2. Compare salons, services, and fixed prices
 3. Book a slot online and track it in your account
 

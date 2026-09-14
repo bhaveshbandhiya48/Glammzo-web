@@ -2,6 +2,11 @@ import type { MetadataRoute } from "next"
 
 import { getPublicSalons } from "@/lib/salons"
 import {
+  BENGALURU_SEO_INTENTS,
+  buildBengaluruIntentPath,
+  filterSalonsByBengaluruIntent,
+} from "@/lib/seo/bengaluru-intents"
+import {
   SEO_CITY_LANDINGS,
   buildAreaLandingPath,
   buildCityLandingPath,
@@ -48,6 +53,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const intentEntries: MetadataRoute.Sitemap = BENGALURU_SEO_INTENTS.flatMap((intent) => {
+    if (filterSalonsByBengaluruIntent(salons, intent).length === 0) return []
+    return [
+      {
+        url: `${BASE_URL}${buildBengaluruIntentPath(intent.slug)}`,
+        lastModified: new Date(),
+        changeFrequency: "daily" as const,
+        priority: 0.93,
+      },
+    ]
+  })
+
   return [
     {
       url: BASE_URL,
@@ -62,12 +79,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${BASE_URL}/get-999-off`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.96,
+    },
+    {
       url: `${BASE_URL}/salons-near-me`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.95,
     },
     ...localLandingEntries,
+    ...intentEntries,
     {
       url: `${BASE_URL}/services`,
       lastModified: new Date(),

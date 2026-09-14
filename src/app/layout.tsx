@@ -93,7 +93,7 @@ export default async function RootLayout({
 
   return (
     <html
-      lang="en"
+      lang="en-IN"
       data-scroll-behavior="smooth"
       className={`${inter.variable} ${sora.variable} ${logoFont.variable} h-full antialiased`}
       suppressHydrationWarning

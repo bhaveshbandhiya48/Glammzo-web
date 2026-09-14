@@ -15,10 +15,10 @@ export const siteCopy = {
   ] as const,
   hero: {
     badge: "Now live near you",
-    headline: "Find a salon near you,",
+    headline: "Find a salon in Bengaluru,",
     headlineAccent: "book in minutes.",
     subhead:
-      "Discover salons nearby, see fixed prices, and confirm appointments without phone calls or guesswork.",
+      "Get ₹999 off or a free service after every 10 visits. Discover hair, spa, nail, and beauty salons across Bengaluru (Bangalore) with fixed prices.",
     offerLine: "Discover salons nearby and book in minutes",
     primaryCta: "Book your first service",
     secondaryCta: "See how it works",
